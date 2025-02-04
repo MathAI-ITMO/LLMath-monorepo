@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
+import { computed } from "vue";
+import { useRoute } from "vue-router";
+
+const route = useRoute();
+const isChatRoute = computed(() => route.path === "/chat");
 </script>
 
 <template>
@@ -9,21 +12,21 @@ import HelloWorld from './components/HelloWorld.vue'
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700;900&display=swap"
     rel="stylesheet" />
 
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="Главная страница" />
-
+  <div v-if="!isChatRoute" class="layout">
+    <aside class="sidebar">
+      <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
       <nav>
         <RouterLink to="/">На главную</RouterLink>
         <RouterLink to="/auth">Авторизация</RouterLink>
         <RouterLink to="/chat">Чат</RouterLink>
       </nav>
-    </div>
-  </header>
+    </aside>
+    <main class="content">
+      <RouterView />
+    </main>
+  </div>
 
-  <RouterView />
+  <RouterView v-else />
 </template>
 
 <style scoped>

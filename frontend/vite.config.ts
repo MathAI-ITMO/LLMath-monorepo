@@ -14,7 +14,13 @@ export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
     plugins: [
-      vue(),
+      vue({
+        template: {
+          compilerOptions: {
+            isCustomElement: (tag) => tag.startsWith("gradio-"),
+          },
+        },
+      }),
       vueJsx(),
       vueDevTools(),
       basicSsl({
@@ -43,5 +49,16 @@ export default defineConfig(({ command, mode }) => {
     },
     base: env.VUE_APP_PATH_SUFFIX ? ('/' + env.VUE_APP_PATH_SUFFIX + '/') : undefined,
     // base: '',
+    /* optimizeDeps: {
+      exclude: ["@gradio/lite"],
+    },
+    build: {
+      rollupOptions: {
+        external: ["@gradio/lite"],
+      },
+    },
+    define: {
+      "process.env.GRADIO_API_BASE": env.GRADIO_PREFIX ? JSON.stringify(env.GRADIO_PREFIX) : undefined,
+    }*/
   }
 })
