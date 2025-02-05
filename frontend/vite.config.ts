@@ -49,7 +49,7 @@ export default defineConfig(({ command, mode }) => {
     },
     base: env.VUE_APP_PATH_SUFFIX ? ('/' + env.VUE_APP_PATH_SUFFIX + '/') : undefined,
     // base: '',
-    /* optimizeDeps: {
+    optimizeDeps: {
       exclude: ["@gradio/lite"],
     },
     build: {
@@ -59,6 +59,6 @@ export default defineConfig(({ command, mode }) => {
     },
     define: {
       "process.env.GRADIO_API_BASE": env.GRADIO_PREFIX ? JSON.stringify(env.GRADIO_PREFIX) : undefined,
-    }*/
+    }
   }
 })

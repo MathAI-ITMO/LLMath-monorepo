@@ -6,17 +6,11 @@
     <main>
       <gradio-lite>
         <gradio-file name="app.py" entrypoint>
-          import gradio as gr
-          from utils import add
-
-          demo = gr.Interface(fn=add, inputs=["number", "number"], outputs="number")
-
-          demo.launch()
+          {{ mainCode }}
         </gradio-file>
 
         <gradio-file name="utils.py">
-          def add(a, b):
-          return a + b
+          {{ utilCode }}
         </gradio-file>
       </gradio-lite>
     </main>
@@ -26,6 +20,7 @@
 <script setup lang="ts">
 //import "@gradio/lite";
 //import "@gradio/lite/dist/lite.css";
+import { type Ref, ref } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -33,6 +28,24 @@ const router = useRouter();
 const goHome = () => {
   router.push("/");
 };
+
+const mainCode: Ref<string> = ref("");
+const utilCode: Ref<string> = ref("");
+
+mainCode.value = `
+import gradio as gr
+from utils import add
+
+demo = gr.Interface(fn=add, inputs=["number", "number"], outputs="number")
+
+demo.launch()`;
+
+utilCode.value = `
+def add(a, b):
+  return a + b
+`;
+
+
 </script>
 
 <style lang="css" scoped>
