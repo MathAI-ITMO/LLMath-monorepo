@@ -91,4 +91,9 @@ nav a:first-of-type {
     margin-top: 1rem;
   }
 }
+
+.main-app {
+  width: 100vw;
+  height: 100vh;
+}
 </style>
