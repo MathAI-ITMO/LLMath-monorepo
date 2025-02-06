@@ -1,0 +1,17 @@
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.DomainServices\bin\Debug\net9.0\MathLLMBackend.DomainServices.deps.json
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.DomainServices\bin\Debug\net9.0\MathLLMBackend.DomainServices.dll
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.DomainServices\bin\Debug\net9.0\MathLLMBackend.DomainServices.pdb
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.DomainServices\bin\Debug\net9.0\MathLLMBackend.Domain.dll
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.DomainServices\bin\Debug\net9.0\MathLLMBackend.Repository.dll
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.DomainServices\bin\Debug\net9.0\MathLLMBackend.Domain.pdb
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.DomainServices\bin\Debug\net9.0\MathLLMBackend.Repository.pdb
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.DomainServices\obj\Debug\net9.0\MathLLMBackend.DomainServices.csproj.AssemblyReference.cache
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.DomainServices\obj\Debug\net9.0\MathLLMBackend.DomainServices.GeneratedMSBuildEditorConfig.editorconfig
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.DomainServices\obj\Debug\net9.0\MathLLMBackend.DomainServices.AssemblyInfoInputs.cache
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.DomainServices\obj\Debug\net9.0\MathLLMBackend.DomainServices.AssemblyInfo.cs
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.DomainServices\obj\Debug\net9.0\MathLLMBackend.DomainServices.csproj.CoreCompileInputs.cache
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.DomainServices\obj\Debug\net9.0\MathLLMB.62E4CA71.Up2Date
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.DomainServices\obj\Debug\net9.0\MathLLMBackend.DomainServices.dll
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.DomainServices\obj\Debug\net9.0\refint\MathLLMBackend.DomainServices.dll
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.DomainServices\obj\Debug\net9.0\MathLLMBackend.DomainServices.pdb
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.DomainServices\obj\Debug\net9.0\ref\MathLLMBackend.DomainServices.dll
