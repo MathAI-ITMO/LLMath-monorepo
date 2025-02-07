@@ -74,3 +74,12 @@ c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Pre
 c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Presentation\obj\Debug\net9.0\MathLLMBackend.Presentation.pdb
 C:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Presentation\obj\Debug\net9.0\MathLLMBackend.Presentation.genruntimeconfig.cache
 C:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Presentation\obj\Debug\net9.0\ref\MathLLMBackend.Presentation.dll
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Presentation\obj\Debug\net9.0\MathLLMBackend.Presentation.sourcelink.json
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Presentation\bin\Debug\net9.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Presentation\bin\Debug\net9.0\Microsoft.IdentityModel.Abstractions.dll
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Presentation\bin\Debug\net9.0\Microsoft.IdentityModel.JsonWebTokens.dll
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Presentation\bin\Debug\net9.0\Microsoft.IdentityModel.Logging.dll
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Presentation\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.dll
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Presentation\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Presentation\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Presentation\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll

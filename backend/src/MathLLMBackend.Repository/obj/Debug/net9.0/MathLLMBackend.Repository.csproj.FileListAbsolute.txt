@@ -24,3 +24,4 @@ c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Rep
 c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Repository\obj\Debug\net9.0\refint\MathLLMBackend.Repository.dll
 c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Repository\obj\Debug\net9.0\MathLLMBackend.Repository.pdb
 C:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Repository\obj\Debug\net9.0\ref\MathLLMBackend.Repository.dll
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Repository\obj\Debug\net9.0\MathLLMBackend.Repository.sourcelink.json

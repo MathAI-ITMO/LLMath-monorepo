@@ -14,8 +14,7 @@ namespace MathLLMBackend.Infrastructure.Repositories
             _context = context;
         }
 
-
-        public async Task<User> CreateUser(User user, CancellationToken ct)
+        public async Task<User> Create(User user, CancellationToken ct)
         {
             const string userSql =
             """
@@ -43,7 +42,7 @@ namespace MathLLMBackend.Infrastructure.Repositories
             return createdUser;
         }
 
-        public async Task<User> GetUser(long Id, CancellationToken ct)
+        public async Task<User> Get(long Id, CancellationToken ct)
         {
             const string sql =
             """

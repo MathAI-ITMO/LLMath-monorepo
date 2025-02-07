@@ -30,8 +30,8 @@
               "c:\\Users\\mgsds\\projects\\math-llm-backend\\math-llm-backend\\src\\MathLLMBackend.Domain\\MathLLMBackend.Domain.csproj": {
                 "projectPath": "c:\\Users\\mgsds\\projects\\math-llm-backend\\math-llm-backend\\src\\MathLLMBackend.Domain\\MathLLMBackend.Domain.csproj"
               },
-              "C:\\Users\\mgsds\\projects\\math-llm-backend\\math-llm-backend\\src\\MathLLMBackend.Repository\\MathLLMBackend.Repository.csproj": {
-                "projectPath": "C:\\Users\\mgsds\\projects\\math-llm-backend\\math-llm-backend\\src\\MathLLMBackend.Repository\\MathLLMBackend.Repository.csproj"
+              "c:\\Users\\mgsds\\projects\\math-llm-backend\\math-llm-backend\\src\\MathLLMBackend.Repository\\MathLLMBackend.Repository.csproj": {
+                "projectPath": "c:\\Users\\mgsds\\projects\\math-llm-backend\\math-llm-backend\\src\\MathLLMBackend.Repository\\MathLLMBackend.Repository.csproj"
               }
             }
           }
@@ -66,10 +66,12 @@
           "centralPackageVersions": {
             "BCrypt.Net-PCL": "1.0.1",
             "Dapper": "2.1.66",
+            "Microsoft.AspNetCore.Authentication.JwtBearer": "9.0.1",
             "Microsoft.Extensions.Configuration": "9.0.1",
             "Npgsql": "9.0.2",
             "Swashbuckle.AspNetCore": "7.2.0",
-            "System.Configuration.ConfigurationManager": "9.0.1"
+            "System.Configuration.ConfigurationManager": "9.0.1",
+            "System.IdentityModel.Tokens.Jwt": "8.4.0"
           },
           "imports": [
             "net461",
@@ -134,10 +136,12 @@
           "centralPackageVersions": {
             "BCrypt.Net-PCL": "1.0.1",
             "Dapper": "2.1.66",
+            "Microsoft.AspNetCore.Authentication.JwtBearer": "9.0.1",
             "Microsoft.Extensions.Configuration": "9.0.1",
             "Npgsql": "9.0.2",
             "Swashbuckle.AspNetCore": "7.2.0",
-            "System.Configuration.ConfigurationManager": "9.0.1"
+            "System.Configuration.ConfigurationManager": "9.0.1",
+            "System.IdentityModel.Tokens.Jwt": "8.4.0"
           },
           "imports": [
             "net461",
@@ -159,14 +163,14 @@
         }
       }
     },
-    "C:\\Users\\mgsds\\projects\\math-llm-backend\\math-llm-backend\\src\\MathLLMBackend.Repository\\MathLLMBackend.Repository.csproj": {
+    "c:\\Users\\mgsds\\projects\\math-llm-backend\\math-llm-backend\\src\\MathLLMBackend.Repository\\MathLLMBackend.Repository.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\mgsds\\projects\\math-llm-backend\\math-llm-backend\\src\\MathLLMBackend.Repository\\MathLLMBackend.Repository.csproj",
+        "projectUniqueName": "c:\\Users\\mgsds\\projects\\math-llm-backend\\math-llm-backend\\src\\MathLLMBackend.Repository\\MathLLMBackend.Repository.csproj",
         "projectName": "MathLLMBackend.Repository",
-        "projectPath": "C:\\Users\\mgsds\\projects\\math-llm-backend\\math-llm-backend\\src\\MathLLMBackend.Repository\\MathLLMBackend.Repository.csproj",
+        "projectPath": "c:\\Users\\mgsds\\projects\\math-llm-backend\\math-llm-backend\\src\\MathLLMBackend.Repository\\MathLLMBackend.Repository.csproj",
         "packagesPath": "C:\\Users\\mgsds\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\mgsds\\projects\\math-llm-backend\\math-llm-backend\\src\\MathLLMBackend.Repository\\obj\\",
+        "outputPath": "c:\\Users\\mgsds\\projects\\math-llm-backend\\math-llm-backend\\src\\MathLLMBackend.Repository\\obj\\",
         "projectStyle": "PackageReference",
         "centralPackageVersionsManagementEnabled": true,
         "configFilePaths": [
@@ -218,10 +222,12 @@
           "centralPackageVersions": {
             "BCrypt.Net-PCL": "1.0.1",
             "Dapper": "2.1.66",
+            "Microsoft.AspNetCore.Authentication.JwtBearer": "9.0.1",
             "Microsoft.Extensions.Configuration": "9.0.1",
             "Npgsql": "9.0.2",
             "Swashbuckle.AspNetCore": "7.2.0",
-            "System.Configuration.ConfigurationManager": "9.0.1"
+            "System.Configuration.ConfigurationManager": "9.0.1",
+            "System.IdentityModel.Tokens.Jwt": "8.4.0"
           },
           "imports": [
             "net461",

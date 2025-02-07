@@ -15,3 +15,4 @@ c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Dom
 c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.DomainServices\obj\Debug\net9.0\refint\MathLLMBackend.DomainServices.dll
 c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.DomainServices\obj\Debug\net9.0\MathLLMBackend.DomainServices.pdb
 c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.DomainServices\obj\Debug\net9.0\ref\MathLLMBackend.DomainServices.dll
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.DomainServices\obj\Debug\net9.0\MathLLMBackend.DomainServices.sourcelink.json

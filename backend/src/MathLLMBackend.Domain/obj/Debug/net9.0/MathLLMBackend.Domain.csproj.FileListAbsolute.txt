@@ -20,3 +20,4 @@ c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Dom
 c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Domain\obj\Debug\net9.0\refint\MathLLMBackend.Domain.dll
 c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Domain\obj\Debug\net9.0\MathLLMBackend.Domain.pdb
 c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Domain\obj\Debug\net9.0\ref\MathLLMBackend.Domain.dll
+c:\Users\mgsds\projects\math-llm-backend\math-llm-backend\src\MathLLMBackend.Domain\obj\Debug\net9.0\MathLLMBackend.Domain.sourcelink.json

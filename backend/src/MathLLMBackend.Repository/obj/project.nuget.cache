@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "Oevr0mmsvAA=",
+  "dgSpecHash": "YFMd7irfZKw=",
   "success": true,
-  "projectFilePath": "C:\\Users\\mgsds\\projects\\math-llm-backend\\math-llm-backend\\src\\MathLLMBackend.Repository\\MathLLMBackend.Repository.csproj",
+  "projectFilePath": "c:\\Users\\mgsds\\projects\\math-llm-backend\\math-llm-backend\\src\\MathLLMBackend.Repository\\MathLLMBackend.Repository.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\mgsds\\.nuget\\packages\\dapper\\2.1.66\\dapper.2.1.66.nupkg.sha512",
     "C:\\Users\\mgsds\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\8.0.2\\microsoft.extensions.dependencyinjection.abstractions.8.0.2.nupkg.sha512",

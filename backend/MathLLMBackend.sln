@@ -13,8 +13,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathLLMBackend.Repository",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathLLMBackend.Infrastructure", "src\MathLLMBackend.Infrastructure\MathLLMBackend.Infrastructure.csproj", "{AE31F4D0-9BD4-411C-8982-AE54DC185108}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "migrations", "migrations", "{D4C4D1C2-DE9C-AF20-17FD-0A3EB2BFD436}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathLLMBackend.DomainServices", "src\MathLLMBackend.DomainServices\MathLLMBackend.DomainServices.csproj", "{618EB75B-56FF-49B0-9532-D74F7C9CEA93}"
 EndProject
 Global

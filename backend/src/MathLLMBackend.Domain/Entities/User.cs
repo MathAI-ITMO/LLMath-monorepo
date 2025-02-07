@@ -17,4 +17,3 @@ public class User
     public long? IsuId { get; set; }
 
 }
-
