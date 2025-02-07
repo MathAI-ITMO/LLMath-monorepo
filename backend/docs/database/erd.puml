@@ -1,0 +1,81 @@
+@startuml
+
+entity identity {
+  * user_id : Int64
+  --
+  email : String
+  password_hash : String
+  *created_at : DateTime
+  updated_at : DateTime
+}
+
+' entity security_event {
+'   * event_id : Int64
+'   ---
+'   *user_id : Int64
+'   *description : String
+' }
+
+' entity user_role {
+'   *user_id : Int64
+'   *user_role : user_role_enum
+'   ---
+' }
+
+' enum user_role_enum {
+'     Student,
+'     Teacher,
+'     Admin
+' }
+
+entity user {
+  * user_id : Int64
+  --
+  first_name : String
+  last_name : String
+  isu_id : Int64
+  date_of_birth : Date
+  *created_at : DateTime
+  updated_at : DateTime
+  deleted_at : DateTime
+}
+
+entity session {
+  * session_id : Int64
+  --
+  *user_id : Int64
+  *created_at : DateTime
+  token: String
+}
+
+entity chat {
+  * chat_id : Int64
+  --
+  title : String
+  *created_at : DateTime
+  deleted_at : DateTime
+}
+
+entity chat_message {
+  * message_id : Int64
+  --
+  *chat_id : Int64
+  *text : String
+  *created_at : DateTime
+  *type : chat_message_type
+}
+
+enum chat_message_type_enum {
+    User,
+    Model,
+    System
+}
+
+user ||--|| identity
+user ||--o{ session
+user ||--o{ chat
+chat ||--o{ chat_message
+' user_role }o--|| user
+' security_event }o--|| user
+
+@enduml
