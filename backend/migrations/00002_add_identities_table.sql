@@ -6,6 +6,7 @@ create table identities (
     , email         text unique               not null
     , password_hash text                      not null
     , created_at    timestamp with time zone              default current_timestamp
+    , updated_at    timestamp with time zone              default current_timestamp
 );
 -- +goose StatementEnd
 
