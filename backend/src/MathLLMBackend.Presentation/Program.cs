@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using MathLLMBackend.Presentation;
 using Microsoft.OpenApi.Models;
+using MathLLMBackend.Presentation.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -78,6 +79,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<AuthenticationMiddleware>();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 

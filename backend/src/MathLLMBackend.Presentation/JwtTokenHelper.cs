@@ -3,6 +3,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
+using MathLLMBackend.Domain.Exceptions;
 
 namespace MathLLMBackend.Presentation;
 
@@ -82,7 +83,7 @@ public class JwtTokenHelper
         }
         catch (Exception)
         {
-            throw new UnauthorizedAccessException("Invalid Token");
+            throw new AuthorizationException("Invalid Token");
         }
     }
 }

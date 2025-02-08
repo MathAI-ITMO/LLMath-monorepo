@@ -27,8 +27,6 @@ public class AuthController : ControllerBase
 
         var registeredUser = await _userService.Create(user, dto.Email, dto.Password, ct);
         
-        if (registeredUser == null) 
-            return BadRequest(new { message = "User with email can  already exists." });
 
         return Ok();
     }
@@ -38,9 +36,6 @@ public class AuthController : ControllerBase
     {
         var authenticatedUser = await _userService.AuthenticateUser(dto.Email, dto.Password, ct);
         
-        if (authenticatedUser == null) 
-            return Unauthorized(new { message = "Invalid username or password." });
-
         var token = _jwtTokenHelper.GenerateJwtToken(authenticatedUser, DateTime.UtcNow.AddDays(1));
 
         return Ok(new { token });
@@ -67,7 +62,7 @@ public class AuthController : ControllerBase
 
             return Ok(new { token = newToken });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Unauthorized();
         }

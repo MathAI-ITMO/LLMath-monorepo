@@ -14,12 +14,13 @@ namespace MathLLMBackend.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<User> Create(User user, CancellationToken ct)
+        public async Task<User?> Create(User user, CancellationToken ct)
         {
             const string userSql =
             """
             insert into users(first_name, last_name, isu_id)
             values(@FirstName, @LastName, @IsuId)
+            on conflict do nothing
             returning 
                 id as Id
               , first_name as FirstName
@@ -38,11 +39,11 @@ namespace MathLLMBackend.Infrastructure.Repositories
             },
             cancellationToken: ct);
 
-            var createdUser = await conn.QuerySingleAsync<User>(createdUserCommand);
+            var createdUser = await conn.QuerySingleOrDefaultAsync<User>(createdUserCommand);
             return createdUser;
         }
 
-        public async Task<User> Get(long Id, CancellationToken ct)
+        public async Task<User?> Get(long Id, CancellationToken ct)
         {
             const string sql =
             """
@@ -63,7 +64,7 @@ namespace MathLLMBackend.Infrastructure.Repositories
             },
             cancellationToken: ct);
 
-            return await conn.QuerySingleAsync<User>(command);
+            return await conn.QuerySingleOrDefaultAsync<User>(command);
         }
     }
 }

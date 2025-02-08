@@ -13,12 +13,13 @@ public class IdentityRepository : IIdentityRepository
         _context = context;
     }
 
-    public async Task<Identity> Create(Identity identity, CancellationToken ct)
+    public async Task<Identity?> Create(Identity identity, CancellationToken ct)
     {
         const string sql =
         """
         insert into identities (user_id, email, password_hash) 
         values (@UserId, @Email, @PasswordHash)
+        on conflict do nothing
         returning
             id as Id
           , user_id as UserId
@@ -39,7 +40,7 @@ public class IdentityRepository : IIdentityRepository
             cancellationToken: ct
         );
 
-        return await conn.QuerySingleAsync<Identity>(cmd);
+        return await conn.QuerySingleOrDefaultAsync<Identity>(cmd);
 
     }
 
