@@ -11,11 +11,13 @@ namespace MathLLMBackend.Presentation.Controllers
     {
         private readonly IUserService _userService;
         private readonly JwtTokenHelper _jwtTokenHelper;
+        private readonly ILogger<UserController> _logger;
 
-        public UserController(IUserService userService, JwtTokenHelper jwtTokenHelper)
+        public UserController(IUserService userService, JwtTokenHelper jwtTokenHelper, ILogger<UserController> logger)
         {
             _userService = userService;
             _jwtTokenHelper = jwtTokenHelper;
+            _logger = logger;
         }
 
 
@@ -28,6 +30,7 @@ namespace MathLLMBackend.Presentation.Controllers
             var user = await _userService.GetById(userId, ct);
             if (user is null)
             {
+                _logger.LogError("User not found with ID: {userId} while trying to get user details.", userId);
                 return Unauthorized();
             }
 
