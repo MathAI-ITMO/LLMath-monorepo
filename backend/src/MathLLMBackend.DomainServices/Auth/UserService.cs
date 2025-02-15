@@ -1,5 +1,6 @@
 using System.Transactions;
 using MathLLMBackend.Domain.Entities;
+using MathLLMBackend.Domain.Exceptions;
 using MathLLMBackend.Repository;
 
 namespace MathLLMBackend.DomainServices.UserService;
@@ -21,11 +22,11 @@ public class UserService : IUserService
 
         if (identity == null || !BCrypt.Net.BCrypt.CheckPassword(password, identity.PasswordHash))
         {
-            throw new UnauthorizedAccessException("Invalid credentials");
+            throw new AuthorizationException("Invalid credentials");
         }
 
         var user = await _usersRepository.Get(identity.UserId, ct)
-            ?? throw new UnauthorizedAccessException("Invalid credentials");
+            ?? throw new AuthorizationException("Invalid credentials");
 
         return user;
     }
@@ -37,26 +38,30 @@ public class UserService : IUserService
 
         using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
 
-        var newUser = await _usersRepository.Create(user, ct);
-        await _identityRepository.Create(new Identity(newUser.Id, email, hashedPassword), ct);
+        var newUser = await _usersRepository.Create(user, ct) 
+            ?? throw new InvalidOperationException("User with the same isu number already exists");
+
+        var identity = await _identityRepository.Create(new Identity(newUser.Id, email, hashedPassword), ct)
+            ?? throw new InvalidOperationException("User with the same email already exists");
 
         scope.Complete();
 
         return newUser;
     }
 
-    public async Task<User?> GetByEmail(string email, CancellationToken ct)
+    public async Task<User> GetByEmail(string email, CancellationToken ct)
     {
-        var identity = await _identityRepository.GetByEmail(email, ct);
+        var identity = await _identityRepository.GetByEmail(email, ct)
+            ?? throw new InvalidOperationException("User not found");
 
-        if (identity is null) return null;
         var user = await _usersRepository.Get(identity.UserId, ct);
-        return user;
+        return user!;
     }
 
-    public async Task<User?> GetById(long id, CancellationToken ct)
+    public async Task<User> GetById(long id, CancellationToken ct)
     {
-        var user = await _usersRepository.Get(id, ct);
+        var user = await _usersRepository.Get(id, ct)
+            ?? throw new InvalidOperationException("User not found");   
         return user;
     }
 

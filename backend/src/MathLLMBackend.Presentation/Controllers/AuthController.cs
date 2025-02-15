@@ -12,12 +12,14 @@ public class AuthController : ControllerBase
     private readonly IUserService _userService;
     private readonly JwtTokenHelper _jwtTokenHelper;
     private readonly IConfiguration _config;
+    private readonly ILogger<AuthController> _logger;
 
-    public AuthController(IUserService userService, JwtTokenHelper jwtTokenHelper, IConfiguration config)
+    public AuthController(IUserService userService, JwtTokenHelper jwtTokenHelper, IConfiguration config, ILogger<AuthController> logger)
     {
         _userService = userService;
         _jwtTokenHelper = jwtTokenHelper;
         _config = config;
+        _logger = logger;
     }
 
     [HttpPost("register")]
@@ -26,9 +28,6 @@ public class AuthController : ControllerBase
         var user = new User(dto.FirstName, dto.LastName, dto.IsuId);
 
         var registeredUser = await _userService.Create(user, dto.Email, dto.Password, ct);
-        
-        if (registeredUser == null) 
-            return BadRequest(new { message = "User with email can  already exists." });
 
         return Ok();
     }
@@ -38,9 +37,6 @@ public class AuthController : ControllerBase
     {
         var authenticatedUser = await _userService.AuthenticateUser(dto.Email, dto.Password, ct);
         
-        if (authenticatedUser == null) 
-            return Unauthorized(new { message = "Invalid username or password." });
-
         var token = _jwtTokenHelper.GenerateJwtToken(authenticatedUser, DateTime.UtcNow.AddDays(1));
 
         return Ok(new { token });
@@ -60,7 +56,10 @@ public class AuthController : ControllerBase
             var userId = int.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var user = await _userService.GetById(userId, ct);
             if (user is null) 
+            {
+                _logger.LogWarning("User not found while trying to renew token");
                 return Unauthorized();
+            }
 
             var newToken = _jwtTokenHelper.GenerateJwtToken(user, DateTime.UtcNow.AddDays(1));
 
@@ -69,6 +68,7 @@ public class AuthController : ControllerBase
         }
         catch (Exception ex)
         {
+            _logger.LogError("Error while trying to renew token {exception}", ex.Message);
             return Unauthorized();
         }
     }
