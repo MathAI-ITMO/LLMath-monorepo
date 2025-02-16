@@ -16,7 +16,7 @@ public class ChatService : IChatService
     public async Task<Chat> Create(Chat chat, CancellationToken ct)
     {
         var newChat = await _chatRepository.Create(chat, ct)
-        ?? throw new InvalidOperationException("Unexpected error in Creating chat"); 
+        ?? throw new InvalidOperationException("Unexpected error in Creating message"); 
         return newChat;
     }
     public async Task<List<Chat>> GetAllChats(long userId, CancellationToken ct)

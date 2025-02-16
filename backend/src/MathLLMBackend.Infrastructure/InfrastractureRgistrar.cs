@@ -12,6 +12,7 @@ public static class InfrastractureRgistrar
         services.AddSingleton<IUsersRepository, UserRepository>();
         services.AddSingleton<IIdentityRepository, IdentityRepository>();
         services.AddSingleton<IChatRepository, ChatRepository>();
+        services.AddSingleton<IMsgRepository, MsgRepository>();
 
         var connectionString = configuration.GetConnectionString("Postgres") ?? throw new InvalidOperationException("Connection string 'Postgres' not found in appsettings.json");
         services.AddSingleton(_ => new DataContext(connectionString));
