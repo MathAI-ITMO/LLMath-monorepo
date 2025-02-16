@@ -4,6 +4,7 @@ using MathLLMBackend.DomainServices.ChatService;
 using MathLLMBackend.Domain.Entities;
 using MathLLMBackend.Presentation.Models.Dtos;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MathLLMBackend.Presentation.Controllers
 {
@@ -24,6 +25,7 @@ namespace MathLLMBackend.Presentation.Controllers
         }
 
         [HttpPost("create-chat")]
+        [Authorize]
         public async Task<IActionResult> CreateChat([FromBody] ChatNameDto dto, CancellationToken ct)
         {
             var existingToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
