@@ -51,6 +51,28 @@ namespace MathLLMBackend.Presentation.Controllers
             }
         }
 
+        [HttpGet("get-messages-from-chat")]
+        [Authorize]
+        public async Task<IActionResult> GetAllMessagesFromChat(long chatId, CancellationToken ct)
+        {
+            var existingToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+            if (string.IsNullOrEmpty(existingToken))
+                return Unauthorized();
+
+            try
+            {
+                var principal = _jwtTokenHelper.ValidateJwtToken(existingToken);
+                var userId = int.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                var msgs = await _msgService.GetAllMsgFromChat(chatId, ct);
+                return Ok(new {results = msgs});
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error while trying to renew token {exception}", ex.Message);
+                return Unauthorized();
+            }
+        }
+
 
 
     }
