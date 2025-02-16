@@ -34,17 +34,8 @@ namespace MathLLMBackend.Presentation.Controllers
             {
                 var principal = _jwtTokenHelper.ValidateJwtToken(existingToken);
                 var userId = int.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!);
-                var user = await _userService.GetById(userId, ct);
-                if (user is null)
-                {
-                    _logger.LogWarning("User not found while trying to renew token");
-                    return Unauthorized();
-                }
-
                 var chat = new Chat(dto.name, userId);
                 var registeredChat = await _chatService.Create(chat, ct);
-
-
                 return Ok();
             }
             catch (Exception ex)

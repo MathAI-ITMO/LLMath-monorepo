@@ -17,10 +17,8 @@ public class ChatService : IChatService
 
     public async Task<Chat> Create(Chat chat, CancellationToken ct)
     {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
         var newChat = await _chatRepository.Create(chat, ct)
         ?? throw new InvalidOperationException("Unexpected error in Creating chat"); 
-        scope.Complete();
         return newChat;
     }
 }
