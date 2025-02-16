@@ -12,7 +12,6 @@ public class Chat
     
     public long Id { get; set; }
     public long? UserId { get; set; }
-    public long? user_id { get {return UserId;} set{UserId=value;} }
     public string Name { get; set; }
 
 }

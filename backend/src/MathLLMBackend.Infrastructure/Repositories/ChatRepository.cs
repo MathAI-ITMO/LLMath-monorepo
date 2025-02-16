@@ -45,7 +45,7 @@ namespace MathLLMBackend.Infrastructure.Repositories
         {
             const string chatSql =
             """
-            select id, name, user_id from chats
+            select id, name, user_id as UserId from chats
             where user_id=@UserId;
             """;
 
