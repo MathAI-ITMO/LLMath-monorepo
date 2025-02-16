@@ -13,12 +13,16 @@ public class ChatService : IChatService
     {
         _chatRepository = chatRepository;
     }
-
-
     public async Task<Chat> Create(Chat chat, CancellationToken ct)
     {
         var newChat = await _chatRepository.Create(chat, ct)
         ?? throw new InvalidOperationException("Unexpected error in Creating chat"); 
         return newChat;
+    }
+    public async Task<List<Chat>> GetAllChats(long userId, CancellationToken ct)
+    {
+        var chats = await _chatRepository.GetAllChats(userId, ct)
+        ?? throw new InvalidOperationException("Unexpected error in getting chats"); 
+        return chats;
     }
 }

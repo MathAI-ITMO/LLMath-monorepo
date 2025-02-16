@@ -40,5 +40,31 @@ namespace MathLLMBackend.Infrastructure.Repositories
             var createdChat = await conn.QuerySingleOrDefaultAsync<Chat>(createdChatCommand);
             return createdChat;
         }
+
+        public async Task<List<Chat>?> GetAllChats(long userId, CancellationToken ct)
+        {
+            const string chatSql =
+            """
+            select id, name, user_id from chats
+            where user_id=@UserId;
+            """;
+
+            using var conn = _context.CreateConnection();
+
+            var createdChatCommand = new CommandDefinition(chatSql,
+            new
+            {
+                UserId = userId
+            },
+            cancellationToken: ct);
+
+            var chats = await conn.QueryAsync<Chat>(createdChatCommand);
+            var res = new List<Chat>(); 
+            foreach (var el in chats)
+            {
+                res.Add(el);
+            }
+            return res;
+        }
     }
 }
