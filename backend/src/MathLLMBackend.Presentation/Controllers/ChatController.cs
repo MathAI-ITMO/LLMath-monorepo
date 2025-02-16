@@ -41,7 +41,7 @@ namespace MathLLMBackend.Presentation.Controllers
                     return Unauthorized();
                 }
 
-                var chat = new Chat(dto.title, userId);
+                var chat = new Chat(dto.name, userId);
                 var registeredChat = await _chatService.Create(chat, ct);
 
 
