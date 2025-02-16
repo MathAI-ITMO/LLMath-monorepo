@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Transactions;
 using Dapper;
 using MathLLMBackend.Domain.Entities;
@@ -59,12 +60,7 @@ namespace MathLLMBackend.Infrastructure.Repositories
             cancellationToken: ct);
 
             var chats = await conn.QueryAsync<Chat>(createdChatCommand);
-            var res = new List<Chat>(); 
-            foreach (var el in chats)
-            {
-                res.Add(el);
-            }
-            return res;
+            return chats.ToList();
         }
     }
 }
