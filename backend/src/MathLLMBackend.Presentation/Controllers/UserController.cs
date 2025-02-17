@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using MathLLMBackend.DomainServices.UserService;
+using MathLLMBackend.Presentation.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,7 +26,7 @@ namespace MathLLMBackend.Presentation.Controllers
         [Authorize]
         public async Task<IActionResult> GetMeAsync(CancellationToken ct)
         {
-            var userId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var userId = User.GetUserId();
 
             var user = await _userService.GetById(userId, ct);
             if (user is null)

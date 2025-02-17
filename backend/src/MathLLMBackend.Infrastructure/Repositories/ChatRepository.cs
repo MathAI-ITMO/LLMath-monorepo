@@ -1,5 +1,3 @@
-using System.Runtime.CompilerServices;
-using System.Transactions;
 using Dapper;
 using MathLLMBackend.Domain.Entities;
 using MathLLMBackend.Repository;
@@ -42,7 +40,7 @@ namespace MathLLMBackend.Infrastructure.Repositories
             return createdChat;
         }
 
-        public async Task<List<Chat>?> GetAllChats(long userId, CancellationToken ct)
+        public async Task<List<Chat>?> GetUserChats(long userId, CancellationToken ct)
         {
             const string chatSql =
             """
@@ -61,6 +59,27 @@ namespace MathLLMBackend.Infrastructure.Repositories
 
             var chats = await conn.QueryAsync<Chat>(createdChatCommand);
             return chats.ToList();
+        }
+
+        public async Task<bool> IsChatExistsForUser(long userId, long chatId, CancellationToken ct)
+        {
+            var chatSql =
+            """
+            select id from chats where user_id=@UserId and id=@ChatId;
+            """;
+
+            using var conn = _context.CreateConnection();
+            var command = new CommandDefinition(
+                chatSql,
+                new 
+                {
+                    UserId = userId,
+                    ChatId = chatId
+                },
+                cancellationToken: ct);
+
+            var result = await conn.ExecuteScalarAsync<long>(command);
+            return result > 0;
         }
     }
 }

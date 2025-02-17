@@ -1,10 +1,10 @@
-using System.Security.Claims;
 using MathLLMBackend.DomainServices.UserService;
 using MathLLMBackend.DomainServices.ChatService;
 using MathLLMBackend.Domain.Entities;
 using MathLLMBackend.Presentation.Models.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using MathLLMBackend.Presentation.Helpers;
 
 namespace MathLLMBackend.Presentation.Controllers
 {
@@ -28,48 +28,19 @@ namespace MathLLMBackend.Presentation.Controllers
         [Authorize]
         public async Task<IActionResult> CreateChat([FromBody] ChatNameDto dto, CancellationToken ct)
         {
-            var existingToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
-            if (string.IsNullOrEmpty(existingToken))
-                return Unauthorized();
-
-            try
-            {
-                var principal = _jwtTokenHelper.ValidateJwtToken(existingToken);
-                var userId = int.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!);
-                var chat = new Chat(dto.name, userId);
-                var registeredChat = await _chatService.Create(chat, ct);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error while trying to renew token {exception}", ex.Message);
-                return Unauthorized();
-            }
+            var userId =  User.GetUserId();
+            var chat = new Chat(dto.name, userId);
+            await _chatService.Create(chat, ct);
+            return Ok();
         }
 
         [HttpGet("get-chats")]
         [Authorize]
-        public async Task<IActionResult> GetAllChats(CancellationToken ct)
+        public async Task<IActionResult> GetChats(CancellationToken ct)
         {
-            var existingToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
-            if (string.IsNullOrEmpty(existingToken))
-                return Unauthorized();
-
-            try
-            {
-                var principal = _jwtTokenHelper.ValidateJwtToken(existingToken);
-                var userId = int.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!);
-                var chats = await _chatService.GetAllChats(userId, ct);
-                return Ok(new {results = chats});
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error while trying to renew token {exception}", ex.Message);
-                return Unauthorized();
-            }
+            var userId =  User.GetUserId();
+            var chats = await _chatService.GetUserChats(userId, ct);
+            return Ok(chats);
         }
-
-
-
     }
 }

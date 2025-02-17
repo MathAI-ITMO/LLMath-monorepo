@@ -2,7 +2,9 @@ using System.Security.Claims;
 using MathLLMBackend.Domain.Entities;
 using MathLLMBackend.DomainServices.UserService;
 using MathLLMBackend.Presentation;
+using MathLLMBackend.Presentation.Helpers;
 using MathLLMBackend.Presentation.Models.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 [Route("api/[controller]")]
@@ -25,9 +27,9 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto dto, CancellationToken ct)
     {
-        var user = new User(dto.FirstName, dto.LastName, dto.IsuId);
+        var user = new User(dto.FirstName, dto.LastName);
 
-        var registeredUser = await _userService.Create(user, dto.Email, dto.Password, ct);
+        await _userService.Create(user, dto.Email, dto.Password, ct);
 
         return Ok();
     }
@@ -43,17 +45,12 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("renew-token")]
+    [Authorize]
     public async Task<IActionResult> RenewToken(CancellationToken ct)
     {
-        var existingToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
-
-        if (string.IsNullOrEmpty(existingToken))
-            return Unauthorized();
-
         try
         {
-            var principal = _jwtTokenHelper.ValidateJwtToken(existingToken);
-            var userId = int.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var userId = User.GetUserId();
             var user = await _userService.GetById(userId, ct);
             if (user is null) 
             {
@@ -62,7 +59,6 @@ public class AuthController : ControllerBase
             }
 
             var newToken = _jwtTokenHelper.GenerateJwtToken(user, DateTime.UtcNow.AddDays(1));
-
 
             return Ok(new { token = newToken });
         }

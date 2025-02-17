@@ -57,33 +57,4 @@ public class JwtTokenHelper
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
     }
-
-    public ClaimsPrincipal ValidateJwtToken(string token)
-    {
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var jwtConfig = _config.GetSection("Jwt");
-        var key = Encoding.UTF8.GetBytes(jwtConfig["Key"]);
-        
-        try
-        {
-            var tokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = jwtConfig["Issuer"],
-                ValidAudience = jwtConfig["Audience"],
-                IssuerSigningKey = new SymmetricSecurityKey(key)
-            };
-
-            var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
-
-            return principal;
-        }
-        catch (Exception)
-        {
-            throw new AuthorizationException("Invalid Token");
-        }
-    }
 }

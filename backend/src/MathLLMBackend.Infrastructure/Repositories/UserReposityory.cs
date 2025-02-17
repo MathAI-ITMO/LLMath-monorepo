@@ -1,4 +1,3 @@
-using System.Transactions;
 using Dapper;
 using MathLLMBackend.Domain.Entities;
 using MathLLMBackend.Repository;
@@ -18,14 +17,13 @@ namespace MathLLMBackend.Infrastructure.Repositories
         {
             const string userSql =
             """
-            insert into users(first_name, last_name, isu_id)
-            values(@FirstName, @LastName, @IsuId)
+            insert into users(first_name, last_name)
+            values(@FirstName, @LastName)
             on conflict do nothing
             returning 
                 id as Id
               , first_name as FirstName
               , last_name as LastName
-              , isu_id as IsuId;
             """;
 
             using var conn = _context.CreateConnection();
@@ -35,7 +33,6 @@ namespace MathLLMBackend.Infrastructure.Repositories
             {
                 FirstName = user.FirstName,
                 LastName = user.LastName,
-                IsuId = user.IsuId
             },
             cancellationToken: ct);
 
@@ -51,7 +48,6 @@ namespace MathLLMBackend.Infrastructure.Repositories
                 id as Id
               , first_name as FirstName
               , last_name as LastName
-              , isu_id as IsuId
             from users
             where id = @Id;
             """;

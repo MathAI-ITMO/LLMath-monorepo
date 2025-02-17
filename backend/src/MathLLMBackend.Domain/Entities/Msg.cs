@@ -1,22 +1,21 @@
+using MathLLMBackend.Domain.Enums;
+
 namespace MathLLMBackend.Domain.Entities;
-public enum MsgType
+
+public class Message
 {
-    user,
-    assistant,
-    system
-}
-public class Msg
-{
-    public Msg(long chatId, string message, MsgType mtype)
+    public Message(long chatId, string text, MessageType type)
     {
         ChatId = chatId;
-        Message = message;
-        MType = mtype.ToString();
+        Text = text;
+        MessageType = type;
+        
     }
-    public Msg() { }
+    public Message() { }
+
     public long Id { get; set; }
     public long ChatId { get; set; }
-    public string Message { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public string? MType { get; set; }
+    public string Text { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public  MessageType MessageType { get; set; }
 }

@@ -25,7 +25,7 @@ try
 
     builder.Services.AddScoped<JwtTokenHelper>();
 
-    InfrastractureRgistrar.Configure(builder.Services, configuration);
+    InfrastractureRegistrar.Configure(builder.Services, configuration);
     DomainServicesRegistrar.Configure(builder.Services, configuration);
 
 

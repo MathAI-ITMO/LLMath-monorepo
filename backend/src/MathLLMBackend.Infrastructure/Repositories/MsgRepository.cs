@@ -1,71 +1,74 @@
-using System.Transactions;
 using Dapper;
 using MathLLMBackend.Domain.Entities;
+using MathLLMBackend.Infrastructure.Converters;
+using MathLLMBackend.Infrastructure.DbModels;
 using MathLLMBackend.Repository;
 
 namespace MathLLMBackend.Infrastructure.Repositories
 {
-    public class MsgRepository : IMsgRepository
+    public class MessageRepository : IMessagesRepository
     {
         private readonly DataContext _context;
 
-        public MsgRepository(DataContext context)
+        public MessageRepository(DataContext context)
         {
             _context = context;
         }
 
-        public async Task<Msg?> Create(Msg msg, long chatId, CancellationToken ct)
+        public async Task<Message?> Create(Message message, CancellationToken ct)
         {
-            const string msgSql =
+            const string messageSql =
             """
-            insert into chat_messages(chat_id, message, message_type)
-            values(@ChatId, @Message, 'user')
+            insert into chat_messages(chat_id, text, message_type)
+            values(@ChatId, @Message, @Type::message_type)
             on conflict do nothing
             returning 
                 id as Id,
                 chat_id as ChatId,
                 created_at as CreatedAt,
-                message as Message,
-                message_type as MType;
+                text as Text,
+                message_type::text as MessageType;
             """;
 
             using var conn = _context.CreateConnection();
 
-            var createdMsgCommand = new CommandDefinition(msgSql,
+            var createdMessageCommand = new CommandDefinition(messageSql,
             new
             {
-                ChatId = chatId,
-                Message = msg.Message
+                ChatId = message.ChatId,
+                Message = message.Text,
+                Type = message.MessageType.ToDbName()
             },
             cancellationToken: ct);
-            var createdMsg = await conn.QuerySingleOrDefaultAsync<Msg>(createdMsgCommand);
-            return createdMsg;
+            var createdMessage = await conn.QuerySingleOrDefaultAsync<MessageDbModel>(createdMessageCommand);
+            return createdMessage?.ToDomain();
         }
 
-        public async Task<List<Msg>?> GetAllMsgFromChat(long chatId, CancellationToken ct)
+        public async Task<List<Message>?> GetAllMessageFromChat(long chatId, CancellationToken ct)
         {
-            const string msgSql =
+            const string messageSql =
             """
-            select id as Id, 
-            chat_id as ChatId, 
-            message as Message, 
-            message_type as MType, 
-            created_at as CreatedAt from chat_messages
+            select 
+                id as Id
+              , chat_id as ChatId 
+              ,  text as Text
+              ,  message_type::text as MessageType
+              ,  created_at as CreatedAt from chat_messages
             where chat_id=@ChatId
             order by created_at;
             """;
 
             using var conn = _context.CreateConnection();
 
-            var createdMsgCommand = new CommandDefinition(msgSql,
+            var createdMessageCommand = new CommandDefinition(messageSql,
             new
             {
                 ChatId = chatId
             },
             cancellationToken: ct);
 
-            var msgs = await conn.QueryAsync<Msg>(createdMsgCommand);
-            return msgs.ToList();
+            var messages = await conn.QueryAsync<MessageDbModel>(createdMessageCommand);
+            return [.. messages.Select(m => m.ToDomain())];
         }
     }
 }

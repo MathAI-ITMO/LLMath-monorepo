@@ -1,9 +1,9 @@
 using MathLLMBackend.Domain.Entities;
 
-namespace MathLLMBackend.DomainServices.MsgService;
+namespace MathLLMBackend.DomainServices.MessageService;
 
-public interface IMsgService
+public interface IMessageService
 {
-    Task<Msg> Create(Msg msg, long chatId, CancellationToken ct);
-    Task<List<Msg>> GetAllMsgFromChat(long chatId, CancellationToken ct);
+    Task<Message> Create(Message message, long userId, CancellationToken ct);
+    Task<List<Message>> GetAllMessageFromChat(long userId, long chatId, CancellationToken ct);
 }
