@@ -1,10 +1,11 @@
 using MathLLMBackend.DomainServices.UserService;
 using MathLLMBackend.DomainServices.ChatService;
 using MathLLMBackend.Domain.Entities;
-using MathLLMBackend.Presentation.Models.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using MathLLMBackend.Presentation.Helpers;
+using MathLLMBackend.Presentation.Dtos.Chats;
+using MathLLMBackend.Presentation.Jwt;
 
 namespace MathLLMBackend.Presentation.Controllers
 {
@@ -26,12 +27,14 @@ namespace MathLLMBackend.Presentation.Controllers
 
         [HttpPost("create-chat")]
         [Authorize]
-        public async Task<IActionResult> CreateChat([FromBody] ChatNameDto dto, CancellationToken ct)
+        public async Task<IActionResult> CreateChat([FromBody] CreateChatRequestDto dto, CancellationToken ct)
         {
             var userId =  User.GetUserId();
-            var chat = new Chat(dto.name, userId);
+            var chat = new Chat(dto.Name, userId);
             await _chatService.Create(chat, ct);
-            return Ok();
+            return Ok(
+                new ChatDto(chat.Id, chat.Name)
+                );
         }
 
         [HttpGet("get-chats")]

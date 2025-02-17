@@ -3,9 +3,8 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
-using MathLLMBackend.Domain.Exceptions;
 
-namespace MathLLMBackend.Presentation;
+namespace MathLLMBackend.Presentation.Jwt;
 
 public class JwtTokenHelper
 {
@@ -16,7 +15,7 @@ public class JwtTokenHelper
         _config = config;
     }
 
-    public string GenerateJwtToken(User user, DateTime expires)
+    public Jwt GenerateJwtToken(User user, DateTime expires)
     {
         var jwtConfig = _config.GetSection("Jwt");
         var key = Encoding.UTF8.GetBytes(jwtConfig["Key"]);
@@ -55,6 +54,6 @@ public class JwtTokenHelper
 
         var tokenHandler = new JwtSecurityTokenHandler();
         var token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
+        return new Jwt(tokenHandler.WriteToken(token), expires);
     }
 }

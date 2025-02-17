@@ -1,9 +1,8 @@
-using System.Security.Claims;
 using MathLLMBackend.Domain.Entities;
 using MathLLMBackend.DomainServices.UserService;
-using MathLLMBackend.Presentation;
+using MathLLMBackend.Presentation.Dtos.Auth;
 using MathLLMBackend.Presentation.Helpers;
-using MathLLMBackend.Presentation.Models.Dtos;
+using MathLLMBackend.Presentation.Jwt;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -39,9 +38,9 @@ public class AuthController : ControllerBase
     {
         var authenticatedUser = await _userService.AuthenticateUser(dto.Email, dto.Password, ct);
         
-        var token = _jwtTokenHelper.GenerateJwtToken(authenticatedUser, DateTime.UtcNow.AddDays(1));
+        var token = _jwtTokenHelper.GenerateJwtToken(authenticatedUser, DateTime.UtcNow.AddDays(7));
 
-        return Ok(new { token });
+        return Ok(new TokenDto(token.Token, token.ValidUntill));
     }
 
     [HttpPost("renew-token")]
@@ -58,9 +57,9 @@ public class AuthController : ControllerBase
                 return Unauthorized();
             }
 
-            var newToken = _jwtTokenHelper.GenerateJwtToken(user, DateTime.UtcNow.AddDays(1));
+            var newToken = _jwtTokenHelper.GenerateJwtToken(user, DateTime.UtcNow.AddDays(7));
 
-            return Ok(new { token = newToken });
+            return Ok(new TokenDto(newToken.Token, newToken.ValidUntill));
         }
         catch (Exception ex)
         {

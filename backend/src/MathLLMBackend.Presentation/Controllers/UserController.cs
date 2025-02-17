@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using MathLLMBackend.DomainServices.UserService;
 using MathLLMBackend.Presentation.Helpers;
+using MathLLMBackend.Presentation.Jwt;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

@@ -4,11 +4,11 @@ using MathLLMBackend.Infrastructure;
 using MathLLMBackend.DomainServices;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using MathLLMBackend.Presentation;
 using Microsoft.OpenApi.Models;
 using MathLLMBackend.Presentation.Middlewares;
 using NLog;
 using NLog.Web;
+using MathLLMBackend.Presentation.Jwt;
 
 var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
 logger.Debug("init main");

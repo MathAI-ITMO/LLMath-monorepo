@@ -35,6 +35,5 @@ public class ExceptionHandlingMiddleware
             _logger.LogError("An unexpected error occurred: {Exception}", ex);
             throw;
         }
-
     }
 }

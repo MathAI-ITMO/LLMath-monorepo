@@ -2,11 +2,12 @@ using MathLLMBackend.DomainServices.UserService;
 using MathLLMBackend.DomainServices.ChatService;
 using MathLLMBackend.DomainServices.MessageService;
 using MathLLMBackend.Domain.Entities;
-using MathLLMBackend.Presentation.Models.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using MathLLMBackend.Presentation.Helpers;
 using MathLLMBackend.Domain.Enums;
+using MathLLMBackend.Presentation.Dtos.Messages;
+using MathLLMBackend.Presentation.Jwt;
 
 namespace MathLLMBackend.Presentation.Controllers
 {
@@ -33,9 +34,11 @@ namespace MathLLMBackend.Presentation.Controllers
         public async Task<IActionResult> CreateChat([FromBody] MessageDto dto, CancellationToken ct)
         {
             var userId = User.GetUserId();
-            var message = new Message(dto.chatId, dto.Text, MessageType.User);
+            var message = new Message(dto.ChatId, dto.Text, MessageType.User);
             var registeredMessage = await _messageService.Create(message, userId, ct);
-            return Ok(new {result = $"Message created"});
+            return Ok(
+                new MessageDto(registeredMessage.Id, registeredMessage.ChatId, registeredMessage.Text, registeredMessage.MessageType.ToString())
+            );
         }
 
         [HttpGet("get-messages-from-chat")]
@@ -48,7 +51,9 @@ namespace MathLLMBackend.Presentation.Controllers
 
             var userId = User.GetUserId();
             var messages = await _messageService.GetAllMessageFromChat(userId, chatId, ct);
-            return Ok(new {results = messages});
+            return Ok(
+                messages.Select(m => new MessageDto(m.Id, m.ChatId, m.Text, m.MessageType.ToString()))
+            );
         }
     }
 }
