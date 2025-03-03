@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { useRoute } from "vue-router";
 
+
 const route = useRoute();
 const isChatRoute = computed(() => route.path === "/chat");
 </script>
@@ -30,6 +31,8 @@ const isChatRoute = computed(() => route.path === "/chat");
 </template>
 
 <style scoped>
+
+
 header {
   line-height: 1.5;
   max-height: 100vh;

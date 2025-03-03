@@ -1,48 +1,42 @@
 <!-- ChatView.vue -->
 <template>
-  <div class="chatview container-fluid p-0">
-    <div class="row align-items-center mb-2">
-      <div class="col-12">
-        <button class="back-button btn btn-success" @click="goHome">Назад</button>
-        <h1 class="d-inline-block ms-3 mb-0">Chat View.</h1>
-      </div>
-    </div>
-    <main>
-      <gradio-lite class="w-100 gradio-wrapper">
-        <gradio-file name="app.py" entrypoint>
-          {{ mainCode }}
-        </gradio-file>
-      </gradio-lite>
-    </main>
-  </div>
+    <v-layout ref="app" class="rounded rounded-md fill-heights">
+      <Sidebar
+        :isChatCreation="isChatCreation"
+        @createChat="createChat"
+        @chatSelected="chatSelected"
+      />
+
+      <v-main>
+        <NewChat v-if="isChatCreation" @chatCreated="chatSelected" />
+        <Chat v-if="!isChatCreation" :chatId="chatId" />
+      </v-main>
+    </v-layout>
 </template>
 
 <script setup lang="ts">
-import { ref, type Ref } from "vue";
-import { useRouter } from "vue-router";
-import mainCodeContent from "@/assets/python/gradio/main.py?raw";
+import { ref } from 'vue'
+import Sidebar from '@/components/chat/Sidebar.vue'
+import NewChat from '@/components/chat/NewChat.vue'
+import Chat from '@/components/chat/Chat.vue'
 
-const router = useRouter();
-const goHome = () => {
-  router.push("/");
-};
+const isChatCreation = ref<boolean>(true)
+const chatId = ref<number>(null)
 
-const mainCode: Ref<string> = ref(mainCodeContent);
+function chatSelected(id: number) {
+  chatId.value = id
+  isChatCreation.value = false
+  console.log('chat with id ' + id + ' selected')
+}
+
+function createChat() {
+  isChatCreation.value = true
+}
 </script>
 
 <style lang="css" scoped>
-.back-button {
-  margin: 10px;
-  border-radius: 5px;
-}
-
-.gradio-wrapper {
-  min-width: 100%;
-  min-height: 90vh;
-}
-
-.chatview {
-  min-width: 60vw;
-  overflow-x: hidden;
+.outer-div {
+  min-height: 100vh;
+  min-width: 100vw;
 }
 </style>
