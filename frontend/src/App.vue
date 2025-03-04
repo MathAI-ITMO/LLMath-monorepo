@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from "vue";
+import { computed, ref, onMounted, provide } from "vue";
 import { useRoute } from "vue-router";
 import { AuthService } from '@/services/AuthService'
+
+provide('refreshAuthInHeader', refreshAuthInfo);
 
 const isAuthentificated : Ref<boolean> = ref(false);
 const authService = new AuthService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES)

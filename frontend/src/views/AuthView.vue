@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, type Ref } from 'vue';
+import { onMounted, ref, type Ref, inject } from 'vue';
 import { AuthService } from '@/services/AuthService'
 import router from '@/router'
 
@@ -45,6 +45,8 @@ const errorMessage: Ref<string> = ref("");
 const email: Ref<string> = ref("");
 const password: Ref<string> = ref("");
 
+const refreshAuthInHeader = inject('refreshAuthInHeader');
+
 onMounted(() => {
     errorMessage.value = "";
     authService.login(email.value, password.value)
@@ -52,6 +54,7 @@ onMounted(() => {
     {
       if (res !== null)
       {
+        refreshAuthInHeader()
         router.push('/');
       }
     })
@@ -63,6 +66,7 @@ function onAuth() {
   {
     if(resp !== null)
     {
+      refreshAuthInHeader()
       router.push('/');
     }
 

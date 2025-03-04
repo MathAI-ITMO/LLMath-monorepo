@@ -3,16 +3,21 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, inject } from 'vue';
 import { AuthService } from '@/services/AuthService'
 import router from '@/router'
 
-const authService = new AuthService(process.env.VITE_MATHLLM_BACKEND_ADDRES)
+const refreshAuthInHeader = inject('refreshAuthInHeader');
+
+const authService = new AuthService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES)
 
 onMounted(() => {
     authService.logout()
-    .then(() => router.push('/'))
-    .finally(() => router.push('/'))
+    .finally(() =>
+    {
+      refreshAuthInHeader()
+      router.push('/')
+    })
 })
 
 </script>
