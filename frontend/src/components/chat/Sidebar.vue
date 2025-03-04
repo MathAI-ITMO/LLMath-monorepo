@@ -33,8 +33,13 @@
 
 <script setup lang="ts">
 import { ref, toRefs, watch, onMounted } from 'vue'
-import { chatService } from '@/services/ChatService'
+import { ChatService } from '@/services/ChatService'
+import { AuthService } from '@/services/AuthService'
 import type { Chat } from '@/models/Chat'
+import router from '@/router'
+
+const authService = new AuthService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES)
+const chatService = new ChatService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES)
 
 const emit = defineEmits<{
   (e: 'chatDeleted'): void
@@ -51,12 +56,18 @@ const props = defineProps({
 const { isChatCreation } = toRefs(props)
 
 
-
 watch(isChatCreation, updateChatList)
 
 onMounted(() => {
   updateChatList()
 })
+
+function processError(err)
+{
+  console.log(err)
+  authService.logout()
+  router.push('/auth')
+}
 
 function selectChat(id: number) {
   console.log('chat with id ' + id + ' selected')
@@ -70,7 +81,10 @@ function deleteChat(id: number) {
 }
 
 function updateChatList() {
-  chats.value = chatService.getChats()
+  chatService.getChats()
+  .then(res => chats.value = res)
+  .catch(err => processError(err)
+  )
 }
 
 function newChat() {

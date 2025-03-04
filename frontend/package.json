@@ -20,7 +20,7 @@
     "@thednp/color-picker": "^2.0.3",
     "@types/bootstrap": "^5.2.10",
     "@vue/cli": "^5.0.8",
-    "axios": "^1.7.9",
+    "axios": "^1.8.1",
     "binary-search": "^1.3.6",
     "binary-search-bounds": "2.0.5",
     "bootstrap": "^5.3.3",

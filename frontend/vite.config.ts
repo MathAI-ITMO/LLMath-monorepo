@@ -41,24 +41,10 @@ export default defineConfig(({ command, mode }) => {
         '.net.ecm',
         '.updatemirror.cc',
       ],
+      https: false,
       port: 23188,
       strictPort: true,
-      https: {
-        cert: fs.readFileSync('./.devServer/cert/_cert.pem')
-      },
     },
     base: env.VUE_APP_PATH_SUFFIX ? ('/' + env.VUE_APP_PATH_SUFFIX + '/') : undefined,
-    // base: '',
-    optimizeDeps: {
-      exclude: ["@gradio/lite"],
-    },
-    build: {
-      rollupOptions: {
-        external: ["@gradio/lite"],
-      },
-    },
-    define: {
-      "process.env.GRADIO_API_BASE": env.GRADIO_PREFIX ? JSON.stringify(env.GRADIO_PREFIX) : undefined,
-    }
   }
 })

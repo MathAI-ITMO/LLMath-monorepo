@@ -30,7 +30,7 @@
     ></v-text-field>
     </v-col>
     <v-col>
-    <v-btn @click="sendMessage" :disabled = "!isSending">Отправить</v-btn>
+    <v-btn @click="sendMessage" :disabled = "isSending">Отправить</v-btn>
     </v-col>
   </v-container>
   </v-card>
@@ -39,10 +39,15 @@
 
 <script setup lang="ts">
 import { ref, toRefs, watch, onMounted } from 'vue'
-import { chatService } from '@/services/ChatService'
+import { ChatService } from '@/services/ChatService'
 import type { Chat } from '@/models/Chat'
 import type { Message } from '@/models/Message'
+import { AuthService } from '@/services/AuthService'
 import moment from 'moment'
+import router from '@/router'
+
+const authService = new AuthService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES)
+const chatService = new ChatService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES, authService)
 
 const props = defineProps({
   chatId: Number,
@@ -74,10 +79,10 @@ function updateWidth()
   }
 }
 
-function updateChat() {
-  const receivedChat = chatService.getChatById(chatId.value)
+async function updateChat() {
+  const receivedChat = await chatService.getChatById(chatId.value)
   chat.value = receivedChat
-  const receivedMessages = chatService.getChatMessages(chatId.value)
+  const receivedMessages = await chatService.getChatMessages(chatId.value)
   messages.value = receivedMessages
   console.log(receivedMessages)
 }
@@ -89,8 +94,13 @@ function formatMessage(message: string): string {
 function sendMessage() {
   isSending.value = true
   chatService.sendMessage(currentMessageText.value, chatId.value)
-  updateChat()
-  isSending.value = false
+  .then(() =>
+  {
+    updateChat().then(() =>
+    {
+      isSending.value = false
+    })
+  });
 }
 </script>
 

@@ -18,7 +18,13 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { chatService } from '@/services/ChatService'
+import { ChatService } from '@/services/ChatService'
+import { AuthService } from '@/services/AuthService'
+import router from '@/router'
+
+const authService = new AuthService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES)
+const chatService = new ChatService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES, authService)
+
 
 const chatName = ref<string>('');
 
@@ -26,11 +32,18 @@ const emit = defineEmits<{
   (e: 'chatCreated', id: number): void
 }>()
 
+function processError(err)
+{
+  console.log(err)
+  authService.logout()
+  router.push('/auth')
+}
+
 function onChatCreate()
 {
-  console.log('emit')
-  const id = chatService.createChat(chatName.value)
-  emit('chatCreated', id)
+  chatService.createChat(chatName.value)
+  .then(id => emit('chatCreated', id))
+  .else(err => processError(err))
 }
 
 </script>

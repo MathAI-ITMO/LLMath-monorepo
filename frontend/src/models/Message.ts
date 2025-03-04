@@ -3,5 +3,5 @@ export interface Message {
   chatId: number,
   type: string, //bot or user
   text: string,
-  time: string
+  time: Date
 }

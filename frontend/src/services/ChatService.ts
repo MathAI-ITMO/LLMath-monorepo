@@ -1,67 +1,64 @@
 import type { Chat } from '@/models/Chat';
 import type { Message } from '@/models/Message';
 import moment from 'moment'
+import { AuthService } from './AuthService';
+import axios, { type AxiosInstance } from 'axios';
+import type { ChatDto, CreateChatDto, MessageDto, SendMessageDto, SendMessageRequestDto } from '@/types/BackendDtos';
 
-class ChatService {
-    private id: number;
-    private chats: Chat[];
-    private messages: Message[];
+export class ChatService {
+    client: AxiosInstance;
+    authSvc: AuthService;
 
-    constructor() {
-      this.id = 0;
-        this.chats = [
-            { id: this.id++, name: "General Discussion" },
-            { id: this.id++, name: "Project Updates" },
-            { id: this.id++, name: "Team Meetings" }
-        ];
-      this.messages = [
-        { id: 1, chatId: 0, type: "bot", text: "Hello, welcome to the chat!", time: new Date().toISOString() },
-        { id: 2, chatId: 0, type: "user", text: "Hi there, how can I help you today?", time: new Date().toISOString() },
-        { id: 3, chatId: 0, type: "bot", text: "I'm here to answer any questions you have.", time: new Date().toISOString() }
-      ];
-  
+    constructor(baseUrl: string) {
+      this.client = axios.create({
+        baseURL: baseUrl,
+      });
+
+      this.authSvc = new AuthService(baseUrl);
     }
 
-    addChat(chat: Chat): void {
-      console.log(this.chats)
-        this.chats.push(chat);
-        console.log(this)
-
+    async createChat(name: string): Promise<number> {
+      const options = await this.authSvc.getAuthOptions()
+      const dto : CreateChatDto = {name: name}
+      console.log(dto)
+      const res = await this.client.post('api/chat/create-chat', dto, options)
+      return res.data.id;
     }
 
     deleteChat(id: number): void {
-      this.chats = this.chats.filter(c => c.id != id)
     }
 
-    getChats(): Chat[] {
-        return this.chats;
+    async getChats(): Promise<Chat[]> {
+      const options = await this.authSvc.getAuthOptions()
+      const resp = await this.client.get<ChatDto[]>('/api/chat/get-chats', options)
+      return resp.data.map(c => ({ id: c.id, name: c.name } as Chat))
     }
 
-    getChatById(id: number): Chat | undefined {
-        console.log(this.chats)
-        return this.chats.find((chat) => chat.id === id);
+    async getChatById(id: number): Promise<Chat | undefined> {
+      const options = await this.authSvc.getAuthOptions()
+      const resp = await this.client.get<ChatDto[]>('/api/chat/get-chats', options)
+      return resp.data
+        .map(c => ({ id: c.id, name: c.name } as Chat))
+        .find(c => c.id == id);
     }
 
-    createChat(name: string): number
+    async sendMessage(text: string, chatId: number): Promise<void>
     {
-      const newId = this.id++
-      const chat: Chat = {id: newId, name: name };
-      this.chats.push(chat)
-      return newId
+      const options = await this.authSvc.getAuthOptions()
+      const dto : SendMessageRequestDto = { chatId: chatId, text: text }
+      await this.client.post<ChatDto[]>('/api/Message/send-message', dto, options)
     }
 
-    sendMessage(text: string, chatId: number): void
+    async getChatMessages(id: number): Promise<Message[]>
     {
-      const currentDate = moment();
-      const id = this.id++;
-      const message: Message = { id: id, chatId: chatId, type: "user", text: text, time: currentDate.toISOString() }
-      this.messages.push(message)
-    }
-
-    getChatMessages(id: number): Message[]
-    {
-        return this.messages.filter(message => message.chatId === id);
+      const options = await this.authSvc.getAuthOptions()
+      const resp = await this.client.get<MessageDto[]>(`api/Message/get-messages-from-chat?chatId=${id}`, options);
+      return resp.data.map(m =>
+      ({
+        id: m.id,
+        time: m.creationTime,
+        text: m.text,
+        type: m.type === 'Assistant' ? 'bot' : 'user'
+      } as Message))
     }
 }
-
-export const chatService = new ChatService();

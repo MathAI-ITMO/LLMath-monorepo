@@ -1,6 +1,30 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
+import { AuthService } from '@/services/AuthService'
+
+const isAuthentificated : Ref<boolean> = ref(false);
+const authService = new AuthService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES)
+
+function refreshAuthInfo()
+{
+  console.log(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES)
+  authService.getCurrentUser()
+  .then(res =>
+  {
+    console.log(res)
+    isAuthentificated.value = res !== null
+  }
+  )
+  .catch(err =>
+  {
+    console.log(err)
+    isAuthentificated.value = false
+  }
+  )
+}
+
+onMounted(() => refreshAuthInfo())
 
 
 const route = useRoute();
@@ -18,8 +42,9 @@ const isChatRoute = computed(() => route.path === "/chat");
       <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
       <nav>
         <RouterLink to="/">На главную</RouterLink>
-        <RouterLink to="/auth">Авторизация</RouterLink>
-        <RouterLink to="/chat">Чат</RouterLink>
+        <RouterLink v-if="!isAuthentificated" to="/auth">Авторизация</RouterLink>
+        <RouterLink v-if="isAuthentificated" to="/logout">Выйти</RouterLink>
+        <RouterLink v-if="isAuthentificated" to="/chat">Чат</RouterLink>
       </nav>
     </aside>
     <main class="content">

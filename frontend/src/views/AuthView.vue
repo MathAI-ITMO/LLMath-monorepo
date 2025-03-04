@@ -4,11 +4,11 @@
 
     <div id="authForm">
       <div class="form-group row">
-        <label for="authISU" class="col-sm-3 col-form-label">Номер ИСУ:</label>
+        <label for="email" class="col-sm-3 col-form-label">Номер ИСУ:</label>
         <div class="col-sm-9">
-          <input type="text" class="form-control" id="authISU" aria-describedby="helpISU" placeholder="123456"
-            v-model="isuLogin">
-          <small id="helpISU" class="form-text text-muted">Введите номер ИСУ в формате 123456.</small>
+          <input type="text" class="form-control" id="email" aria-describedby="helpemail" placeholder="test@test.test"
+            v-model="email">
+          <small id="helpemail" class="form-text text-muted">Введите email</small>
         </div>
 
       </div>
@@ -22,20 +22,13 @@
         <div class="col-sm-3">
           <button class="btn btn-outline-success" @click="onAuth">Войти</button>
         </div>
-        <div class="col-sm-9 align-middle">
-          <input type="checkbox" class="form-check-input align-middle m-3" id="saveFlag" v-model="saveOption">
-          <label class="form-check-label align-middle" for="saveFlag">Запомнить меня</label>
-        </div>
       </div>
 
     </div>
 
-    <div v-if="requestMessage !== ''">
-      <h5>
-        Отправился бы следующий запрос:
-      </h5>
+    <div v-if="errorMessage !== ''">
       <pre>
-        {{ requestMessage }}
+        {{ errorMessage }}
       </pre>
     </div>
   </div>
@@ -43,23 +36,46 @@
 
 <script setup lang="ts">
 import { onMounted, ref, type Ref } from 'vue';
+import { AuthService } from '@/services/AuthService'
+import router from '@/router'
 
-const requestMessage: Ref<string> = ref("");
-const isuLogin: Ref<string> = ref("");
+const authService = new AuthService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES)
+
+const errorMessage: Ref<string> = ref("");
+const email: Ref<string> = ref("");
 const password: Ref<string> = ref("");
-const saveOption: Ref<boolean> = ref(false);
 
+onMounted(() => {
+    errorMessage.value = "";
+    authService.login(email.value, password.value)
+    .then(res =>
+    {
+      if (res !== null)
+      {
+        router.push('/');
+      }
+    })
+  })
 
-onMounted(() => { requestMessage.value = ""; })
+function onAuth() {
+  authService.login(email.value, password.value)
+  .then((resp) =>
+  {
+    if(resp !== null)
+    {
+      router.push('/');
+    }
 
-function onAuth(evt: Event) {
-  const req = {
-    'ISU': isuLogin.value,
-    'password': password.value,
-    'saveOption': saveOption.value,
-  };
+  }
+  )
+  .catch(err =>
+  {
+    console.log(err);
+  })
 
-  requestMessage.value = JSON.stringify(req);
+  errorMessage.value = "Неверный логин или пароль"
+  email.value = ''
+  password.value= ''
 }
 
 </script>
