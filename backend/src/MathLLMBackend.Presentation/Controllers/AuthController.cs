@@ -43,9 +43,16 @@ public class AuthController : ControllerBase
         return Ok(new TokenDto(token.Token, token.ValidUntill));
     }
 
-    [HttpPost("renew-token")]
+    [HttpPost("logout")]
     [Authorize]
-    public async Task<IActionResult> RenewToken(CancellationToken ct)
+    public async Task<IActionResult> Logout()
+    {
+        return Ok();
+    }
+
+    [HttpPost("refresh")]
+    [Authorize]
+    public async Task<IActionResult> Refresh(CancellationToken ct)
     {
         try
         {
