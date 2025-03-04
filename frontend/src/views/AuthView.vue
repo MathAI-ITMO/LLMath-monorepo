@@ -4,7 +4,7 @@
 
     <div id="authForm">
       <div class="form-group row">
-        <label for="email" class="col-sm-3 col-form-label">Номер ИСУ:</label>
+        <label for="email" class="col-sm-3 col-form-label">Email:</label>
         <div class="col-sm-9">
           <input type="text" class="form-control" id="email" aria-describedby="helpemail" placeholder="test@test.test"
             v-model="email">
