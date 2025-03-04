@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using MathLLMBackend.DomainServices.UserService;
+using MathLLMBackend.Presentation.Dtos.Common;
 using MathLLMBackend.Presentation.Helpers;
 using MathLLMBackend.Presentation.Jwt;
 using Microsoft.AspNetCore.Authorization;
@@ -24,24 +25,17 @@ namespace MathLLMBackend.Presentation.Controllers
 
 
         [HttpGet("me")]
+        [Produces("application/json", Type = typeof(UserInfoDto))]
         [Authorize]
-        public async Task<IActionResult> GetMeAsync(CancellationToken ct)
+        public IActionResult GetMe(CancellationToken ct)
         {
-            var userId = User.GetUserId();
-
-            var user = await _userService.GetById(userId, ct);
-            if (user is null)
-            {
-                _logger.LogError("User not found with ID: {userId} while trying to get user details.", userId);
-                return Unauthorized();
-            }
-
-            var identity = await _userService.GetIdentity(user, ct);
-            return Ok(new { 
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Email = identity.Email
-             });
+            var user = User.GetUser();
+            return Ok(
+                new UserInfoDto(
+                    user.Id,
+                    user.Email,
+                    user.FirstName,
+                    user.LastName));;
 
         }
     }

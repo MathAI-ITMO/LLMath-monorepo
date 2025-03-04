@@ -17,11 +17,12 @@ namespace MathLLMBackend.Infrastructure.Repositories
         {
             const string userSql =
             """
-            insert into users(first_name, last_name)
-            values(@FirstName, @LastName)
+            insert into users(email, first_name, last_name)
+            values(@Email, @FirstName, @LastName)
             on conflict do nothing
             returning 
                 id as Id
+              , email as Email
               , first_name as FirstName
               , last_name as LastName
             """;
@@ -31,6 +32,7 @@ namespace MathLLMBackend.Infrastructure.Repositories
             var createdUserCommand = new CommandDefinition(userSql,
             new
             {
+                Email = user.Email,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
             },
@@ -46,6 +48,7 @@ namespace MathLLMBackend.Infrastructure.Repositories
             """
             select 
                 id as Id
+              , email as Email
               , first_name as FirstName
               , last_name as LastName
             from users

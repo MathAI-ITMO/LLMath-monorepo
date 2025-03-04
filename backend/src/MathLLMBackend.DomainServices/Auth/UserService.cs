@@ -39,7 +39,7 @@ public class UserService : IUserService
         using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
 
         var newUser = await _usersRepository.Create(user, ct) 
-            ?? throw new InvalidOperationException("User with the same isu number already exists");
+            ?? throw new InvalidOperationException("User with the same  number already exists");
 
         var identity = await _identityRepository.Create(new Identity(newUser.Id, email, hashedPassword), ct)
             ?? throw new InvalidOperationException("User with the same email already exists");

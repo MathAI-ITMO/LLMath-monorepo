@@ -1,6 +1,7 @@
 using MathLLMBackend.Domain.Entities;
 using MathLLMBackend.DomainServices.UserService;
 using MathLLMBackend.Presentation.Dtos.Auth;
+using MathLLMBackend.Presentation.Dtos.Common;
 using MathLLMBackend.Presentation.Helpers;
 using MathLLMBackend.Presentation.Jwt;
 using Microsoft.AspNetCore.Authorization;
@@ -26,7 +27,7 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto dto, CancellationToken ct)
     {
-        var user = new User(dto.FirstName, dto.LastName);
+        var user = new User(dto.Email, dto.FirstName, dto.LastName);
 
         await _userService.Create(user, dto.Email, dto.Password, ct);
 
@@ -34,23 +35,34 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [Produces("application/json", Type = typeof(LoginResponseDto))]
     public async Task<IActionResult> Login([FromBody] LoginCredentialsDto dto, CancellationToken ct)
     {
         var authenticatedUser = await _userService.AuthenticateUser(dto.Email, dto.Password, ct);
-        
+
         var token = _jwtTokenHelper.GenerateJwtToken(authenticatedUser, DateTime.UtcNow.AddDays(7));
 
-        return Ok(new TokenDto(token.Token, token.ValidUntill));
+        return Ok(
+            new LoginResponseDto(
+                new TokenDto(
+                    token.Token,
+                    token.ValidUntill),
+                new UserInfoDto(
+                    authenticatedUser.Id,
+                    authenticatedUser.Email,
+                    authenticatedUser.FirstName,
+                    authenticatedUser.LastName)));
     }
 
     [HttpPost("logout")]
     [Authorize]
-    public async Task<IActionResult> Logout()
+    public IActionResult Logout()
     {
         return Ok();
     }
 
     [HttpPost("refresh")]
+    [Produces("application/json", Type = typeof(TokenDto))]
     [Authorize]
     public async Task<IActionResult> Refresh(CancellationToken ct)
     {
@@ -58,7 +70,7 @@ public class AuthController : ControllerBase
         {
             var userId = User.GetUserId();
             var user = await _userService.GetById(userId, ct);
-            if (user is null) 
+            if (user is null)
             {
                 _logger.LogWarning("User not found while trying to renew token");
                 return Unauthorized();

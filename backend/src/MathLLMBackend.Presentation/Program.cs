@@ -17,6 +17,18 @@ try
 {
 
     var builder = WebApplication.CreateBuilder(args);
+    builder.Services.AddHttpLogging(o => { });
+
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowAllOrigins",
+            policy =>
+            {
+                policy.AllowAnyOrigin()  // Allow requests from any origin
+                      .AllowAnyMethod()  // Allow any HTTP method (GET, POST, PUT, etc.)
+                      .AllowAnyHeader(); // Allow any headers
+            });
+    });
 
     builder.Logging.ClearProviders();
     builder.Host.UseNLog();
@@ -92,6 +104,8 @@ try
     app.UseMiddleware<ExceptionHandlingMiddleware>();
     app.UseAuthorization();
     app.MapControllers();
+    app.UseHttpLogging();
+    app.UseCors("AllowAllOrigins");
 
     app.Run();
 }

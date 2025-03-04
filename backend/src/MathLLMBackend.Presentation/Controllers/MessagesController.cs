@@ -37,7 +37,7 @@ namespace MathLLMBackend.Presentation.Controllers
             var message = new Message(dto.ChatId, dto.Text, MessageType.User);
             var registeredMessage = await _messageService.Create(message, userId, ct);
             return Ok(
-                new MessageDto(registeredMessage.Id, registeredMessage.ChatId, registeredMessage.Text, registeredMessage.MessageType.ToString())
+                new MessageDto(registeredMessage.Id, registeredMessage.ChatId, registeredMessage.Text, registeredMessage.MessageType.ToString(), null)
             );
         }
 
@@ -45,14 +45,10 @@ namespace MathLLMBackend.Presentation.Controllers
         [Authorize]
         public async Task<IActionResult> GetAllMessagesFromChat(long chatId, CancellationToken ct)
         {
-            var existingToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
-            if (string.IsNullOrEmpty(existingToken))
-                return Unauthorized();
-
             var userId = User.GetUserId();
             var messages = await _messageService.GetAllMessageFromChat(userId, chatId, ct);
             return Ok(
-                messages.Select(m => new MessageDto(m.Id, m.ChatId, m.Text, m.MessageType.ToString()))
+                messages.Select(m => new MessageDto(m.Id, m.ChatId, m.Text, m.MessageType.ToString(), m.CreatedAt))
             );
         }
     }

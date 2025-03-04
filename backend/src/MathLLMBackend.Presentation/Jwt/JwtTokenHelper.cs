@@ -25,23 +25,10 @@ public class JwtTokenHelper
         var claims = new List<Claim>()
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(ClaimTypes.Email, user.Email),
+            new("FirstName", user.FirstName),
+            new("LastName", user.LastName)
         };
-
-        // if (user.FirstName is not null)
-        // {
-        //     claims.Add(new Claim("FirstName", user.FirstName));
-        // }
-
-        // if (user.LastName is not null)
-        // {
-        //     claims.Add(new Claim("LastName", user.LastName));
-        // }
-
-        // if (user.IsuId is not null)
-        // {
-        //     claims.Add(new Claim("IsuId", user.IsuId?.ToString() ?? ""));
-        // }
-
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
