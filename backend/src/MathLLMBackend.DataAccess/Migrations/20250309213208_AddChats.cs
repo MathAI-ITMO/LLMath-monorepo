@@ -54,8 +54,7 @@ namespace MathLLMBackend.DataAccess.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Chats_UserId",
                 table: "Chats",
-                column: "UserId",
-                unique: true);
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Messages_ChatId",

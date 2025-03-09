@@ -38,8 +38,7 @@ namespace MathLLMBackend.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId")
-                        .IsUnique();
+                    b.HasIndex("UserId");
 
                     b.ToTable("Chats");
                 });
@@ -269,8 +268,8 @@ namespace MathLLMBackend.DataAccess.Migrations
             modelBuilder.Entity("MathLLMBackend.Domain.Entities.Chat", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
-                        .WithOne()
-                        .HasForeignKey("MathLLMBackend.Domain.Entities.Chat", "UserId")
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

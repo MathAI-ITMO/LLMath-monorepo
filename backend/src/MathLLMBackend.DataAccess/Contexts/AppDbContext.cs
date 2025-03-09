@@ -1,9 +1,6 @@
 using MathLLMBackend.Domain.Entities;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-
 namespace MathLLMBackend.DataAccess.Contexts;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options)
@@ -24,8 +21,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         
         modelBuilder.Entity<Chat>()
             .HasOne(c => c.User)
-            .WithOne()
-            .HasForeignKey<Chat>(c => c.UserId);
+            .WithMany()
+            .HasForeignKey(c => c.UserId);
 
         modelBuilder.Entity<Chat>()
             .Property(c => c.UserId)

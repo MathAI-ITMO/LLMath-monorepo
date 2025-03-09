@@ -2,7 +2,6 @@ using MathLLMBackend.Core;
 using MathLLMBackend.DataAccess.Contexts;
 using Microsoft.OpenApi.Models;
 using MathLLMBackend.Presentation.Middlewares;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using NLog;
 using NLog.Web;
 using Microsoft.AspNetCore.Identity;
@@ -15,22 +14,22 @@ try
 
     var builder = WebApplication.CreateBuilder(args);
     builder.Services.AddHttpLogging(o => { });
+    var configuration = builder.Configuration;
 
     builder.Services.AddCors(options =>
     {
-        options.AddPolicy("AllowAllOrigins",
+        var origins = configuration["CorsOrigins"] ?? throw new Exception("CorsOrigins not found");
+        options.AddDefaultPolicy(
             policy =>
             {
-                policy.AllowAnyOrigin()  // Allow requests from any origin
-                      .AllowAnyMethod()  // Allow any HTTP method (GET, POST, PUT, etc.)
-                      .AllowAnyHeader(); // Allow any headers
+                policy.WithOrigins("http://localhost:23188")
+                      .AllowAnyMethod()
+                      .AllowAnyHeader();
             });
     });
 
     builder.Logging.ClearProviders();
     builder.Host.UseNLog();
-
-    var configuration = builder.Configuration;
 
     CoreServicesRegistrar.Configure(builder.Services, configuration);
     
@@ -91,6 +90,10 @@ try
     {
         app.UseSwagger();
         app.UseSwaggerUI();
+        app.UseCookiePolicy(new CookiePolicyOptions
+        {
+            Secure = CookieSecurePolicy.SameAsRequest
+        });
     }
     
     app.MapIdentityApi<IdentityUser>();
@@ -99,7 +102,7 @@ try
     app.UseAuthorization();
     app.MapControllers();
     app.UseHttpLogging();
-    app.UseCors("AllowAllOrigins");
+    app.UseCors();
 
     app.Run();
 }
