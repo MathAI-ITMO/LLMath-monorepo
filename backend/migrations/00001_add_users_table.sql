@@ -1,10 +1,9 @@
 -- +goose Up
 -- +goose StatementBegin
 create table users (
-    id                bigint            primary key generated always as identity
-  , email             varchar(255)      not null
-  , first_name        VARCHAR(255)      not null
-  , last_name         VARCHAR(255)      not null
+    id                uuid              primary key generated always as identity
+  , name              VARCHAR(255)      not null
+  , normalized_name   VARCHAR(255)      not null unique 
   , created_at        timestamptz       not null default CURRENT_TIMESTAMP
 );
 -- +goose StatementEnd

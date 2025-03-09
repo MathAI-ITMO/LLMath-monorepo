@@ -1,17 +1,14 @@
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using MathLLMBackend.Infrastructure;
-using MathLLMBackend.DomainServices;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using MathLLMBackend.Core;
+using MathLLMBackend.DataAccess.Contexts;
 using Microsoft.OpenApi.Models;
 using MathLLMBackend.Presentation.Middlewares;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using NLog;
 using NLog.Web;
-using MathLLMBackend.Presentation.Jwt;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
-logger.Debug("init main");
 
 try
 {
@@ -35,14 +32,28 @@ try
 
     var configuration = builder.Configuration;
 
-    builder.Services.AddScoped<JwtTokenHelper>();
-
-    InfrastractureRegistrar.Configure(builder.Services, configuration);
-    DomainServicesRegistrar.Configure(builder.Services, configuration);
+    CoreServicesRegistrar.Configure(builder.Services, configuration);
+    
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
+    
+    builder.Services.AddIdentityApiEndpoints<IdentityUser>(options =>
+    {
+        options.User.RequireUniqueEmail = true;
+        options.SignIn.RequireConfirmedEmail = false;
+    })
+        .AddEntityFrameworkStores<AppDbContext>();
+    
+    builder.Services.AddAuthorization();
+    builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+        .AddCookie();
 
 
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
+    
+    
+    
     builder.Services.AddSwaggerGen(c =>
         {
             var openApiSecurityScheme = new OpenApiSecurityScheme()
@@ -77,20 +88,20 @@ try
             c.AddSecurityRequirement(openApiSecurityRequirement);
         });
 
-    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-        .AddJwtBearer(options =>
-        {
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                ValidAudience = builder.Configuration["Jwt:Audience"],
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-            };
-        });
+    // builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    //     .AddJwtBearer(options =>
+    //     {
+    //         options.TokenValidationParameters = new TokenValidationParameters
+    //         {
+    //             ValidateIssuer = true,
+    //             ValidateAudience = true,
+    //             ValidateLifetime = true,
+    //             ValidateIssuerSigningKey = true,
+    //             ValidIssuer = builder.Configuration["Jwt:Issuer"],
+    //             ValidAudience = builder.Configuration["Jwt:Audience"],
+    //             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    //         };
+    //     });
 
     var app = builder.Build();
 
@@ -99,9 +110,10 @@ try
         app.UseSwagger();
         app.UseSwaggerUI();
     }
-
-    app.UseMiddleware<AuthenticationMiddleware>();
+    
+    app.MapIdentityApi<IdentityUser>();
     app.UseMiddleware<ExceptionHandlingMiddleware>();
+    app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();
     app.UseHttpLogging();

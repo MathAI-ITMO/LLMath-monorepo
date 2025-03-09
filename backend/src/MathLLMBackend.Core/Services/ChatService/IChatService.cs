@@ -1,0 +1,16 @@
+using System.Text;
+using MathLLMBackend.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
+
+namespace MathLLMBackend.Core.Services.ChatService;
+
+public interface IChatService
+{
+    Task<Chat> Create(Chat chat, CancellationToken ct);
+    Task Delete(Chat chat, CancellationToken ct);
+    Task<List<Chat>> GetUserChats(IdentityUser user, CancellationToken ct);
+    IAsyncEnumerable<StringBuilder> CreateMessage(Message message, CancellationToken ct);
+    public Task<List<Message>> GetAllMessageFromChat(Chat chat, CancellationToken ct);
+    public Task<Chat?> GetChatById(Guid id, CancellationToken ct);
+    public Task<Message?> GetMessageId(Guid id, CancellationToken ct);
+}

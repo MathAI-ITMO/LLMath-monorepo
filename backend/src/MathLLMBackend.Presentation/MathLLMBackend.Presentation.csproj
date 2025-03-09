@@ -7,12 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MathLLMBackend.DomainServices\MathLLMBackend.DomainServices.csproj" />
-    <ProjectReference Include="..\MathLLMBackend.Infrastructure\MathLLMBackend.Infrastructure.csproj" />
+    <ProjectReference Include="..\MathLLMBackend.Core\MathLLMBackend.Core.csproj" />
+    <ProjectReference Include="..\MathLLMBackend.DataAccess\MathLLMBackend.DataAccess.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="NLog.Web.AspNetCore" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
   </ItemGroup>

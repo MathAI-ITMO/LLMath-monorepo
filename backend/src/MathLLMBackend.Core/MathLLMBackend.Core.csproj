@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>MathLLMBackend.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MathLLMBackend.DataAccess\MathLLMBackend.DataAccess.csproj" />
+    <ProjectReference Include="..\MathLLMBackend.Domain\MathLLMBackend.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BouncyCastle.Cryptography" />
+    <PackageReference Include="OpenAI" />
+  </ItemGroup>
+
+</Project>
