@@ -35,11 +35,11 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, type Ref, inject } from 'vue';
-import { AuthService } from '@/services/AuthService'
+import { ref, type Ref, inject } from 'vue';
+import { useAuth } from '@/composables/useAuth';
 import router from '@/router'
 
-const authService = new AuthService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES)
+const { login } = useAuth()
 
 const errorMessage: Ref<string> = ref("");
 const email: Ref<string> = ref("");
@@ -47,37 +47,24 @@ const password: Ref<string> = ref("");
 
 const refreshAuthInHeader = inject('refreshAuthInHeader');
 
-onMounted(() => {
-    errorMessage.value = "";
-    authService.login(email.value, password.value)
-    .then(res =>
-    {
-      if (res !== null)
-      {
-        refreshAuthInHeader()
-        router.push('/');
-      }
-    })
-  })
-
 function onAuth() {
-  authService.login(email.value, password.value)
+  login(email.value, password.value)
   .then((resp) =>
   {
     if(resp !== null)
     {
-      refreshAuthInHeader()
+      // refreshAuthInHeader()
       router.push('/');
     }
+    errorMessage.value = "Неверный логин или пароль"
 
-  }
-  )
+  })
   .catch(err =>
   {
+    errorMessage.value = "Неверный логин или пароль"
     console.log(err);
   })
 
-  errorMessage.value = "Неверный логин или пароль"
   email.value = ''
   password.value= ''
 }

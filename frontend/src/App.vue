@@ -1,36 +1,38 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, provide } from "vue";
 import { useRoute } from "vue-router";
-import { AuthService } from '@/services/AuthService'
+import { useAuth } from "./composables/useAuth";
 
-provide('refreshAuthInHeader', refreshAuthInfo);
+// provide('refreshAuthInHeader', refreshAuthInfo);
 
-const isAuthentificated : Ref<boolean> = ref(false);
-const authService = new AuthService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES)
+// // const isAuthentificated : Ref<boolean> = ref(false);
+// const authService = new AuthService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES)
 
-function refreshAuthInfo()
-{
-  console.log(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES)
-  authService.getCurrentUser()
-  .then(res =>
-  {
-    console.log(res)
-    isAuthentificated.value = res !== null
-  }
-  )
-  .catch(err =>
-  {
-    console.log(err)
-    isAuthentificated.value = false
-  }
-  )
-}
+// function refreshAuthInfo()
+// {
+//   console.log(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES)
+//   authService.getCurrentUser()
+//   .then(res =>
+//   {
+//     console.log(res)
+//     isAuthentificated.value = res !== null
+//   }
+//   )
+//   .catch(err =>
+//   {
+//     console.log(err)
+//     isAuthentificated.value = false
+//   }
+//   )
+// }
 
-onMounted(() => refreshAuthInfo())
+// onMounted(() => refreshAuthInfo())
 
 
 const route = useRoute();
 const isChatRoute = computed(() => route.path === "/chat");
+
+const { isAuthenticated } = useAuth();
 </script>
 
 <template>
@@ -44,9 +46,9 @@ const isChatRoute = computed(() => route.path === "/chat");
       <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
       <nav>
         <RouterLink to="/">На главную</RouterLink>
-        <RouterLink v-if="!isAuthentificated" to="/auth">Авторизация</RouterLink>
-        <RouterLink v-if="isAuthentificated" to="/logout">Выйти</RouterLink>
-        <RouterLink v-if="isAuthentificated" to="/chat">Чат</RouterLink>
+        <RouterLink v-if="!isAuthenticated" to="/auth">Авторизация</RouterLink>
+        <RouterLink v-if="isAuthenticated" to="/logout">Выйти</RouterLink>
+        <RouterLink v-if="isAuthenticated" to="/chat">Чат</RouterLink>
       </nav>
     </aside>
     <main class="content">

@@ -23,11 +23,4 @@ onMounted(() => {
 </script>
 
 <style lang="css" scoped>
-/* #authForm * input {
-  margin: 5px;
-}
-
-#authForm>button {
-  margin: 15px;
-} */
 </style>
