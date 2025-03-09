@@ -2,15 +2,6 @@
 import WelcomeItem from './WelcomeItem.vue'
 import ToolingIcon from './icons/IconTooling.vue'
 import EcosystemIcon from './icons/IconEcosystem.vue'
-
-/**
- * onSampleButtonClicked
- */
-function onSampleButtonClicked(evt: Event) {
-  console.log(evt);
-  alert("Вы кликнули по кнопке. Event в консоли.")
-}
-
 </script>
 
 <template>
@@ -33,7 +24,7 @@ function onSampleButtonClicked(evt: Event) {
   <WelcomeItem>
     <template #icon>
       <button class="btn btn-outline-primary" type="button" data-bs-toggle="tooltip" data-bs-placement="right"
-        title="Reverse selection" @click="onSampleButtonClicked">
+        title="Reverse selection">
         <i class="bi bi-arrow-repeat"></i>
       </button>
     </template>

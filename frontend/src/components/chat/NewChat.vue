@@ -18,13 +18,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ChatService } from '@/services/ChatService'
-import { AuthService } from '@/services/AuthService'
-import router from '@/router'
+import { useChat } from '@/composables/useChat.ts'
 
-const authService = new AuthService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES)
-const chatService = new ChatService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES, authService)
-
+const { createChat } = useChat()
 
 const chatName = ref<string>('');
 
@@ -32,18 +28,10 @@ const emit = defineEmits<{
   (e: 'chatCreated', id: number): void
 }>()
 
-function processError(err)
+async function onChatCreate()
 {
-  console.log(err)
-  authService.logout()
-  router.push('/auth')
-}
-
-function onChatCreate()
-{
-  chatService.createChat(chatName.value)
-  .then(id => emit('chatCreated', id))
-  .else(err => processError(err))
+  const id = await createChat(chatName.value)
+  emit('chatCreated', id)
 }
 
 </script>

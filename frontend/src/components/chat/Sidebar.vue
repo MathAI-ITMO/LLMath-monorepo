@@ -14,7 +14,7 @@
     </v-card-actions>
 
     <v-divider></v-divider>
-    <v-list-item @click="selectChat(chat.id)" v-for="chat in chats" :key="chat.id" link>
+    <v-list-item @click="onChatSelect(chat.id)" v-for="chat in chats" :key="chat.id" link>
       <v-list-item-content>
         <v-list-item-title>
           {{ chat.name }}
@@ -22,7 +22,7 @@
       </v-list-item-content>
 
       <v-list-item-action>
-        <v-btn variant="text" @click="deleteChat(chat.id)">
+        <v-btn variant="text" @click="onChatDelete(chat.id)">
           <v-icon icon="mdi-delete-forever"></v-icon>
           Удалить чат
         </v-btn>
@@ -32,14 +32,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, toRefs, watch, onMounted } from 'vue'
-import { ChatService } from '@/services/ChatService'
-import { AuthService } from '@/services/AuthService'
+import { onMounted, ref, toRefs, watch } from 'vue'
+import { useChat } from '@/composables/useChat.ts'
 import type { Chat } from '@/models/Chat'
-import router from '@/router'
 
-const authService = new AuthService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES)
-const chatService = new ChatService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES)
+const { getChats, deleteChat } = useChat()
 
 const emit = defineEmits<{
   (e: 'chatDeleted'): void
@@ -55,36 +52,25 @@ const props = defineProps({
 
 const { isChatCreation } = toRefs(props)
 
-
-watch(isChatCreation, updateChatList)
+watch(isChatCreation, onChatUpdate)
 
 onMounted(() => {
-  updateChatList()
+  onChatUpdate()
 })
 
-function processError(err)
-{
-  console.log(err)
-  authService.logout()
-  router.push('/auth')
-}
-
-function selectChat(id: number) {
+function onChatSelect(id: number) {
   console.log('chat with id ' + id + ' selected')
   emit('chatSelected', id)
 }
 
-function deleteChat(id: number) {
-  chatService.deleteChat(id)
-  updateChatList()
+async function onChatDelete(id: number) {
+  await deleteChat(id)
+  onChatUpdate()
   emit('chatDeleted')
 }
 
-function updateChatList() {
-  chatService.getChats()
-  .then(res => chats.value = res)
-  .catch(err => processError(err)
-  )
+async function onChatUpdate() {
+  chats.value = await getChats()
 }
 
 function newChat() {

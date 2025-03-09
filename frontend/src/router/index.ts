@@ -33,13 +33,11 @@ const router = createRouter({
   ],
 })
 
-const auth = useAuth();
+const { isAuthenticated } = useAuth();
 
 router.beforeEach(async (to, from, next) => {
   if (to.meta.requiresAuth) {
-    const user = await auth.getCurrentUser();
-
-    if (!user) {
+    if (!isAuthenticated.value) {
       return next({ name: 'home' });
     }
   }

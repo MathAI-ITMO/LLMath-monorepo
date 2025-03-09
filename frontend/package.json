@@ -28,6 +28,7 @@
     "colortranslator": "^4.1.0",
     "core-js": "^3.40.0",
     "display-si": "^1.0.7",
+    "js-cookie": "^3.0.5",
     "mobx": "^6.13.6",
     "mobx-vue-lite": "^0.4.3",
     "moment": "^2.30.1",
@@ -40,6 +41,7 @@
     "primeicons": "^7.0.0",
     "primevue": "^4.2.5",
     "sl-vue-tree": "^1.8.5",
+    "stream": "^0.0.3",
     "toolcool-color-picker": "^1.0.15",
     "vanilla-picker": "^2.12.3",
     "vue": "^3.5.13",
@@ -51,6 +53,7 @@
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.10.5",
     "@tsconfig/node22": "^22.0.0",
+    "@types/js-cookie": "^3.0.6",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^22.13.1",
     "@types/path-browserify": "^1.0.3",

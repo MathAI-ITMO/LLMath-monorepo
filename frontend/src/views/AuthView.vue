@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, type Ref, inject } from 'vue';
+import { ref, type Ref } from 'vue';
 import { useAuth } from '@/composables/useAuth';
 import router from '@/router'
 
@@ -45,15 +45,12 @@ const errorMessage: Ref<string> = ref("");
 const email: Ref<string> = ref("");
 const password: Ref<string> = ref("");
 
-const refreshAuthInHeader = inject('refreshAuthInHeader');
-
 function onAuth() {
   login(email.value, password.value)
   .then((resp) =>
   {
     if(resp !== null)
     {
-      // refreshAuthInHeader()
       router.push('/');
     }
     errorMessage.value = "Неверный логин или пароль"

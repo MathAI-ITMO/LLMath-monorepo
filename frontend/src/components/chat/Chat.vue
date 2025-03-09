@@ -39,18 +39,15 @@
 
 <script setup lang="ts">
 import { ref, toRefs, watch, onMounted } from 'vue'
-import { ChatService } from '@/services/ChatService'
 import type { Chat } from '@/models/Chat'
 import type { Message } from '@/models/Message'
-import { AuthService } from '@/services/AuthService'
 import moment from 'moment'
-import router from '@/router'
+import { useChat } from '@/composables/useChat.ts'
 
-const authService = new AuthService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES)
-const chatService = new ChatService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES, authService)
+const { getChatById, getChatMessages, getNextMessage } = useChat()
 
 const props = defineProps({
-  chatId: Number,
+  chatId: String,
 })
 
 const { chatId } = toRefs(props)
@@ -58,7 +55,7 @@ const { chatId } = toRefs(props)
 const inputCard = ref(null)
 const messagesCard = ref(null)
 
-const chat = ref<Chat>(null)
+const chat = ref<Chat>()
 const messages = ref<Message[]>([])
 const currentMessageText = ref<string>('')
 const isSending = ref<boolean>(false)
@@ -80,9 +77,15 @@ function updateWidth()
 }
 
 async function updateChat() {
-  const receivedChat = await chatService.getChatById(chatId.value)
+  if (!chatId?.value)
+  {
+    console.log('chat update called but id not specified yet')
+    return;
+  }
+
+  const receivedChat = await getChatById(chatId!.value)
   chat.value = receivedChat
-  const receivedMessages = await chatService.getChatMessages(chatId.value)
+  const receivedMessages = await getChatMessages(chatId!.value)
   messages.value = receivedMessages
   console.log(receivedMessages)
 }
@@ -91,16 +94,46 @@ function formatMessage(message: string): string {
   return message?.replace(/\n/g, '<br>')
 }
 
-function sendMessage() {
-  isSending.value = true
-  chatService.sendMessage(currentMessageText.value, chatId.value)
-  .then(() =>
+async function sendMessage() {
+  if (!chatId?.value)
   {
-    updateChat().then(() =>
-    {
-      isSending.value = false
-    })
-  });
+    console.log('send message called but chat id not specified yet')
+    return;
+  }
+
+  if (!currentMessageText.value)
+  {
+    alert('Message cannot be sent because it is empty')
+    return;
+  }
+  isSending.value = true
+
+  const userMessage : Message = {
+    id: "",
+    chatId: chatId!.value,
+    type: 'user',
+    text: currentMessageText.value,
+    time: new Date()
+  }
+
+  messages.value.push(userMessage)
+
+  const botMessage = await getNextMessage(currentMessageText.value, chatId!.value)
+
+  const message : Message = {
+      id: "",
+      chatId: chatId!.value,
+      type: 'bot',
+      text: "",
+      time: new Date()
+    }
+
+  messages.value.push(message)
+
+  for await (const chunk of botMessage) {
+    console.log(chunk);
+    message.text += chunk.message
+  }
 }
 </script>
 

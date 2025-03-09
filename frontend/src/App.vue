@@ -6,11 +6,11 @@ import { useAuth } from "./composables/useAuth";
 // provide('refreshAuthInHeader', refreshAuthInfo);
 
 // // const isAuthentificated : Ref<boolean> = ref(false);
-// const authService = new AuthService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES)
+// const authService = new AuthService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRESS)
 
 // function refreshAuthInfo()
 // {
-//   console.log(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES)
+//   console.log(import.meta.env.VITE_MATHLLM_BACKEND_ADDRESS)
 //   authService.getCurrentUser()
 //   .then(res =>
 //   {

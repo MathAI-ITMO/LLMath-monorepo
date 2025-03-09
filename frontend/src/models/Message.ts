@@ -1,6 +1,6 @@
 export interface Message {
-  id: number,
-  chatId: number,
+  id: string,
+  chatId: string,
   type: string, //bot or user
   text: string,
   time: Date

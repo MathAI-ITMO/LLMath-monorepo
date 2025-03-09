@@ -3,26 +3,9 @@ export interface LoginRequestDto {
   password: string;
 }
 
-export interface LoginResponseDto {
-  token: TokenDto;
-  user: UserInfoDto;
-}
-
-export interface TokenDto {
-  token: string;
-  validUntill: Date;
-}
-
-export interface UserInfoDto {
-  id: number;
-  email: string;
-  firstName: string;
-  lastName: string;
-}
-
 export interface ChatDto {
-  id: number;
-  userId: number;
+  id: string;
+  userId: string;
   name: string;
 }
 
@@ -31,14 +14,14 @@ export interface CreateChatDto {
 }
 
 export interface MessageDto {
-  id: number;
-  chatId: number;
+  id: string;
+  chatId: string;
   text: string;
   type: string;
   creationTime: Date
 }
 
 export interface SendMessageRequestDto {
-  chatId: number;
+  chatId: string;
   text: string;
 }

@@ -21,12 +21,11 @@ import NewChat from '@/components/chat/NewChat.vue'
 import Chat from '@/components/chat/Chat.vue'
 
 const isChatCreation = ref<boolean>(true)
-const chatId = ref<number>(null)
+const chatId = ref<number>()
 
 function chatSelected(id: number) {
   chatId.value = id
   isChatCreation.value = false
-  console.log('chat with id ' + id + ' selected')
 }
 
 function createChat() {

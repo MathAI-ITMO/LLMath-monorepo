@@ -1,23 +1,27 @@
 <template>
-    <h1>Вы успешно вышли</h1>
+    <h1>{{text}}</h1>
 </template>
 
 <script setup lang="ts">
-import { onMounted, inject } from 'vue';
-import { AuthService } from '@/services/AuthService'
+import { onMounted, ref } from 'vue';
+import { useAuth } from '@/composables/useAuth.ts'
 import router from '@/router'
 
-const refreshAuthInHeader = inject('refreshAuthInHeader');
+const text = ref("Подождите")
 
-const authService = new AuthService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRES)
+const { logout } = useAuth()
+
 
 onMounted(() => {
-    authService.logout()
-    .finally(() =>
-    {
-      refreshAuthInHeader()
-      router.push('/')
+    logout().then(() => {
+      text.value = 'Вы успешно вышли'
+      // router.push('/')
     })
+      .catch(err =>
+      {
+        text.value = 'Произошла ошибка, проверьте консоль'
+        console.log(err)
+      });
 })
 
 </script>
