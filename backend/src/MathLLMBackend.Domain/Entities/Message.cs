@@ -13,7 +13,9 @@ public class Message
     }
     public Message() { }
 
-    public Guid MessageId { get; set; }
+    public Guid Id { get; set; }
+    
+    public Guid ChatId { get; set; }
     public Chat Chat { get; set; }
     public string Text { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

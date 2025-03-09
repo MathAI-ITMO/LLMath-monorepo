@@ -4,16 +4,17 @@ namespace MathLLMBackend.Domain.Entities;
 
 public class Chat
 {
-    public Chat(string name, IdentityUser user)
+    public Chat(string name, string userId)
     {
         Name = name;
-        User = user;
+        UserId = userId;
     }
 
     public Chat() { }
     
-    public Guid ChatId { get; set; }
+    public Guid Id { get; set; }
     public string Name { get; set; }
+    public string UserId { get; set; }
     public IdentityUser User { get; set; }
     
     public IEnumerable<Message> Messages { get; set; }

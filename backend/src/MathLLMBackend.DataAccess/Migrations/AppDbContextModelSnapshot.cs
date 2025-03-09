@@ -24,7 +24,7 @@ namespace MathLLMBackend.DataAccess.Migrations
 
             modelBuilder.Entity("MathLLMBackend.Domain.Entities.Chat", b =>
                 {
-                    b.Property<Guid>("ChatId")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
@@ -33,18 +33,20 @@ namespace MathLLMBackend.DataAccess.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("UserId")
+                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("ChatId");
+                    b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
                     b.ToTable("Chats");
                 });
 
             modelBuilder.Entity("MathLLMBackend.Domain.Entities.Message", b =>
                 {
-                    b.Property<Guid>("MessageId")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
@@ -61,7 +63,7 @@ namespace MathLLMBackend.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("MessageId");
+                    b.HasKey("Id");
 
                     b.HasIndex("ChatId");
 
@@ -267,8 +269,10 @@ namespace MathLLMBackend.DataAccess.Migrations
             modelBuilder.Entity("MathLLMBackend.Domain.Entities.Chat", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
+                        .WithOne()
+                        .HasForeignKey("MathLLMBackend.Domain.Entities.Chat", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
@@ -276,7 +280,7 @@ namespace MathLLMBackend.DataAccess.Migrations
             modelBuilder.Entity("MathLLMBackend.Domain.Entities.Message", b =>
                 {
                     b.HasOne("MathLLMBackend.Domain.Entities.Chat", "Chat")
-                        .WithMany()
+                        .WithMany("Messages")
                         .HasForeignKey("ChatId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -333,6 +337,11 @@ namespace MathLLMBackend.DataAccess.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("MathLLMBackend.Domain.Entities.Chat", b =>
+                {
+                    b.Navigation("Messages");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,3 +1,4 @@
+using MathLLMBackend.Core.Configuration;
 using MathLLMBackend.Core.Services.ChatService;
 using MathLLMBackend.Core.Services.LlmService;
 using Microsoft.Extensions.Configuration;
@@ -11,6 +12,8 @@ public class CoreServicesRegistrar
     {
         services.AddTransient<IChatService, ChatService>();
         services.AddTransient<ILlmService, LlmService>();
+        
+        services.Configure<LlmServiceConfiguration>(configuration.GetSection("OpenAi"));
         return services;
     }
 }

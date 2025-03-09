@@ -9,65 +9,24 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1a46bf1e-c12b-4745-90a3-f1b9a3a0503c" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.MathLLMBackend/.idea/.name" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.MathLLMBackend/.idea/indexLayout.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.MathLLMBackend/.idea/projectSettingsUpdater.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.MathLLMBackend/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.MathLLMBackend/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/MathLLMBackend.Core/CoreServicesRegistrar.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/MathLLMBackend.Core/Services/ChatService/ChatService.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/MathLLMBackend.Core/Services/ChatService/IChatService.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/MathLLMBackend.Core/Services/LlmService/ILlmService.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/MathLLMBackend.Core/Services/LlmService/LlmService.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/MathLLMBackend.DataAccess/Contexts/AppDbContext.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/MathLLMBackend.DataAccess/MathLLMBackend.DataAccess.csproj" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/MathLLMBackend.DataAccess/Migrations/20250309162115_AddIdentity.Designer.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/MathLLMBackend.DataAccess/Migrations/20250309162115_AddIdentity.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/MathLLMBackend.DataAccess/Migrations/20250309162129_AddChats.Designer.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/MathLLMBackend.DataAccess/Migrations/20250309162129_AddChats.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/MathLLMBackend.DataAccess/Migrations/AppDbContextModelSnapshot.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.MathLLMBackend/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.MathLLMBackend/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Directory.Packages.props" beforeDir="false" afterPath="$PROJECT_DIR$/Directory.Packages.props" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MathLLMBackend.sln" beforeDir="false" afterPath="$PROJECT_DIR$/MathLLMBackend.sln" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docker-compose.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/00001_add_users_table.sql" beforeDir="false" afterPath="$PROJECT_DIR$/migrations/00001_add_users_table.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/00002_add_identities_table.sql" beforeDir="false" afterPath="$PROJECT_DIR$/migrations/00002_add_identities_table.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Core/CoreServicesRegistrar.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/MathLLMBackend.Core/CoreServicesRegistrar.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Core/MathLLMBackend.Core.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/src/MathLLMBackend.Core/MathLLMBackend.Core.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Core/Services/ChatService/ChatService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/MathLLMBackend.Core/Services/ChatService/ChatService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Core/Services/ChatService/IChatService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/MathLLMBackend.Core/Services/ChatService/IChatService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Core/Services/LlmService/LlmService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/MathLLMBackend.Core/Services/LlmService/LlmService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.DataAccess/Contexts/AppDbContext.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/MathLLMBackend.DataAccess/Contexts/AppDbContext.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.DataAccess/Migrations/20250309162129_AddChats.Designer.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.DataAccess/Migrations/20250309162129_AddChats.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.DataAccess/Migrations/AppDbContextModelSnapshot.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/MathLLMBackend.DataAccess/Migrations/AppDbContextModelSnapshot.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Domain/Entities/Chat.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/MathLLMBackend.Domain/Entities/Chat.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Domain/Entities/Identity.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Domain/Entities/Msg.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/MathLLMBackend.Domain/Entities/Message.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Domain/Entities/User.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Domain/MathLLMBackend.Domain.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/src/MathLLMBackend.Domain/MathLLMBackend.Domain.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.DomainServices/Auth/IUserService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.DomainServices/Auth/UserService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.DomainServices/Chat/ChatService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.DomainServices/Chat/IChatService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.DomainServices/Msg/IMsgService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.DomainServices/Msg/MsgService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Infrastructure/Converters/MessageDbModelConverter.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Infrastructure/Converters/MessageTypeConverter.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Infrastructure/DataContext.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Infrastructure/DbModels/MessageDbModel.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Infrastructure/InfrastractureRgistrar.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Infrastructure/Mappers/MessageTypeHandler.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Infrastructure/MathLLMBackend.Infrastructure.csproj" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Infrastructure/Repositories/ChatRepository.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Infrastructure/Repositories/IdentityRepository.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Infrastructure/Repositories/MsgRepository.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Infrastructure/Repositories/UserReposityory.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Presentation/Controllers/AuthController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Presentation/Controllers/ChatController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Presentation/Controllers/MessagesController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Presentation/Controllers/UserController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Presentation/Helpers/ClaimsHelper.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Presentation/Jwt/Jwt.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Presentation/Jwt/JwtTokenHelper.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Presentation/MathLLMBackend.Presentation.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/src/MathLLMBackend.Presentation/MathLLMBackend.Presentation.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Domain/Entities/Message.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/MathLLMBackend.Domain/Entities/Message.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Presentation/Dtos/Chats/ChatDto.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/MathLLMBackend.Presentation/Dtos/Chats/ChatDto.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Presentation/Dtos/Common/UserInfoDto.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/MathLLMBackend.Presentation/Dtos/Common/UserInfoDto.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Presentation/Dtos/Messages/MessageDto.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/MathLLMBackend.Presentation/Dtos/Messages/MessageDto.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Presentation/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/MathLLMBackend.Presentation/Program.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Repository/IChatRepository.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Repository/IIdentityRepository.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Repository/IMessagesRepository.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Repository/IUsersRepository.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Repository/MathLLMBackend.Repository.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/src/MathLLMBackend.Core/MathLLMBackend.Core.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MathLLMBackend.Presentation/appsettings.Development.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/MathLLMBackend.Presentation/appsettings.Development.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -80,7 +39,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="master" />
+        <entry key="$PROJECT_DIR$" value="f38b7bf00808c028de2e7963b967c9fa3862625f" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -88,9 +47,19 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/7b5b0fd6b251454f8703ac3e61293fe22a038/a9/b3d3fde8/IdentityError.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/7b5b0fd6b251454f8703ac3e61293fe22a038/c3/f24766fc/IdentityResult.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/a6b7f037ba7b44df80b8d3aa7e58eeb2e8e938/4d/54a7c9b1/ExceptionDispatchInfo.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/246a2f4a259362619b885aa6c488146b25ff1924a2c49cf143ba51dd70868068/ClientResultOfT.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/597456ad1997ef83b12d33395586d87970d4f6cbad1265f6ef38ab18249902b/ClientResult.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/src/MathLLMBackend.Core/DomainServicesRegistrar.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/bd1d5c50194fea68ff3559c160230b0ab50f5acf4ce3061bffd6d62958e2182/ExceptionDispatchInfo.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/c7102cd0ffb8973777e61b1942c3fffac7e14016a511d055c3adf73ff91748/ThrowHelper.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/f9342fb513b7b524925c79d9822cd3ecaf072c50231aa3b469875f4c2cdf/IdentityDbContext.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/MathLLMBackend.Core/CoreServicesRegistrar.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/MathLLMBackend.Core/Services/ChatService/ChatService.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/MathLLMBackend.Core/Services/ChatService/IChatService.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/MathLLMBackend.Core/Services/LlmService/ILlmService.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/MathLLMBackend.Core/Services/LlmService/LlmService.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/MathLLMBackend.DataAccess/Contexts/AppDbContext.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/MathLLMBackend.Domain/Entities/Message.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="ProblemsViewState">
@@ -106,7 +75,7 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
-    &quot;.NET Launch Settings Profile.MathLLMBackend.Presentation: http.executor&quot;: &quot;Run&quot;,
+    &quot;.NET Launch Settings Profile.MathLLMBackend.Presentation: http.executor&quot;: &quot;Debug&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;chat&quot;,
@@ -162,7 +131,7 @@
       <workItem from="1741522326637" duration="6229000" />
       <workItem from="1741529056622" duration="4087000" />
       <workItem from="1741533186436" duration="884000" />
-      <workItem from="1741534091311" duration="5167000" />
+      <workItem from="1741534091311" duration="13986000" />
     </task>
     <servers />
   </component>
@@ -171,6 +140,17 @@
   </component>
   <component name="UnityCheckinConfiguration" checkUnsavedScenes="true" />
   <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
   </component>
@@ -182,6 +162,58 @@
           <line>2</line>
           <properties documentPath="C:\Users\mgsds\projects\mathllm-backend\src\MathLLMBackend.Presentation\Models\Dtos\Auth\ChatInfrorm.cs" containingFunctionPresentation="Constructor 'ChatNameDto'" />
           <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/MathLLMBackend.Presentation/Controllers/MessagesController.cs</url>
+          <line>29</line>
+          <properties documentPath="C:\Users\mgsds\projects\mathllm-backend\src\MathLLMBackend.Presentation\Controllers\MessagesController.cs" containingFunctionPresentation="Method 'Complete'">
+            <startOffsets>
+              <option value="1153" />
+            </startOffsets>
+            <endOffsets>
+              <option value="1195" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="4" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/MathLLMBackend.Core/Services/ChatService/ChatService.cs</url>
+          <line>46</line>
+          <properties documentPath="C:\Users\mgsds\projects\mathllm-backend\src\MathLLMBackend.Core\Services\ChatService\ChatService.cs" containingFunctionPresentation="Method 'CreateMessage'">
+            <startOffsets>
+              <option value="1562" />
+            </startOffsets>
+            <endOffsets>
+              <option value="1619" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/MathLLMBackend.Core/Services/ChatService/ChatService.cs</url>
+          <line>55</line>
+          <properties documentPath="C:\Users\mgsds\projects\mathllm-backend\src\MathLLMBackend.Core\Services\ChatService\ChatService.cs" containingFunctionPresentation="Method 'CreateMessage'">
+            <startOffsets>
+              <option value="1830" />
+            </startOffsets>
+            <endOffsets>
+              <option value="1917" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="7" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/MathLLMBackend.Core/Services/LlmService/LlmService.cs</url>
+          <line>42</line>
+          <properties documentPath="C:\Users\mgsds\projects\mathllm-backend\src\MathLLMBackend.Core\Services\LlmService\LlmService.cs" containingFunctionPresentation="Method 'GenerateNextMessageText'">
+            <startOffsets>
+              <option value="1517" />
+            </startOffsets>
+            <endOffsets>
+              <option value="1523" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="9" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

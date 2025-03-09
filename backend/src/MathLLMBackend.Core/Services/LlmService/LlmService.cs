@@ -1,6 +1,9 @@
 using System.ClientModel;
+using MathLLMBackend.Core.Configuration;
 using MathLLMBackend.Domain.Entities;
 using MathLLMBackend.Domain.Enums;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using OpenAI;
 using OpenAI.Chat;
 
@@ -8,12 +11,19 @@ namespace MathLLMBackend.Core.Services.LlmService;
 
 public class LlmService : ILlmService
 {
+    private readonly IOptions<LlmServiceConfiguration> _config;
+
+    public LlmService(IOptions<LlmServiceConfiguration> config)
+    {
+        _config = config;
+    }
+    
     public async IAsyncEnumerable<string> GenerateNextMessageText(List<Message> messages)
     {
         var client = new ChatClient (
-            model: "gpt-3.5-turbo",
-            credential: new ApiKeyCredential("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImM3Y2U4MGI0LTMwZDEtNGFhZi05NTZlLTNmMWU3N2Y1M2RjOSIsImlzRGV2ZWxvcGVyIjp0cnVlLCJpYXQiOjE3NDExMjI3NzgsImV4cCI6MjA1NjY5ODc3OH0.jHI9lFuVsRX237_6iyBmVwHFrzI8_ar7t3yUYdwjuxo"),
-            options: new OpenAIClientOptions() { Endpoint =  new Uri("https://bothub.chat/api/v2/openai/v1")} );
+            model: _config.Value.Model,
+            credential: new ApiKeyCredential(_config.Value.Token),
+            options: new OpenAIClientOptions() { Endpoint =  new Uri(_config.Value.Url)} );
     
         var openaiMessages = messages.Select<Message, ChatMessage>(m =>
             m.MessageType switch
@@ -29,6 +39,9 @@ public class LlmService : ILlmService
 
         await foreach (var chunk in completion)
         {
+            if (chunk.ContentUpdate.Count == 0)
+                break;
+            
             yield return chunk.ContentUpdate[0].Text;
         }
     }

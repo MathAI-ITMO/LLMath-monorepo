@@ -26,9 +26,9 @@ public class ChatService : IChatService
         return res.Entity;
     }
     
-    public async Task<List<Chat>> GetUserChats(IdentityUser user, CancellationToken ct)
+    public async Task<List<Chat>> GetUserChats(string userId, CancellationToken ct)
     {
-        var chats = await _dbContext.Chats.Where(c => c.User == user).ToListAsync(cancellationToken: ct);
+        var chats = await _dbContext.Chats.Where(c => c.User.Id == userId).ToListAsync(cancellationToken: ct);
         await _dbContext.SaveChangesAsync(ct);
         return chats;
     }
@@ -39,16 +39,18 @@ public class ChatService : IChatService
         await _dbContext.SaveChangesAsync(ct);
     }
     
-    public async IAsyncEnumerable<StringBuilder> CreateMessage(Message message, CancellationToken ct)
+    public async IAsyncEnumerable<string> CreateMessage(Message message, CancellationToken ct)
     {
         _dbContext.Messages.Add(message);
         var messages = await _dbContext.Messages.Where(m => m.Chat == message.Chat).ToListAsync(cancellationToken: ct);
+        messages.Add(message);
         var text = _llmService.GenerateNextMessageText(messages);
 
         var fullText = new StringBuilder();
         await foreach (var messageText in text)
         {
-            yield return fullText.Append(messageText);
+            fullText.Append(messageText);
+            yield return messageText;
         }
         
         var newMessage = new Message(message.Chat, fullText.ToString(), MessageType.Assistant);
@@ -63,11 +65,13 @@ public class ChatService : IChatService
 
     public async Task<Chat?> GetChatById(Guid id, CancellationToken ct)
     {
-        return await _dbContext.Chats.FirstOrDefaultAsync(c => c.ChatId == id, cancellationToken: ct);
+        return await _dbContext.Chats
+            .Include(c => c.User)
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken: ct);
     }
 
     public async Task<Message?> GetMessageId(Guid id, CancellationToken ct)
     {
-        return await _dbContext.Messages.FirstOrDefaultAsync(c => c.MessageId == id, cancellationToken: ct);
+        return await _dbContext.Messages.FirstOrDefaultAsync(c => c.Id == id, cancellationToken: ct);
     }
 }
