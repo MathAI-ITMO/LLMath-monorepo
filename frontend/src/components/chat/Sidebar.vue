@@ -41,7 +41,7 @@ const { getChats, deleteChat } = useChat()
 const emit = defineEmits<{
   (e: 'chatDeleted'): void
   (e: 'createChat'): void
-  (e: 'chatSelected', id: number): void
+  (e: 'chatSelected', id: string): void
 }>()
 
 const chats = ref<Chat[]>([])
@@ -58,15 +58,20 @@ onMounted(() => {
   onChatUpdate()
 })
 
-function onChatSelect(id: number) {
+function onChatSelect(id: string) {
   console.log('chat with id ' + id + ' selected')
   emit('chatSelected', id)
 }
 
-async function onChatDelete(id: number) {
-  await deleteChat(id)
-  onChatUpdate()
-  emit('chatDeleted')
+async function onChatDelete(id: string) {
+  try {
+    await deleteChat(id)
+    onChatUpdate()
+    emit('chatDeleted')
+  } catch (error) {
+    console.error('Error deleting chat:', error)
+    alert('Failed to delete chat. Please try again.')
+  }
 }
 
 async function onChatUpdate() {

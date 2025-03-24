@@ -29,6 +29,7 @@
     "core-js": "^3.40.0",
     "display-si": "^1.0.7",
     "js-cookie": "^3.0.5",
+    "marked": "^15.0.7",
     "mobx": "^6.13.6",
     "mobx-vue-lite": "^0.4.3",
     "moment": "^2.30.1",

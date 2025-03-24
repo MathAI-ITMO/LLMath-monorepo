@@ -19,7 +19,12 @@ export function useChat() {
   }
 
   async function deleteChat(id: string): Promise<void> {
-    await client.delete(`/api/chat/delete-chat/${id}`, { withCredentials: true })
+    try {
+      await client.delete(`/api/Chat/delete-chat/${id}`, { withCredentials: true })
+    } catch (error) {
+      console.error('Failed to delete chat:', error)
+      throw new Error('Failed to delete chat. Please try again.')
+    }
   }
 
   async function getChats(): Promise<Chat[]> {

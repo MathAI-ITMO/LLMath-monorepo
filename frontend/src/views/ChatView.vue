@@ -15,21 +15,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import Sidebar from '@/components/chat/Sidebar.vue'
 import NewChat from '@/components/chat/NewChat.vue'
 import Chat from '@/components/chat/Chat.vue'
 
-const isChatCreation = ref<boolean>(true)
-const chatId = ref<number>()
+const route = useRoute()
+const router = useRouter()
 
-function chatSelected(id: number) {
+const isChatCreation = ref<boolean>(!route.params.chatId)
+const chatId = ref<string | undefined>(route.params.chatId as string)
+
+watch(() => route.params.chatId, (newChatId) => {
+  if (newChatId) {
+    chatId.value = newChatId as string
+    isChatCreation.value = false
+  }
+})
+
+function chatSelected(id: string) {
   chatId.value = id
   isChatCreation.value = false
+  router.push(`/chat/${id}`)
 }
 
 function createChat() {
   isChatCreation.value = true
+  router.push('/chat')
 }
 </script>
 

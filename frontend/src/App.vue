@@ -1,36 +1,10 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, provide } from "vue";
+import { computed } from "vue";
 import { useRoute } from "vue-router";
 import { useAuth } from "./composables/useAuth";
 
-// provide('refreshAuthInHeader', refreshAuthInfo);
-
-// // const isAuthentificated : Ref<boolean> = ref(false);
-// const authService = new AuthService(import.meta.env.VITE_MATHLLM_BACKEND_ADDRESS)
-
-// function refreshAuthInfo()
-// {
-//   console.log(import.meta.env.VITE_MATHLLM_BACKEND_ADDRESS)
-//   authService.getCurrentUser()
-//   .then(res =>
-//   {
-//     console.log(res)
-//     isAuthentificated.value = res !== null
-//   }
-//   )
-//   .catch(err =>
-//   {
-//     console.log(err)
-//     isAuthentificated.value = false
-//   }
-//   )
-// }
-
-// onMounted(() => refreshAuthInfo())
-
-
 const route = useRoute();
-const isChatRoute = computed(() => route.path === "/chat");
+const isChatRoute = computed(() => route.path.startsWith("/chat"));
 
 const { isAuthenticated } = useAuth();
 </script>

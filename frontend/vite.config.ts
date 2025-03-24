@@ -42,7 +42,7 @@ export default defineConfig(({ command, mode }) => {
         '.updatemirror.cc',
       ],
       https: false,
-      port: 23188,
+      port: 8080,
       strictPort: true,
     },
     base: env.VUE_APP_PATH_SUFFIX ? ('/' + env.VUE_APP_PATH_SUFFIX + '/') : undefined,

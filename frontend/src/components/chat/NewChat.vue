@@ -25,7 +25,7 @@ const { createChat } = useChat()
 const chatName = ref<string>('');
 
 const emit = defineEmits<{
-  (e: 'chatCreated', id: number): void
+  (e: 'chatCreated', id: string): void
 }>()
 
 async function onChatCreate()
