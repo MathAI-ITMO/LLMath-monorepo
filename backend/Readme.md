@@ -13,3 +13,14 @@ dotnet tool install --global dotnet-ef
 ``` sh
 dotnet ef database update --project src/MathLLMBackend.Presentation
 ```
+4. (опционально) Создать пользователя
+``` sh
+curl -X 'POST' \
+  'http://localhost:5000/register' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "email": "admin@gmail.com",
+  "password": "Pwd123!"
+}'
+```

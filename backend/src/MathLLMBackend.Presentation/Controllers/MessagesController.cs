@@ -25,24 +25,27 @@ using MathLLMBackend.Domain.Entities;
     
             [HttpPost("complete")]
             [Authorize]
-            public async Task<IActionResult> Complete([FromBody] MessageCreateDto dto, CancellationToken ct)
+            public async Task Complete([FromBody] MessageCreateDto dto, CancellationToken ct)
             {
                 var userId = _userManager.GetUserId(User);
                 if (userId is null)
                 {
-                    return Unauthorized();
+                    Response.StatusCode = 401;
+                    return;
                 }
 
                 var chat = await _service.GetChatById(dto.ChatId, ct);
 
                 if (chat is null)
                 {
-                    return BadRequest();
+                    Response.StatusCode = 400;
+                    return;
                 }
 
                 if (chat.UserId != userId)
                 {
-                    return Unauthorized();
+                    Response.StatusCode = 401;
+                    return;
                 }
                 
                 var message = new Message(chat, dto.Text, MessageType.User);
@@ -55,9 +58,8 @@ using MathLLMBackend.Domain.Entities;
                 await foreach (var messageLine in response)
                 {
                     await writer.WriteAsync(messageLine);
+                    await writer.FlushAsync(ct);
                 }
-                
-                return Ok();
             }
     
             [HttpGet("get-messages-from-chat")]

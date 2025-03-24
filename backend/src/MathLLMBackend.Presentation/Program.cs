@@ -2,6 +2,8 @@ using MathLLMBackend.Core;
 using MathLLMBackend.DataAccess.Contexts;
 using Microsoft.OpenApi.Models;
 using MathLLMBackend.Presentation.Middlewares;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.CookiePolicy;
 using NLog;
 using NLog.Web;
 using Microsoft.AspNetCore.Identity;
@@ -48,6 +50,14 @@ try
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
     
+    builder.Services.ConfigureApplicationCookie(options =>
+    {
+        options.Cookie.HttpOnly = false;
+        // Other cookie options if needed
+        options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+        options.Cookie.SameSite = SameSiteMode.Lax; // Or Strict depending on your needs
+    });
+    
     
     
     builder.Services.AddSwaggerGen(c =>
@@ -90,10 +100,6 @@ try
     {
         app.UseSwagger();
         app.UseSwaggerUI();
-        app.UseCookiePolicy(new CookiePolicyOptions
-        {
-            Secure = CookieSecurePolicy.SameAsRequest
-        });
     }
     
     app.MapIdentityApi<IdentityUser>();
