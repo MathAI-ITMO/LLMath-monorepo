@@ -1,58 +1,98 @@
 <template>
-  <v-navigation-drawer app>
-    <v-divider></v-divider>
-    <v-card-actions class="justify-center">
-      <v-btn
-        class="new-chat-button"
-        variant="tonal"
-        :disabled="props.isChatCreation"
-        @click="newChat()"
-      >
-        <v-icon icon="mdi-plus" />
-        Новый чат
-      </v-btn>
-    </v-card-actions>
+  <v-navigation-drawer
+    v-model="modelValue"
+    app
+    class="chat-sidebar"
+  >
+    <div class="sidebar-header">
+      <v-divider></v-divider>
+      <v-card-actions class="justify-center pa-4">
+        <v-btn
+          class="new-chat-button"
+          variant="tonal"
+          block
+          :disabled="props.isChatCreation"
+          @click="newChat()"
+        >
+          <v-icon icon="mdi-plus" class="mr-2" />
+          Новый чат
+        </v-btn>
+      </v-card-actions>
+      <v-divider></v-divider>
+    </div>
 
-    <v-divider></v-divider>
-    <v-list-item @click="onChatSelect(chat.id)" v-for="chat in chats" :key="chat.id" link>
-      <v-list-item-content>
+    <v-list class="chat-list">
+      <v-list-item
+        v-for="chat in chats"
+        :key="chat.id"
+        link
+        :active="selectedChatId === chat.id"
+        @click="onChatSelect(chat.id)"
+        class="chat-list-item"
+      >
+        <template v-slot:prepend>
+          <v-icon icon="mdi-chat" class="mr-2"></v-icon>
+        </template>
+
         <v-list-item-title>
           {{ chat.name }}
         </v-list-item-title>
-      </v-list-item-content>
 
-      <v-list-item-action>
-        <v-btn variant="text" @click="onChatDelete(chat.id)">
-          <v-icon icon="mdi-delete-forever"></v-icon>
-          Удалить чат
-        </v-btn>
-      </v-list-item-action>
-    </v-list-item>
+        <template v-slot:append>
+          <v-btn
+            variant="text"
+            density="comfortable"
+            icon="mdi-delete"
+            color="error"
+            @click.stop="onChatDelete(chat.id)"
+            class="delete-btn"
+          >
+          </v-btn>
+        </template>
+      </v-list-item>
+    </v-list>
   </v-navigation-drawer>
 </template>
 
 <script setup lang="ts">
+defineOptions({
+  name: 'ChatSidebar'
+})
+
 import { onMounted, ref, toRefs, watch } from 'vue'
 import { useChat } from '@/composables/useChat.ts'
 import type { Chat } from '@/models/Chat'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const selectedChatId = ref<string>(route.params.chatId as string)
 
 const { getChats, deleteChat } = useChat()
+
+const props = defineProps({
+  isChatCreation: Boolean,
+  modelValue: {
+    type: Boolean,
+    default: true
+  }
+})
+
+const { isChatCreation, modelValue } = toRefs(props)
 
 const emit = defineEmits<{
   (e: 'chatDeleted'): void
   (e: 'createChat'): void
   (e: 'chatSelected', id: string): void
+  (e: 'update:modelValue', value: boolean): void
 }>()
 
 const chats = ref<Chat[]>([])
 
-const props = defineProps({
-  isChatCreation: Boolean,
-})
-
-const { isChatCreation } = toRefs(props)
-
 watch(isChatCreation, onChatUpdate)
+
+watch(() => route.params.chatId, (newChatId) => {
+  selectedChatId.value = newChatId as string
+})
 
 onMounted(() => {
   onChatUpdate()
@@ -84,8 +124,46 @@ function newChat() {
 </script>
 
 <style lang="css" scoped>
+.chat-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.sidebar-header {
+  flex-shrink: 0;
+}
+
+.chat-list {
+  flex-grow: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
 .new-chat-button {
-  align: center;
-  display: block;
+  width: 100%;
+}
+
+.chat-list-item {
+  margin: 4px 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.chat-list-item:hover {
+  background-color: rgba(var(--v-theme-primary), 0.1);
+}
+
+.chat-list-item .delete-btn {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.chat-list-item:hover .delete-btn {
+  opacity: 1;
+}
+
+.v-list-item--active {
+  background-color: rgba(var(--v-theme-primary), 0.15);
 }
 </style>
