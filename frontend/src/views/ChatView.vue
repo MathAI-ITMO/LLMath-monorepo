@@ -12,18 +12,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ChatMessages from '@/components/chat/Chat.vue'
 
 const route = useRoute()
 const router = useRouter()
-
-const chatId = ref<string | undefined>(route.params.chatId as string)
-
-watch(() => route.params.chatId, (newChatId) => {
-  chatId.value = newChatId as string | undefined
-})
 
 function chatSelected(id: string) {
   router.push(`/chat/${id}`)

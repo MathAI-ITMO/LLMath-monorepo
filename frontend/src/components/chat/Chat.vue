@@ -109,6 +109,13 @@
         <div ref="messagesCard" class="messages-wrapper">
           <v-card class="messages-container">
             <v-list class="messages-list" lines="none">
+              <template v-if="messages.length === 0">
+                <v-list-item>
+                  <v-list-item-title class="text-center">
+                    Сообщений пока нет, напишите первое сообщение
+                  </v-list-item-title>
+                </v-list-item>
+              </template>
               <v-list-item
                 v-for="message in messages"
                 :key="message.id"
@@ -190,7 +197,7 @@ const props = defineProps({
   chatId: String,
 })
 
-const { chatId } = toRefs(props)
+const chatId = ref<string | undefined>(props.chatId)
 
 const inputCard = ref(null)
 const messagesCard = ref(null)
@@ -211,31 +218,34 @@ function scrollToBottom() {
   }
 }
 
-watch(chatId, onChatUpdate)
-
-onMounted(() => {
-  onChatUpdate()
+onMounted(async () => {
+  chatId.value = route.params.chatId as string | undefined;
+  emit('update:chatId', chatId.value);
+  await onChatUpdate();
 })
 
-onUnmounted(() => {
+watch(() => route.params.chatId, async (newChatId) => {
+  console.log('New chatId from URL:', newChatId);
+  chatId.value = newChatId as string | undefined;
+  emit('update:chatId', chatId.value);
+  await onChatUpdate();
 })
 
 async function onChatUpdate() {
-  chats.value = await getChats()
+  chats.value = await getChats();
 
   if (!chatId.value) {
-    console.log('chat update called but id not specified yet')
-    chat.value = undefined
-    messages.value = []
+    chat.value = undefined;
+    messages.value = [];
     return;
   }
 
-  const receivedChat = await getChatById(chatId.value)
-  chat.value = receivedChat
-  const receivedMessages = await getChatMessages(chatId.value)
-  messages.value = receivedMessages
-  console.log(receivedMessages)
-  scrollToBottom()
+  const receivedChat = await getChatById(chatId.value);
+  chat.value = receivedChat;
+  const receivedMessages = await getChatMessages(chatId.value);
+  messages.value = receivedMessages;
+  console.log(receivedMessages);
+  scrollToBottom();
 }
 
 function formatMessage(message: string): string {
@@ -294,25 +304,30 @@ async function onChatCreate() {
   const id = await createChat(chatName.value)
   emit('chatSelected', id)
   sidebarOpen.value = false
+
+  await onChatUpdate()
 }
 
-function onChatSelect(id: string) {
+async function onChatSelect(id: string) {
   console.log('chat with id ' + id + ' selected')
   emit('chatSelected', id)
   sidebarOpen.value = false
+  chatId.value = id;
+  await onChatUpdate();
 }
 
 async function onChatDelete(id: string) {
   try {
     await deleteChat(id)
-    await onChatUpdate()
     if (id === chatId.value) {
       chatName.value = ''
       chat.value = undefined
       messages.value = []
+      chatId.value = undefined
       emit('chatDeleted')
       router.push('/chat')
     }
+    await onChatUpdate()
   } catch (error) {
     console.error('Error deleting chat:', error)
     alert('Failed to delete chat. Please try again.')
@@ -327,10 +342,6 @@ function createNewChat() {
   router.push('/chat')
   sidebarOpen.value = false
 }
-
-watch(() => route.params.chatId, (newChatId) => {
-  emit('update:chatId', newChatId as string | undefined)
-})
 </script>
 
 <style lang="css" scoped>
@@ -369,6 +380,8 @@ watch(() => route.params.chatId, (newChatId) => {
   width: 90%;
   max-width: 75rem;
   margin: 0 auto;
+  border-radius: 1rem;
+  overflow: hidden;
 }
 
 .messages-list {
@@ -379,6 +392,8 @@ watch(() => route.params.chatId, (newChatId) => {
 .message-item {
   min-height: 0;
   padding: 0.25rem 0;
+  border-radius: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .message-item::before,
@@ -444,6 +459,7 @@ watch(() => route.params.chatId, (newChatId) => {
   max-width: 75rem;
   margin: 2rem auto;
   padding: 1rem;
+  border-radius: 1rem;
 }
 
 .margin-before {
@@ -472,7 +488,7 @@ watch(() => route.params.chatId, (newChatId) => {
 
 .chat-list-item {
   margin: 0.25rem 0.5rem;
-  border-radius: 0.5rem;
+  border-radius: 1rem;
   transition: all 0.2s ease;
 }
 
