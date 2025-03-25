@@ -14,26 +14,29 @@ export function useChat() {
   async function createChat(name: string): Promise<string> {
     const dto: CreateChatDto = { name }
     console.log(dto)
-    const res = await client.post('/api/chat/create-chat', dto, { withCredentials: true })
+    const res = await client.post('/api/chat/create', dto, { withCredentials: true })
     return res.data.id
   }
 
   async function deleteChat(id: string): Promise<void> {
     try {
-      await client.delete(`/api/Chat/delete-chat/${id}`, { withCredentials: true })
+      await client.post(`/api/chat/delete/${id}`, {}, { withCredentials: true })
     } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return
+      }
       console.error('Failed to delete chat:', error)
       throw new Error('Failed to delete chat. Please try again.')
     }
   }
 
   async function getChats(): Promise<Chat[]> {
-    const resp = await client.get<ChatDto[]>('/api/chat/get-chats', { withCredentials: true })
+    const resp = await client.get<ChatDto[]>('/api/chat/get', { withCredentials: true })
     return resp.data.map((c) => ({ id: c.id, name: c.name }) as Chat)
   }
 
   async function getChatById(id: string): Promise<Chat | undefined> {
-    const resp = await client.get<ChatDto[]>('/api/chat/get-chats', { withCredentials: true })
+    const resp = await client.get<ChatDto[]>('/api/chat/get', { withCredentials: true })
     return resp.data.map((c) => ({ id: c.id, name: c.name }) as Chat).find((c) => c.id === id)
   }
 
@@ -49,7 +52,7 @@ export function useChat() {
     return resp.data
   }
 
-  async function getChatMessages(chatId: number): Promise<Message[]> {
+  async function getChatMessages(chatId: string): Promise<Message[]> {
     const resp = await client.get<MessageDto[]>(
       `/api/Message/get-messages-from-chat?chatId=${chatId}`,
       { withCredentials: true },

@@ -1,37 +1,52 @@
 <template>
-  <div class="authview">
-    <h1>Авторизация</h1>
+  <v-layout class="rounded rounded-md fill-heights">
+    <v-main>
+      <div class="authview">
+        <v-card class="mx-auto pa-6" max-width="600">
+          <h1 class="text-h4 mb-6">Авторизация</h1>
 
-    <div id="authForm">
-      <div class="form-group row">
-        <label for="email" class="col-sm-3 col-form-label">Email:</label>
-        <div class="col-sm-9">
-          <input type="text" class="form-control" id="email" aria-describedby="helpemail" placeholder="test@test.test"
-            v-model="email">
-          <small id="helpemail" class="form-text text-muted">Введите email</small>
-        </div>
+          <v-form @submit.prevent="onAuth">
+            <v-text-field
+              v-model="email"
+              label="Email"
+              type="email"
+              placeholder="test@test.test"
+              :rules="[v => !!v || 'Email is required']"
+              required
+            ></v-text-field>
 
+            <v-text-field
+              v-model="password"
+              label="Пароль"
+              type="password"
+              placeholder="Пароль"
+              :rules="[v => !!v || 'Password is required']"
+              required
+            ></v-text-field>
+
+            <v-btn
+              color="success"
+              type="submit"
+              variant="outlined"
+              class="mt-4"
+              block
+            >
+              Войти
+            </v-btn>
+          </v-form>
+
+          <v-alert
+            v-if="errorMessage"
+            type="error"
+            class="mt-4"
+            variant="tonal"
+          >
+            {{ errorMessage }}
+          </v-alert>
+        </v-card>
       </div>
-      <div class="form-group row">
-        <label for="authPassword" class="col-sm-3 col-form-label">Пароль:</label>
-        <div class="col-sm-9">
-          <input type="password" class="form-control" id="authPassword" placeholder="Пароль" v-model="password">
-        </div>
-      </div>
-      <div class="form-group row">
-        <div class="col-sm-3">
-          <button class="btn btn-outline-success" @click="onAuth">Войти</button>
-        </div>
-      </div>
-
-    </div>
-
-    <div v-if="errorMessage !== ''">
-      <pre>
-        {{ errorMessage }}
-      </pre>
-    </div>
-  </div>
+    </v-main>
+  </v-layout>
 </template>
 
 <script setup lang="ts">
@@ -47,33 +62,26 @@ const password: Ref<string> = ref("");
 
 function onAuth() {
   login(email.value, password.value)
-  .then((resp) =>
-  {
-    if(resp !== null)
-    {
-      router.push('/');
-    }
-    errorMessage.value = "Неверный логин или пароль"
-
-  })
-  .catch(err =>
-  {
-    errorMessage.value = "Неверный логин или пароль"
-    console.log(err);
-  })
-
-  email.value = ''
-  password.value= ''
+    .then((resp) => {
+      if(resp !== null) {
+        router.push('/');
+        return;
+      }
+      errorMessage.value = "Неверный логин или пароль"
+    })
+    .catch(err => {
+      errorMessage.value = "Неверный логин или пароль"
+      console.log(err);
+    })
 }
-
 </script>
 
 <style lang="css" scoped>
-/* #authForm * input {
-  margin: 5px;
+.authview {
+  padding: 2rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-
-#authForm>button {
-  margin: 15px;
-} */
 </style>

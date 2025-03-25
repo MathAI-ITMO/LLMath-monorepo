@@ -1,11 +1,65 @@
 <template>
   <div class="chat-container">
+    <v-navigation-drawer
+      v-model="sidebarOpen"
+      permanent
+      class="chat-sidebar"
+    >
+      <div class="sidebar-header">
+        <v-divider></v-divider>
+        <v-card-actions class="justify-center pa-4">
+          <v-btn
+            class="new-chat-button"
+            variant="tonal"
+            block
+            :disabled="!chatId"
+            @click="createNewChat()"
+          >
+            <v-icon icon="mdi-plus" class="mr-2" />
+            Новый чат
+          </v-btn>
+        </v-card-actions>
+        <v-divider></v-divider>
+      </div>
+
+      <v-list class="chat-list">
+        <v-list-item
+          v-for="chatItem in chats"
+          :key="chatItem.id"
+          link
+          :active="chatId === chatItem.id"
+          @click="onChatSelect(chatItem.id)"
+          class="chat-list-item"
+        >
+          <template v-slot:prepend>
+            <v-icon icon="mdi-chat" class="mr-2"></v-icon>
+          </template>
+
+          <v-list-item-title>
+            {{ chatItem.name }}
+          </v-list-item-title>
+
+          <template v-slot:append>
+            <v-btn
+              variant="text"
+              density="comfortable"
+              icon="mdi-delete"
+              color="error"
+              @click.stop="onChatDelete(chatItem.id)"
+              class="delete-btn"
+            >
+            </v-btn>
+          </template>
+        </v-list-item>
+      </v-list>
+    </v-navigation-drawer>
+
     <div class="top-panel">
       <v-app-bar flat class="px-4">
         <v-btn
           icon
           variant="text"
-          @click="$emit('toggleSidebar')"
+          @click="sidebarOpen = !sidebarOpen"
         >
           <v-icon>mdi-menu</v-icon>
         </v-btn>
@@ -20,68 +74,95 @@
         </v-btn>
 
         <v-app-bar-title class="ml-4">
-          {{ chat?.name || 'Что-то пошло не так' }}
+          {{ chat?.name || 'Новый чат' }}
         </v-app-bar-title>
       </v-app-bar>
     </div>
 
     <div class="chat-content">
-      <div ref="messagesCard" class="messages-wrapper">
-        <v-card class="messages-container">
-          <v-list class="messages-list" lines="none">
-            <v-list-item
-              v-for="message in messages"
-              :key="message.id"
-              class="message-item"
-              :class="{
-                'user-message': message.type === 'user',
-                'bot-message': message.type === 'bot',
-              }"
-              density="compact"
-            >
-              <v-icon v-if="message.type === 'bot'" class="bot-icon">mdi-robot</v-icon>
-              <div v-html="formatMessage(message.text)"></div>
-              <small>{{ moment(message?.time).fromNow() }}</small>
-            </v-list-item>
-          </v-list>
+      <template v-if="!chatId">
+        <v-card class="new-chat-card">
+          <v-card-title class="pb-4">Создание нового чата</v-card-title>
+          <v-row align="center" no-gutters>
+            <v-col>
+              <v-text-field
+                hide-details="auto"
+                label="Название чата"
+                variant="solo"
+                density="comfortable"
+                bg-color="surface"
+                v-model="chatName"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="auto" class="pl-2">
+              <v-btn
+                variant="tonal"
+                :disabled="!chatName"
+                @click="onChatCreate"
+                height="48"
+              >Создать</v-btn>
+            </v-col>
+          </v-row>
         </v-card>
-      </div>
+      </template>
+      <template v-else>
+        <div ref="messagesCard" class="messages-wrapper">
+          <v-card class="messages-container">
+            <v-list class="messages-list" lines="none">
+              <v-list-item
+                v-for="message in messages"
+                :key="message.id"
+                class="message-item"
+                :class="{
+                  'user-message': message.type === 'user',
+                  'bot-message': message.type === 'bot',
+                }"
+                density="compact"
+              >
+                <v-icon v-if="message.type === 'bot'" class="bot-icon">mdi-robot</v-icon>
+                <div v-html="formatMessage(message.text)"></div>
+                <small>{{ moment(message?.time).fromNow() }}</small>
+              </v-list-item>
+            </v-list>
+          </v-card>
+        </div>
 
-      <div ref="inputCard" class="input-container">
-        <v-card class="input-card" elevation="4">
-          <v-container class="pa-2">
-            <v-row align="center" no-gutters>
-              <v-col>
-                <v-text-field
-                  hide-details="auto"
-                  placeholder="Введите сообщение..."
-                  v-model="currentMessageText"
-                  auto-grow
-                  rows="1"
-                  max-rows="1"
-                  variant="solo"
-                  density="comfortable"
-                  bg-color="surface"
-                  class="message-input"
-                  @keyup.enter="sendMessage"
-                ></v-text-field>
-              </v-col>
-              <v-col cols="auto" class="pl-2">
-                <v-btn
-                  @click="sendMessage"
-                  :disabled="isSending"
-                  :loading="isSending"
-                  color="primary"
-                  variant="elevated"
-                >
-                  <v-icon icon="mdi-send" class="mr-1"></v-icon>
-                  Отправить
-                </v-btn>
-              </v-col>
-            </v-row>
-          </v-container>
-        </v-card>
-      </div>
+        <div ref="inputCard" class="input-container">
+          <v-card class="input-card" elevation="4">
+            <v-container class="pa-2">
+              <v-row align="center" no-gutters>
+                <v-col>
+                  <v-text-field
+                    hide-details="auto"
+                    placeholder="Введите сообщение..."
+                    v-model="currentMessageText"
+                    auto-grow
+                    rows="1"
+                    max-rows="1"
+                    variant="solo"
+                    density="comfortable"
+                    bg-color="surface"
+                    class="message-input"
+                    @keyup.enter="sendMessage"
+                  ></v-text-field>
+                </v-col>
+                <v-col cols="auto" class="pl-2">
+                  <v-btn
+                    @click="sendMessage"
+                    :disabled="isSending"
+                    :loading="isSending"
+                    color="primary"
+                    variant="elevated"
+                  >
+                    <v-icon icon="mdi-send" class="mr-1"></v-icon>
+                    Отправить
+                  </v-btn>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-card>
+        </div>
+      </template>
     </div>
   </div>
 </template>
@@ -91,15 +172,19 @@ defineOptions({
   name: 'ChatMessages'
 })
 
-defineEmits(['toggleSidebar'])
+const emit = defineEmits(['chatSelected', 'chatDeleted', 'update:chatId'])
 
 import { ref, toRefs, watch, onMounted, onUnmounted } from 'vue'
 import type { Chat } from '@/models/Chat'
 import type { Message } from '@/models/Message'
 import moment from 'moment'
 import { useChat } from '@/composables/useChat.ts'
+import { useRoute, useRouter } from 'vue-router'
 
-const { getChatById, getChatMessages, getNextMessage } = useChat()
+const route = useRoute()
+const router = useRouter()
+
+const { getChatById, getChatMessages, getNextMessage, createChat, getChats, deleteChat } = useChat()
 
 const props = defineProps({
   chatId: String,
@@ -109,6 +194,9 @@ const { chatId } = toRefs(props)
 
 const inputCard = ref(null)
 const messagesCard = ref(null)
+const chatName = ref<string>('')
+const sidebarOpen = ref<boolean>(false)
+const chats = ref<Chat[]>([])
 
 const chat = ref<Chat>()
 const messages = ref<Message[]>([])
@@ -123,25 +211,28 @@ function scrollToBottom() {
   }
 }
 
-watch(chatId, updateChat)
+watch(chatId, onChatUpdate)
 
 onMounted(() => {
-  updateChat()
+  onChatUpdate()
 })
 
 onUnmounted(() => {
 })
 
-async function updateChat() {
-  if (!chatId?.value)
-  {
+async function onChatUpdate() {
+  chats.value = await getChats()
+
+  if (!chatId.value) {
     console.log('chat update called but id not specified yet')
+    chat.value = undefined
+    messages.value = []
     return;
   }
 
-  const receivedChat = await getChatById(chatId!.value)
+  const receivedChat = await getChatById(chatId.value)
   chat.value = receivedChat
-  const receivedMessages = await getChatMessages(chatId!.value)
+  const receivedMessages = await getChatMessages(chatId.value)
   messages.value = receivedMessages
   console.log(receivedMessages)
   scrollToBottom()
@@ -198,6 +289,48 @@ async function sendMessage() {
   isSending.value = false
   currentMessageText.value = ""
 }
+
+async function onChatCreate() {
+  const id = await createChat(chatName.value)
+  emit('chatSelected', id)
+  sidebarOpen.value = false
+}
+
+function onChatSelect(id: string) {
+  console.log('chat with id ' + id + ' selected')
+  emit('chatSelected', id)
+  sidebarOpen.value = false
+}
+
+async function onChatDelete(id: string) {
+  try {
+    await deleteChat(id)
+    await onChatUpdate()
+    if (id === chatId.value) {
+      chatName.value = ''
+      chat.value = undefined
+      messages.value = []
+      emit('chatDeleted')
+      router.push('/chat')
+    }
+  } catch (error) {
+    console.error('Error deleting chat:', error)
+    alert('Failed to delete chat. Please try again.')
+  }
+}
+
+function createNewChat() {
+  chatName.value = ''
+  chat.value = undefined
+  messages.value = []
+  emit('update:chatId', undefined)
+  router.push('/chat')
+  sidebarOpen.value = false
+}
+
+watch(() => route.params.chatId, (newChatId) => {
+  emit('update:chatId', newChatId as string | undefined)
+})
 </script>
 
 <style lang="css" scoped>
@@ -213,7 +346,7 @@ async function sendMessage() {
 }
 
 .top-panel {
-  flex: 0 0 auto; /* Don't grow or shrink, use auto height */
+  flex: 0 0 auto;
 }
 
 .chat-content {
@@ -222,30 +355,30 @@ async function sendMessage() {
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
-  padding-top: var(--v-layout-top); /* Use Vuetify's built-in layout spacing */
+  padding-top: var(--v-layout-top);
 }
 
 .messages-wrapper {
   flex: 1 1 auto;
   overflow-y: auto;
-  padding: 16px;
-  min-height: 0; /* Important for Firefox */
+  padding: 1rem;
+  min-height: 0;
 }
 
 .messages-container {
   width: 90%;
-  max-width: 1200px;
+  max-width: 75rem;
   margin: 0 auto;
 }
 
 .messages-list {
-  padding: 16px;
+  padding: 1rem;
   --v-border-opacity: 0;
 }
 
 .message-item {
   min-height: 0;
-  padding: 4px 0;
+  padding: 0.25rem 0;
 }
 
 .message-item::before,
@@ -255,24 +388,24 @@ async function sendMessage() {
 
 .user-message {
   text-align: right;
-  border-radius: 16px;
-  padding: 12px 16px;
-  margin: 8px 0;
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 0;
   background: rgba(var(--v-theme-primary), 0.1);
 }
 
 .bot-message {
   text-align: left;
-  margin-left: 30px;
-  border-radius: 16px;
-  padding: 12px 16px;
-  margin: 8px 0;
+  margin-left: 2rem;
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 0;
   background: rgba(var(--v-theme-surface-variant), 0.1);
 }
 
 .input-container {
   flex: 0 0 auto;
-  padding: 16px;
+  padding: 1rem;
   background: var(--v-theme-background);
   position: sticky;
   bottom: 0;
@@ -281,28 +414,82 @@ async function sendMessage() {
 
 .input-card {
   width: 90%;
-  max-width: 1200px;
+  max-width: 75rem;
   margin: 0 auto;
-  border-radius: 20px;
-  backdrop-filter: blur(10px);
+  border-radius: 1.25rem;
+  backdrop-filter: blur(0.625rem);
   overflow: hidden;
 }
 
 .message-input {
-  border-radius: 12px;
+  border-radius: 0.75rem;
 }
 
 .message-input :deep(.v-field__input) {
-  padding: 8px 16px;
-  min-height: 44px;
-  border-radius: 12px;
+  padding: 0.5rem 1rem;
+  min-height: 2.75rem;
+  border-radius: 0.75rem;
 }
 
 .message-input :deep(.v-field) {
-  border-radius: 12px;
+  border-radius: 0.75rem;
 }
 
 .v-btn {
-  border-radius: 12px;
+  border-radius: 0.75rem;
+}
+
+.new-chat-card {
+  width: 90%;
+  max-width: 75rem;
+  margin: 2rem auto;
+  padding: 1rem;
+}
+
+.margin-before {
+  margin: 0 2rem 1rem 2rem;
+}
+
+.chat-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.sidebar-header {
+  flex-shrink: 0;
+}
+
+.chat-list {
+  flex-grow: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.new-chat-button {
+  width: 100%;
+}
+
+.chat-list-item {
+  margin: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.chat-list-item:hover {
+  background-color: rgba(var(--v-theme-primary), 0.1);
+}
+
+.chat-list-item .delete-btn {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.chat-list-item:hover .delete-btn {
+  opacity: 1;
+}
+
+.v-list-item--active {
+  background-color: rgba(var(--v-theme-primary), 0.15);
 }
 </style>
