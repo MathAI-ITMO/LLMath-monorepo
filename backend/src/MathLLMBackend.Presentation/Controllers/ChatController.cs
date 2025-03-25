@@ -22,7 +22,7 @@ namespace MathLLMBackend.Presentation.Controllers
             _userManager = userManager;
         }
 
-        [HttpPost("create-chat")]
+        [HttpPost("create")]
         [Authorize]
         public async Task<IActionResult> CreateChat([FromBody] CreateChatRequestDto dto, CancellationToken ct)
         {
@@ -39,7 +39,7 @@ namespace MathLLMBackend.Presentation.Controllers
                 );
         }
 
-        [HttpGet("get-chats")]
+        [HttpGet("get")]
         [Authorize]
         public async Task<IActionResult> GetChats(CancellationToken ct)
         {
@@ -53,7 +53,7 @@ namespace MathLLMBackend.Presentation.Controllers
             return Ok(chats.Select(c => new ChatDto(c.Id, c.Name)).ToList());
         }
 
-        [HttpDelete("delete-chat/{id}")]
+        [HttpPost("delete/{id}")]
         [Authorize]
         public async Task<IActionResult> DeleteChat(Guid id, CancellationToken ct)
         {
