@@ -108,7 +108,7 @@
       <template v-else>
         <div ref="messagesCard" class="messages-wrapper">
           <v-card class="messages-container">
-            <v-list class="messages-list" lines="none">
+            <v-list class="messages-list" :lines="false">
               <template v-if="messages.length === 0">
                 <v-list-item>
                   <v-list-item-title class="text-center">
@@ -181,7 +181,7 @@ defineOptions({
 
 const emit = defineEmits(['chatSelected', 'chatDeleted', 'update:chatId'])
 
-import { ref, toRefs, watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import type { Chat } from '@/models/Chat'
 import type { Message } from '@/models/Message'
 import moment from 'moment'
@@ -199,8 +199,8 @@ const props = defineProps({
 
 const chatId = ref<string | undefined>(props.chatId)
 
-const inputCard = ref(null)
-const messagesCard = ref(null)
+const inputCard = ref<HTMLElement | null>(null)
+const messagesCard = ref<HTMLElement | null>(null)
 const chatName = ref<string>('')
 const sidebarOpen = ref<boolean>(false)
 const chats = ref<Chat[]>([])
@@ -212,8 +212,11 @@ const isSending = ref<boolean>(false)
 
 function scrollToBottom() {
   if (messagesCard.value) {
+    const card = messagesCard.value;
     setTimeout(() => {
-      messagesCard.value.scrollTop = messagesCard.value.scrollHeight
+      if (card) {
+        card.scrollTop = card.scrollHeight;
+      }
     }, 100)
   }
 }

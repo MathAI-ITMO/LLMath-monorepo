@@ -48,7 +48,6 @@ export function useChat() {
         responseType: 'stream',
       },
     })
-
     return resp.data
   }
 
