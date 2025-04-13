@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathLLMBackend.DataAccess",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathLLMBackend.Domain", "src\MathLLMBackend.Domain\MathLLMBackend.Domain.csproj", "{845E8C24-DAC6-458F-85A5-DE0BD87FB305}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathLLMBackend.GeolinClient", "src\MathLLMBackend.GeolinClient\MathLLMBackend.GeolinClient.csproj", "{5309CD07-D814-43DD-8957-BA6C6529BA0B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +37,10 @@ Global
 		{845E8C24-DAC6-458F-85A5-DE0BD87FB305}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{845E8C24-DAC6-458F-85A5-DE0BD87FB305}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{845E8C24-DAC6-458F-85A5-DE0BD87FB305}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5309CD07-D814-43DD-8957-BA6C6529BA0B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5309CD07-D814-43DD-8957-BA6C6529BA0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5309CD07-D814-43DD-8957-BA6C6529BA0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5309CD07-D814-43DD-8957-BA6C6529BA0B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -44,5 +50,6 @@ Global
 		{41613BFA-EC9A-4245-8B4C-FCF6D4959090} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{AE31F4D0-9BD4-411C-8982-AE54DC185108} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{845E8C24-DAC6-458F-85A5-DE0BD87FB305} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{5309CD07-D814-43DD-8957-BA6C6529BA0B} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

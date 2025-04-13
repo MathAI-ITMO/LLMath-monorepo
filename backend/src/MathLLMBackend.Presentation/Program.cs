@@ -1,5 +1,6 @@
 using MathLLMBackend.Core;
 using MathLLMBackend.DataAccess.Contexts;
+using MathLLMBackend.GeolinClient;
 using Microsoft.OpenApi.Models;
 using MathLLMBackend.Presentation.Middlewares;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -34,6 +35,7 @@ try
     builder.Host.UseNLog();
 
     CoreServicesRegistrar.Configure(builder.Services, configuration);
+    GeolinClientRegistrar.Configure(builder.Services, configuration);
     
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));

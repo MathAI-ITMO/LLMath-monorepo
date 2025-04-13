@@ -51,6 +51,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         modelBuilder.Entity<Message>()
             .Property(m => m.Text)
             .IsRequired();
+
+        modelBuilder.Entity<Message>()
+            .Property(m => m.IsSystemPrompt)
+            .IsRequired();
         
         base.OnModelCreating(modelBuilder);
     }

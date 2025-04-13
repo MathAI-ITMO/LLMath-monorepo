@@ -31,14 +31,24 @@ namespace MathLLMBackend.Presentation.Controllers
             {
                 return Unauthorized();
             }
-            
-            var chat = new Chat(dto.Name, userId);
-            await _chatService.Create(chat, ct);
-            return Ok(
-                new ChatDto(chat.Id, chat.Name)
-                );
-        }
 
+            if (dto.ProblemHash is null)
+            {
+                var chat = new Chat(dto.Name, userId);
+                await _chatService.Create(chat, ct);
+                return Ok(
+                    new ChatDto(chat.Id, chat.Name)
+                );
+            }
+            
+            var problemChat = new Chat(dto.Name, userId);
+            await _chatService.Create(problemChat, dto.ProblemHash, ct);
+            return Ok(
+                new ChatDto(problemChat.Id, problemChat.Name)
+            );
+            
+        }
+        
         [HttpGet("get")]
         [Authorize]
         public async Task<IActionResult> GetChats(CancellationToken ct)

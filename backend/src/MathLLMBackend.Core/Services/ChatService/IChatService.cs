@@ -7,6 +7,7 @@ namespace MathLLMBackend.Core.Services.ChatService;
 public interface IChatService
 {
     Task<Chat> Create(Chat chat, CancellationToken ct);
+    Task<Chat> Create(Chat chat, string problemHash, CancellationToken ct);
     Task Delete(Chat chat, CancellationToken ct);
     Task<List<Chat>> GetUserChats(string userId, CancellationToken ct);
     IAsyncEnumerable<string> CreateMessage(Message message, CancellationToken ct);

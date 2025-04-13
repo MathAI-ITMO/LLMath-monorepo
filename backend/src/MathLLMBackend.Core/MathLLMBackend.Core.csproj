@@ -10,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\MathLLMBackend.DataAccess\MathLLMBackend.DataAccess.csproj" />
     <ProjectReference Include="..\MathLLMBackend.Domain\MathLLMBackend.Domain.csproj" />
+    <ProjectReference Include="..\MathLLMBackend.GeolinClient\MathLLMBackend.GeolinClient.csproj" />
   </ItemGroup>
 
   <ItemGroup>

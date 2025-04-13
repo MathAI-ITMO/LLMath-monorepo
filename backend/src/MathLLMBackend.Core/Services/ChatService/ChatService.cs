@@ -1,8 +1,11 @@
 using System.Text;
 using MathLLMBackend.Core.Services.LlmService;
+using MathLLMBackend.Core.Services.PromptService;
 using MathLLMBackend.DataAccess.Contexts;
 using MathLLMBackend.Domain.Entities;
 using MathLLMBackend.Domain.Enums;
+using MathLLMBackend.GeolinClient;
+using MathLLMBackend.GeolinClient.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,11 +15,15 @@ public class ChatService : IChatService
 {
     private readonly AppDbContext _dbContext;
     private readonly ILlmService _llmService;
+    private readonly IGeolinApi _geolinApi;
+    private readonly IPromptService _promptService;
 
-    public ChatService(AppDbContext dbContext, ILlmService llmService)
+    public ChatService(AppDbContext dbContext, ILlmService llmService, IGeolinApi geolinApi, IPromptService promptService)
     {
         _dbContext = dbContext;
         _llmService = llmService;
+        _geolinApi = geolinApi;
+        _promptService = promptService;
     }
     
     public async Task<Chat> Create(Chat chat, CancellationToken ct)
@@ -25,7 +32,34 @@ public class ChatService : IChatService
         await _dbContext.SaveChangesAsync(ct);
         return res.Entity;
     }
-    
+
+    public async Task<Chat> Create(Chat chat, string problemHash, CancellationToken ct)
+    {
+        var problem = await _geolinApi.GetProblemCondition(
+            new ProblemConditionRequest()
+            {
+                Hash = problemHash,
+                Seed = new Random().Next(),
+                Lang = "ru"
+            });
+
+        var newChat = await Create(chat, ct);
+        
+        var systemPrompt = _promptService.GetSolverSystemPrompt();
+        var taskPrompt = _promptService.GetSolverTaskPrompt(problem.Condition);
+        
+        var systemMessage = new Message(newChat, systemPrompt, MessageType.System);
+        var userMessage = new Message(newChat, taskPrompt, MessageType.User, isSystemPrompt: true);
+        
+        _dbContext.Messages.AddRange(systemMessage);
+        await _dbContext.SaveChangesAsync(ct);
+
+        await foreach (var _ in CreateMessage(userMessage, ct))
+        { }
+        
+        return chat;
+    }
+
     public async Task<List<Chat>> GetUserChats(string userId, CancellationToken ct)
     {
         var chats = await _dbContext.Chats.Where(c => c.User.Id == userId).ToListAsync(cancellationToken: ct);
