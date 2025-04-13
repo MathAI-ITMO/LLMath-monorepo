@@ -1,5 +1,5 @@
+using MathLLMBackend.GeolinClient.HttpMessageHandlers;
 using MathLLMBackend.GeolinClient.Options;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Refit;
 
@@ -7,21 +7,20 @@ namespace MathLLMBackend.GeolinClient;
 
 public static class GeolinClientRegistrar
 {
-    public static IServiceCollection Configure(IServiceCollection services, ConfigurationManager configuration)
+    public static IServiceCollection Configure(IServiceCollection services, Action<GeolinClientOptions> configuration)
     {
-        var config = configuration.GetSection("Geolin").Get<GeolinClientOptions>() 
-                     ?? throw new ApplicationException("Geolin client configuration is missing");
-        
-        services.AddRefitClient<IGeolinApi>()
+        var config = new GeolinClientOptions();
+        configuration(config);
+
+        services
+            .Configure(configuration)
+            .AddTransient<AuthMessageHandler>()
+            .AddRefitClient<IGeolinApi>()
             .ConfigureHttpClient(c =>
             {
-                if (config.AuthorizationHeader is not null)
-                {
-                    c.DefaultRequestHeaders.Add("Authoirzation", config.AuthorizationHeader);
-                }
-
                 c.BaseAddress = new Uri(config.BaseAddress);
-            });
+            })
+            .AddHttpMessageHandler<AuthMessageHandler>();
 
         return services;
     }

@@ -11,6 +11,7 @@ dotnet tool install --global dotnet-ef
 ```
 3. Накатить миграции
 ``` sh
+$env:ASPNETCORE_ENVIRONMENT = "Development"
 dotnet ef database update --project src/MathLLMBackend.DataAccess --startup-project src/MathLLMBackend.Presentation
 ```
 4. (опционально) Создать пользователя
