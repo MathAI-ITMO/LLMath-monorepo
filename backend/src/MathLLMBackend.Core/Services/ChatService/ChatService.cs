@@ -1,4 +1,5 @@
 using System.Text;
+using MathLLMBackend.Core.Configuration;
 using MathLLMBackend.Core.Services.LlmService;
 using MathLLMBackend.Core.Services.PromptService;
 using MathLLMBackend.DataAccess.Contexts;
@@ -8,6 +9,8 @@ using MathLLMBackend.GeolinClient;
 using MathLLMBackend.GeolinClient.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace MathLLMBackend.Core.Services.ChatService;
 
@@ -17,18 +20,35 @@ public class ChatService : IChatService
     private readonly ILlmService _llmService;
     private readonly IGeolinApi _geolinApi;
     private readonly IPromptService _promptService;
+    private readonly IOptions<LlmServiceConfiguration> _llmConfig;
+    private readonly ILogger<ChatService> _logger;
 
-    public ChatService(AppDbContext dbContext, ILlmService llmService, IGeolinApi geolinApi, IPromptService promptService)
+    public ChatService(
+        AppDbContext dbContext, 
+        ILlmService llmService, 
+        IGeolinApi geolinApi, 
+        IPromptService promptService,
+        IOptions<LlmServiceConfiguration> llmConfig,
+        ILogger<ChatService> logger)
     {
         _dbContext = dbContext;
         _llmService = llmService;
         _geolinApi = geolinApi;
         _promptService = promptService;
+        _llmConfig = llmConfig;
+        _logger = logger;
     }
     
     public async Task<Chat> Create(Chat chat, CancellationToken ct)
     {
         var res = await _dbContext.Chats.AddAsync(chat, ct);
+        await _dbContext.Messages.AddAsync(
+            new Message(
+                res.Entity,
+                _promptService.GetDefaultSystemPrompt(),
+                MessageType.System)
+            , ct);
+        
         await _dbContext.SaveChangesAsync(ct);
         return res.Entity;
     }
@@ -43,19 +63,23 @@ public class ChatService : IChatService
                 Lang = "ru"
             });
 
-        var newChat = await Create(chat, ct);
+        _logger.LogInformation("Problem hash: {ProblemHash}, Problem condition: {ProblemCondition}", 
+            problemHash, problem.Condition);
         
-        var systemPrompt = _promptService.GetSolverSystemPrompt();
-        var taskPrompt = _promptService.GetSolverTaskPrompt(problem.Condition);
-        
-        var systemMessage = new Message(newChat, systemPrompt, MessageType.System);
-        var userMessage = new Message(newChat, taskPrompt, MessageType.User, isSystemPrompt: true);
-        
-        _dbContext.Messages.AddRange(systemMessage);
-        await _dbContext.SaveChangesAsync(ct);
+        var solution = await _llmService.SolveProblem(problem.Condition, ct);
+        _logger.LogInformation("Solution for problem {ProblemHash}: {Solution}", problemHash, solution);
 
-        await foreach (var _ in CreateMessage(userMessage, ct))
-        { }
+        var newChat = await _dbContext.Chats.AddAsync(chat, ct);
+        var tutorSystemPrompt = _promptService.GetTutorSystemPrompt();
+        var tutorSolutionPrompt = _promptService.GetTutorSolutionPrompt(solution);
+        
+        var tutorSystemMessage = new Message(newChat.Entity, tutorSystemPrompt, MessageType.System);
+        var tutorUserMessage = new Message(newChat.Entity, tutorSolutionPrompt, MessageType.User, isSystemPrompt: true);
+        var firstBotMessage = new Message(newChat.Entity, problem.Condition, MessageType.System);
+        
+        await _dbContext.Messages.AddRangeAsync([tutorSystemMessage, tutorUserMessage, firstBotMessage], ct);
+        
+        await _dbContext.SaveChangesAsync(ct);
         
         return chat;
     }
@@ -78,7 +102,7 @@ public class ChatService : IChatService
         _dbContext.Messages.Add(message);
         var messages = await _dbContext.Messages.Where(m => m.Chat == message.Chat).ToListAsync(cancellationToken: ct);
         messages.Add(message);
-        var text = _llmService.GenerateNextMessageText(messages);
+        var text = _llmService.GenerateNextMessageStreaming(messages, ct);
 
         var fullText = new StringBuilder();
         await foreach (var messageText in text)
