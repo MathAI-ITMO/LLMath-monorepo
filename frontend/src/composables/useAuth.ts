@@ -1,7 +1,19 @@
 import { ref } from 'vue';
 import Cookies from 'js-cookie';
-import axios, { type AxiosInstance } from 'axios';
+import axios, { type AxiosInstance, AxiosError } from 'axios';
 import type { LoginRequestDto } from '@/types/BackendDtos';
+
+interface RegisterErrorResponse {
+  type: string;
+  title: string;
+  status: number;
+  detail: string;
+  instance: string;
+  errors?: {
+    [key: string]: string[];
+  };
+  [key: string]: any;
+}
 
 const baseUrl = import.meta.env.VITE_MATHLLM_BACKEND_ADDRESS;
 
@@ -19,6 +31,26 @@ export function useAuth() {
     isAuthenticatedState.value = true;
   }
 
+  async function register(email: string, password: string): Promise<{ success: boolean; error?: RegisterErrorResponse }> {
+    try {
+      const dto: LoginRequestDto = { email, password };
+      await client.post('/register', dto);
+      await login(email, password);
+      return { success: true };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<RegisterErrorResponse>;
+        if (axiosError.response?.data) {
+          return {
+            success: false,
+            error: axiosError.response.data
+          };
+        }
+      }
+      throw error;
+    }
+  }
+
   async function logout(): Promise<void> {
     Cookies.remove('.AspNetCore.Identity.Application');
     isAuthenticatedState.value = false;
@@ -27,6 +59,7 @@ export function useAuth() {
   return {
     login,
     logout,
+    register,
     isAuthenticated: isAuthenticatedState
   };
 }
