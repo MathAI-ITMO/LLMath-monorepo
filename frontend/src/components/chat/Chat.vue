@@ -83,6 +83,21 @@
       <template v-if="!chatId">
         <v-card class="new-chat-card">
           <v-card-title class="pb-4">Создание нового чата</v-card-title>
+          <v-radio-group
+            v-model="chatMode"
+            inline
+            density="comfortable"
+            class="mb-4"
+          >
+            <v-radio
+              label="Чат"
+              value="chat"
+            ></v-radio>
+            <v-radio
+              label="Решение задач"
+              value="problem-solving"
+            ></v-radio>
+          </v-radio-group>
           <v-row align="center" no-gutters>
             <v-col>
               <v-text-field
@@ -92,17 +107,64 @@
                 density="comfortable"
                 bg-color="surface"
                 v-model="chatName"
+                class="chat-input"
               ></v-text-field>
             </v-col>
             <v-col cols="auto" class="pl-2">
               <v-btn
                 variant="tonal"
-                :disabled="!chatName"
+                :disabled="!chatName || (chatMode === 'problem-solving' && !selectedProblem)"
                 @click="onChatCreate"
-                height="48"
+                class="action-button"
               >Создать</v-btn>
             </v-col>
           </v-row>
+          <template v-if="chatMode === 'problem-solving'">
+            <v-row align="center" no-gutters class="mt-4">
+              <v-col>
+                <v-text-field
+                  v-model="searchQuery"
+                  label="Поиск задач"
+                  variant="solo"
+                  density="comfortable"
+                  bg-color="surface"
+                  prepend-inner-icon="mdi-magnify"
+                  clearable
+                  class="chat-input"
+                  hide-details="auto"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="auto" class="pl-2">
+                <v-btn
+                  variant="tonal"
+                  @click="onSearch"
+                  class="action-button"
+                >Поиск</v-btn>
+              </v-col>
+            </v-row>
+            <v-card class="mt-4 problems-card">
+              <v-list lines="one" class="problems-list">
+                <v-list-item
+                  v-for="problem in paginatedProblems"
+                  :key="problem"
+                  :value="problem"
+                  @click="selectedProblem = problem"
+                  :active="selectedProblem === problem"
+                  class="problem-item"
+                >
+                  <v-list-item-title>{{ problem }}</v-list-item-title>
+                </v-list-item>
+              </v-list>
+              <v-card-actions class="justify-center pa-2">
+                <v-pagination
+                  v-model="page"
+                  :length="pageCount"
+                  :total-visible="5"
+                  density="comfortable"
+                ></v-pagination>
+              </v-card-actions>
+            </v-card>
+          </template>
         </v-card>
       </template>
       <template v-else>
@@ -181,7 +243,7 @@ defineOptions({
 
 const emit = defineEmits(['chatSelected', 'chatDeleted', 'update:chatId'])
 
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import type { Chat } from '@/models/Chat'
 import type { Message } from '@/models/Message'
 import moment from 'moment'
@@ -202,6 +264,39 @@ const chatId = ref<string | undefined>(props.chatId)
 const inputCard = ref<HTMLElement | null>(null)
 const messagesCard = ref<HTMLElement | null>(null)
 const chatName = ref<string>('')
+const chatMode = ref<string>('chat')
+const selectedProblem = ref<string>('')
+const searchQuery = ref<string>('')
+const problems = [
+  'Решение квадратных уравнений',
+  'Решение систем линейных уравнений',
+  'Нахождение производных',
+  'Вычисление интегралов',
+  'Решение тригонометрических уравнений',
+  'Решение логарифмических уравнений',
+  'Геометрические задачи',
+  'Задачи на вероятность'
+]
+
+const filteredProblems = computed(() => {
+  if (!searchQuery.value) return problems
+  const query = searchQuery.value.toLowerCase()
+  return problems.filter(problem => problem.toLowerCase().includes(query))
+})
+
+const itemsPerPage = 5
+const page = ref(1)
+
+const pageCount = computed(() => {
+  return Math.ceil(filteredProblems.value.length / itemsPerPage)
+})
+
+const paginatedProblems = computed(() => {
+  const start = (page.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return filteredProblems.value.slice(start, end)
+})
+
 const sidebarOpen = ref<boolean>(false)
 const chats = ref<Chat[]>([])
 
@@ -279,6 +374,7 @@ async function sendMessage() {
 
   messages.value.push(userMessage)
   scrollToBottom()
+  currentMessageText.value = ""
 
   const botMessage = await getNextMessage(currentMessageText.value, chatId!.value)
 
@@ -300,7 +396,6 @@ async function sendMessage() {
   }
 
   isSending.value = false
-  currentMessageText.value = ""
 }
 
 async function onChatCreate() {
@@ -344,6 +439,10 @@ function createNewChat() {
   emit('update:chatId', undefined)
   router.push('/chat')
   sidebarOpen.value = false
+}
+
+function onSearch() {
+  console.log('Searching for:', searchQuery.value)
 }
 </script>
 
@@ -510,5 +609,39 @@ function createNewChat() {
 
 .v-list-item--active {
   background-color: rgba(var(--v-theme-primary), 0.15);
+}
+
+.chat-input :deep(.v-field__input) {
+  min-height: 48px !important;
+  padding: 0 1rem;
+}
+
+.chat-input :deep(.v-field) {
+  border-radius: 0.75rem;
+}
+
+.action-button {
+  height: 48px;
+  min-width: 100px;
+}
+
+.problems-card {
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.problems-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.problem-item {
+  transition: all 0.2s ease;
+  border-radius: 0.5rem;
+  margin: 0.25rem;
+}
+
+.problem-item:hover {
+  background-color: rgba(var(--v-theme-primary), 0.1);
 }
 </style>
