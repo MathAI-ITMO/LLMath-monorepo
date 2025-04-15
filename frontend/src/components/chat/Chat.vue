@@ -126,7 +126,7 @@
                 }"
                 density="compact"
               >
-                <v-icon v-if="message.type === 'bot'" class="bot-icon">mdi-robot</v-icon>
+                <v-icon v-if="message.type === 'bot'" class="bot-icon">mdi-robot</v-icon>                
                 <div v-html="formatMessage(message.text)"></div>
                 <small>{{ moment(message?.time).fromNow() }}</small>
               </v-list-item>
@@ -187,6 +187,9 @@ import type { Message } from '@/models/Message'
 import moment from 'moment'
 import { useChat } from '@/composables/useChat.ts'
 import { useRoute, useRouter } from 'vue-router'
+
+import 'katex/dist/katex.min.css'
+import katex from 'katex'
 
 const route = useRoute()
 const router = useRouter()
@@ -251,8 +254,19 @@ async function onChatUpdate() {
   scrollToBottom();
 }
 
+function bigFormula(str:string):string {
+    return katex.renderToString(str.substring(2, str.length - 2))
+}
+
+function normalFormula(str:string):string {
+    return katex.renderToString(str.substring(1, str.length - 1))
+}
+
 function formatMessage(message: string): string {
-  return message?.replace(/\n/g, '<br>')
+  let buff = message?.replace(/\n/g, '<br>')
+  buff = buff.replace(/(\$\$[^\$]+\$\$)/g, bigFormula)
+  buff = buff.replace(/(\$[^\$]+\$)/g, normalFormula)
+  return buff
 }
 
 async function sendMessage() {
