@@ -1,3 +1,4 @@
+using MathLLMBackend.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 
 namespace MathLLMBackend.Domain.Entities;
@@ -16,6 +17,6 @@ public class Chat
     public string Name { get; set; }
     public string UserId { get; set; }
     public IdentityUser User { get; set; }
-    
     public IEnumerable<Message> Messages { get; set; }
+    public ChatType? Type { get; set; }
 }

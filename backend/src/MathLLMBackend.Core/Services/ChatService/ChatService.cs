@@ -41,6 +41,7 @@ public class ChatService : IChatService
     
     public async Task<Chat> Create(Chat chat, CancellationToken ct)
     {
+        chat.Type = ChatType.Chat;
         var res = await _dbContext.Chats.AddAsync(chat, ct);
         await _dbContext.Messages.AddAsync(
             new Message(
@@ -55,6 +56,8 @@ public class ChatService : IChatService
 
     public async Task<Chat> Create(Chat chat, string problemHash, CancellationToken ct)
     {
+        chat.Type = ChatType.ProblemSolver;
+        
         var problem = await _geolinApi.GetProblemCondition(
             new ProblemConditionRequest()
             {
@@ -75,7 +78,7 @@ public class ChatService : IChatService
         
         var tutorSystemMessage = new Message(newChat.Entity, tutorSystemPrompt, MessageType.System);
         var tutorUserMessage = new Message(newChat.Entity, tutorSolutionPrompt, MessageType.User, isSystemPrompt: true);
-        var firstBotMessage = new Message(newChat.Entity, problem.Condition, MessageType.System);
+        var firstBotMessage = new Message(newChat.Entity, problem.Condition, MessageType.Assistant);
         
         await _dbContext.Messages.AddRangeAsync([tutorSystemMessage, tutorUserMessage, firstBotMessage], ct);
         
