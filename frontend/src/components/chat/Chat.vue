@@ -32,7 +32,7 @@
           class="chat-list-item"
         >
           <template v-slot:prepend>
-            <v-icon icon="mdi-chat" class="mr-2"></v-icon>
+            <v-icon :icon="chatItem.type === 'ProblemSolver' ? 'mdi-function' : 'mdi-chat'" class="mr-2"></v-icon>
           </template>
 
           <v-list-item-title>
@@ -88,6 +88,7 @@
             inline
             density="comfortable"
             class="mb-4"
+            :disabled="isCreatingChat"
           >
             <v-radio
               label="Чат"
@@ -108,17 +109,30 @@
                 bg-color="surface"
                 v-model="chatName"
                 class="chat-input"
+                :disabled="isCreatingChat"
+                :error="hasDuplicateName"
               ></v-text-field>
             </v-col>
             <v-col cols="auto" class="pl-2">
               <v-btn
                 variant="tonal"
-                :disabled="!chatName || (chatMode === 'problem-solving' && !selectedProblem)"
+                :disabled="isCreateDisabled"
                 @click="onChatCreate"
                 class="action-button"
-              >Создать</v-btn>
+                :loading="isCreatingChat"
+                :color="needsConfirmation ? 'error' : undefined"
+              >{{ needsConfirmation ? 'Подтвердить' : 'Создать' }}</v-btn>
             </v-col>
           </v-row>
+          <v-alert
+            v-if="hasDuplicateName && needsConfirmation"
+            type="error"
+            density="compact"
+            class="mt-2"
+            variant="tonal"
+          >
+            Чат с таким именем существует. Нажмите "Подтвердить" для подтверждения.
+          </v-alert>
           <template v-if="chatMode === 'problem-solving'">
             <v-row align="center" no-gutters class="mt-4">
               <v-col>
@@ -132,6 +146,8 @@
                   clearable
                   class="chat-input"
                   hide-details="auto"
+                  @keyup.enter="onSearch"
+                  :disabled="isCreatingChat"
                 ></v-text-field>
               </v-col>
               <v-col cols="auto" class="pl-2">
@@ -139,21 +155,34 @@
                   variant="tonal"
                   @click="onSearch"
                   class="action-button"
+                  :loading="isLoading"
+                  :disabled="isCreatingChat"
                 >Поиск</v-btn>
               </v-col>
             </v-row>
             <v-card class="mt-4 problems-card">
               <v-list lines="one" class="problems-list">
-                <v-list-item
-                  v-for="problem in paginatedProblems"
-                  :key="problem"
-                  :value="problem"
-                  @click="selectedProblem = problem"
-                  :active="selectedProblem === problem"
-                  class="problem-item"
-                >
-                  <v-list-item-title>{{ problem }}</v-list-item-title>
-                </v-list-item>
+                <template v-if="isLoading">
+                  <v-list-item v-for="n in 5" :key="n">
+                    <v-skeleton-loader type="list-item"></v-skeleton-loader>
+                  </v-list-item>
+                </template>
+                <template v-else>
+                  <v-list-item
+                    v-for="problem in problems"
+                    :key="problem.hash"
+                    :value="problem.name"
+                    @click="() => {
+                      selectedProblem = problem.name;
+                      selectedProblemHash = problem.hash;
+                    }"
+                    :active="selectedProblem === problem.name"
+                    class="problem-item"
+                    :disabled="isCreatingChat"
+                  >
+                    <v-list-item-title>{{ problem.name }}</v-list-item-title>
+                  </v-list-item>
+                </template>
               </v-list>
               <v-card-actions class="justify-center pa-2">
                 <v-pagination
@@ -161,6 +190,7 @@
                   :length="pageCount"
                   :total-visible="5"
                   density="comfortable"
+                  :disabled="isLoading || isCreatingChat"
                 ></v-pagination>
               </v-card-actions>
             </v-card>
@@ -249,11 +279,12 @@ import type { Message } from '@/models/Message'
 import moment from 'moment'
 import { useChat } from '@/composables/useChat.ts'
 import { useRoute, useRouter } from 'vue-router'
+import type { ProblemDto } from '@/types/BackendDtos'
 
 const route = useRoute()
 const router = useRouter()
 
-const { getChatById, getChatMessages, getNextMessage, createChat, getChats, deleteChat } = useChat()
+const { getChatById, getChatMessages, getNextMessage, createChat, getChats, deleteChat, getProblems } = useChat()
 
 const props = defineProps({
   chatId: String,
@@ -266,35 +297,29 @@ const messagesCard = ref<HTMLElement | null>(null)
 const chatName = ref<string>('')
 const chatMode = ref<string>('chat')
 const selectedProblem = ref<string>('')
+const selectedProblemHash = ref<string>('')
 const searchQuery = ref<string>('')
-const problems = [
-  'Решение квадратных уравнений',
-  'Решение систем линейных уравнений',
-  'Нахождение производных',
-  'Вычисление интегралов',
-  'Решение тригонометрических уравнений',
-  'Решение логарифмических уравнений',
-  'Геометрические задачи',
-  'Задачи на вероятность'
-]
-
-const filteredProblems = computed(() => {
-  if (!searchQuery.value) return problems
-  const query = searchQuery.value.toLowerCase()
-  return problems.filter(problem => problem.toLowerCase().includes(query))
-})
-
-const itemsPerPage = 5
-const page = ref(1)
+const problems = ref<ProblemDto[]>([])
+const totalProblems = ref<number>(0)
+const page = ref<number>(1)
+const itemsPerPage = 10
+const isLoading = ref<boolean>(false)
+const isCreatingChat = ref<boolean>(false)
+const hasDuplicateName = ref<boolean>(false)
+const needsConfirmation = ref<boolean>(false)
 
 const pageCount = computed(() => {
-  return Math.ceil(filteredProblems.value.length / itemsPerPage)
+  return Math.ceil(totalProblems.value / itemsPerPage)
 })
 
-const paginatedProblems = computed(() => {
-  const start = (page.value - 1) * itemsPerPage
-  const end = start + itemsPerPage
-  return filteredProblems.value.slice(start, end)
+const isCreateDisabled = computed(() => {
+  if (!chatName.value || (chatMode.value === 'problem-solving' && !selectedProblem) || isCreatingChat.value) {
+    return true
+  }
+  if (hasDuplicateName.value && !needsConfirmation.value) {
+    return false
+  }
+  return false
 })
 
 const sidebarOpen = ref<boolean>(false)
@@ -320,6 +345,7 @@ onMounted(async () => {
   chatId.value = route.params.chatId as string | undefined;
   emit('update:chatId', chatId.value);
   await onChatUpdate();
+  await fetchProblems();
 })
 
 watch(() => route.params.chatId, async (newChatId) => {
@@ -399,11 +425,26 @@ async function sendMessage() {
 }
 
 async function onChatCreate() {
-  const id = await createChat(chatName.value)
-  emit('chatSelected', id)
-  sidebarOpen.value = false
+  try {
+    if (hasDuplicateName.value && !needsConfirmation.value) {
+      needsConfirmation.value = true
+      return
+    }
 
-  await onChatUpdate()
+    isCreatingChat.value = true
+    const dto: CreateChatDto = {
+      name: chatName.value,
+      problemHash: chatMode.value === 'problem-solving' ? selectedProblemHash.value : undefined,
+      type: chatMode.value === 'problem-solving' ? 'ProblemSolver' : 'Chat'
+    }
+    const id = await createChat(dto)
+    emit('chatSelected', id)
+    sidebarOpen.value = false
+
+    await onChatUpdate()
+  } finally {
+    isCreatingChat.value = false
+  }
 }
 
 async function onChatSelect(id: string) {
@@ -441,9 +482,32 @@ function createNewChat() {
   sidebarOpen.value = false
 }
 
-function onSearch() {
-  console.log('Searching for:', searchQuery.value)
+async function onSearch() {
+  page.value = 1
+  await fetchProblems()
 }
+
+async function fetchProblems() {
+  try {
+    isLoading.value = true
+    const response = await getProblems(page.value, searchQuery.value)
+    problems.value = response.problems
+    totalProblems.value = response.number
+  } catch (error) {
+    console.error('Error fetching problems:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+watch(page, async () => {
+  await fetchProblems()
+})
+
+watch(chatName, () => {
+  hasDuplicateName.value = chats.value.some(chat => chat.name === chatName.value)
+  needsConfirmation.value = false
+})
 </script>
 
 <style lang="css" scoped>

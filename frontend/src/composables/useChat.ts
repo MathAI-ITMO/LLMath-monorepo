@@ -1,7 +1,7 @@
 import axios, { type AxiosInstance } from 'axios'
 import type { Chat } from '@/models/Chat'
 import type { Message } from '@/models/Message'
-import type { ChatDto, CreateChatDto, MessageDto, SendMessageRequestDto } from '@/types/BackendDtos'
+import type { ChatDto, CreateChatDto, MessageDto, SendMessageRequestDto, ProblemsResponseDto } from '@/types/BackendDtos'
 import { Stream } from 'stream'
 
 const baseUrl = import.meta.env.VITE_MATHLLM_BACKEND_ADDRESS
@@ -11,8 +11,7 @@ export function useChat() {
     baseURL: baseUrl,
   })
 
-  async function createChat(name: string): Promise<string> {
-    const dto: CreateChatDto = { name }
+  async function createChat(dto: CreateChatDto): Promise<string> {
     console.log(dto)
     const res = await client.post('/api/chat/create', dto, { withCredentials: true })
     return res.data.id
@@ -32,12 +31,12 @@ export function useChat() {
 
   async function getChats(): Promise<Chat[]> {
     const resp = await client.get<ChatDto[]>('/api/chat/get', { withCredentials: true })
-    return resp.data.map((c) => ({ id: c.id, name: c.name }) as Chat)
+    return resp.data.map((c) => ({ id: c.id, name: c.name, type: c.type }) as Chat)
   }
 
   async function getChatById(id: string): Promise<Chat | undefined> {
     const resp = await client.get<ChatDto[]>('/api/chat/get', { withCredentials: true })
-    return resp.data.map((c) => ({ id: c.id, name: c.name }) as Chat).find((c) => c.id === id)
+    return resp.data.map((c) => ({ id: c.id, name: c.name, type: c.type }) as Chat).find((c) => c.id === id)
   }
 
   async function getNextMessage(text: string, chatId: string): Promise<Stream<string>> {
@@ -67,6 +66,18 @@ export function useChat() {
     )
   }
 
+  async function getProblems(page: number, prefix?: string): Promise<ProblemsResponseDto> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      size: '10'
+    });
+    if (prefix) {
+      params.append('prefix', prefix);
+    }
+    const resp = await client.get<ProblemsResponseDto>(`/api/Tasks/problems?${params.toString()}`, { withCredentials: true });
+    return resp.data;
+  }
+
   return {
     createChat,
     deleteChat,
@@ -74,5 +85,6 @@ export function useChat() {
     getChatById,
     getNextMessage,
     getChatMessages,
+    getProblems,
   }
 }
