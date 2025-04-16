@@ -1,4 +1,5 @@
 using MathLLMBackend.Domain.Entities;
+using MathLLMBackend.Domain.Enums;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 namespace MathLLMBackend.DataAccess.Contexts;
@@ -50,6 +51,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         
         modelBuilder.Entity<Message>()
             .Property(m => m.Text)
+            .IsRequired();
+
+        modelBuilder.Entity<Message>()
+            .Property(m => m.IsSystemPrompt)
+            .IsRequired();
+
+        modelBuilder.Entity<Chat>()
+            .Property(c => c.Type)
             .IsRequired();
         
         base.OnModelCreating(modelBuilder);

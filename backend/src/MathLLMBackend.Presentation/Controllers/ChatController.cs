@@ -1,5 +1,6 @@
 using MathLLMBackend.Core.Services.ChatService;
 using MathLLMBackend.Domain.Entities;
+using MathLLMBackend.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using MathLLMBackend.Presentation.Dtos.Chats;
@@ -32,13 +33,24 @@ namespace MathLLMBackend.Presentation.Controllers
                 return Unauthorized();
             }
             
+            // TODO: refactor move logic to service
             var chat = new Chat(dto.Name, userId);
-            await _chatService.Create(chat, ct);
-            return Ok(
-                new ChatDto(chat.Id, chat.Name)
-                );
-        }
 
+            if (dto.ProblemHash is null)
+            {
+                await _chatService.Create(chat, ct);
+            }
+            else
+            {
+                await _chatService.Create(chat, dto.ProblemHash, ct);
+            }
+            
+            return Ok(
+                new ChatDto(chat.Id, chat.Name, chat.Type.ToString())
+            );
+            
+        }
+        
         [HttpGet("get")]
         [Authorize]
         public async Task<IActionResult> GetChats(CancellationToken ct)
@@ -50,7 +62,7 @@ namespace MathLLMBackend.Presentation.Controllers
             }
             
             var chats = await _chatService.GetUserChats(userId, ct);
-            return Ok(chats.Select(c => new ChatDto(c.Id, c.Name)).ToList());
+            return Ok(chats.Select(c => new ChatDto(c.Id, c.Name, c.Type.ToString())).ToList());
         }
 
         [HttpPost("delete/{id}")]

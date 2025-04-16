@@ -84,7 +84,8 @@ using MathLLMBackend.Domain.Entities;
                 var messages = await _service.GetAllMessageFromChat(chat, ct);
                 
                 return Ok(
-                    messages.Select(m => new MessageDto(m.Id, m.ChatId, m.Text, m.MessageType.ToString(), m.CreatedAt))
+                    messages.Where(m => !m.IsSystemPrompt)
+                        .Select(m => new MessageDto(m.Id, m.ChatId, m.Text, m.MessageType.ToString(), m.CreatedAt))
                 );
             }
         }
