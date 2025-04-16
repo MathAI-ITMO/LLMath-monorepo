@@ -1,5 +1,6 @@
 using MathLLMBackend.Core;
-using MathLLMBackend.DataAccess.Contexts;
+using MathLLMBackend.DataAccess;
+using MathLLMBackend.DataAccess.Services;
 using MathLLMBackend.GeolinClient;
 using MathLLMBackend.GeolinClient.Options;
 using Microsoft.OpenApi.Models;
@@ -10,12 +11,12 @@ using NLog;
 using NLog.Web;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using MathLLMBackend.DataAccess.Contexts;
 
 var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
 
 try
 {
-
     var builder = WebApplication.CreateBuilder(args);
     builder.Services.AddHttpLogging(o => { });
     var configuration = builder.Configuration;
@@ -37,9 +38,7 @@ try
 
     CoreServicesRegistrar.Configure(builder.Services, configuration);
     GeolinClientRegistrar.Configure(builder.Services, configuration.GetSection(nameof(GeolinClientOptions)).Bind);
-    
-    builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
+    DataAccessRegistrar.Configure(builder.Services, configuration);
     
     builder.Services.AddIdentityApiEndpoints<IdentityUser>(options =>
     {
@@ -98,6 +97,12 @@ try
         });
 
     var app = builder.Build();
+
+    using (var scope = app.Services.CreateScope())
+    {
+        var warmupService = scope.ServiceProvider.GetRequiredService<WarmupService>();
+        await warmupService.WarmupAsync();
+    }
 
     if (app.Environment.IsDevelopment())
     {

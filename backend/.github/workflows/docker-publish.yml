@@ -8,8 +8,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  API_IMAGE_NAME: ${{ github.repository }}-api
-  MIGRATIONS_IMAGE_NAME: ${{ github.repository }}-migrations
+  API_IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build-and-push:
@@ -46,39 +45,14 @@ jobs:
             type=sha,format=long
             type=raw,value=prerelease-${{ github.head_ref }},enable=${{ github.event_name == 'pull_request' }}
 
-      - name: Extract metadata (tags, labels) for Migrations
-        id: meta-migrations
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.MIGRATIONS_IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,format=long
-            type=raw,value=prerelease-${{ github.head_ref }},enable=${{ github.event_name == 'pull_request' }}
-
       - name: Build and push API image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           tags: ${{ steps.meta-api.outputs.tags }}
           labels: ${{ steps.meta-api.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64
-
-      - name: Build and push Migrations image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile.migrations
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta-migrations.outputs.tags }}
-          labels: ${{ steps.meta-migrations.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
