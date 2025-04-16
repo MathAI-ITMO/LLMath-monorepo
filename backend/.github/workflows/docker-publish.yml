@@ -38,6 +38,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.API_IMAGE_NAME }}
           tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
             type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern={{version}}
@@ -66,6 +67,18 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta-api.outputs.tags }}
           labels: ${{ steps.meta-api.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Build and push Migrations image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.migrations
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-migrations.outputs.tags }}
+          labels: ${{ steps.meta-migrations.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
