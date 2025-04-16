@@ -262,11 +262,29 @@ function normalFormula(str:string):string {
     return katex.renderToString(str.substring(1, str.length - 1))
 }
 
+function proceedWrappedSubStrings(str: string, lSymbols: string, rSymbols: string, replacer: (str: string) => string): string {
+  let res = str
+  let start = res.indexOf(lSymbols)
+  let end = res.indexOf(rSymbols, start + lSymbols.length)
+  while (start != -1 && end != -1) {
+    res = res.substring(0, start) + replacer(res.substring(start, end + rSymbols.length)) + res.substring(end + rSymbols.length)
+    start = res.indexOf(lSymbols)
+    end = res.indexOf(rSymbols, start + lSymbols.length)
+  }
+  return res
+}
+
 function formatMessage(message: string): string {
-  let buff = message?.replace(/\n/g, '<br>')
-  buff = buff.replace(/(\$\$[^\$]+\$\$)/g, bigFormula)
-  buff = buff.replace(/(\$[^\$]+\$)/g, normalFormula)
-  return buff
+  let buff = message ?? ''
+  buff = proceedWrappedSubStrings(message, '$$', '$$', bigFormula)
+  buff = proceedWrappedSubStrings(buff, '$', '$', normalFormula)
+  buff = proceedWrappedSubStrings(buff, '**', '**', (str: string)=>{return `<b>${str.substring(2, str.length - 2)}<\/b>`})
+  buff = proceedWrappedSubStrings(buff, '\`\`\`', '\`\`\`', (str: string)=>{return `<code>${str.substring(3, str.length - 3)}<\/code>`})
+  buff = proceedWrappedSubStrings(buff, '\`', '\`', (str: string)=>{return `<u>${str.substring(1, str.length - 1)}<\/u>`})
+  buff = proceedWrappedSubStrings(buff, '\\textbf{', '}', (str: string)=>{return `<b>${str.substring(8, str.length - 1)}<\/b>`})
+  buff = buff.replace(/\\\\/g, "<br>")
+  buff = buff.replace(/\n/g, '<br>')
+ return buff
 }
 
 async function sendMessage() {
