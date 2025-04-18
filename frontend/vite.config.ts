@@ -1,17 +1,15 @@
 import { fileURLToPath, URL } from 'node:url'
-import fs from 'node:fs';
 
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig, loadEnv, UserConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 
-
-
 // https://vite.dev/config/
-export default defineConfig(({ command, mode }) => {
+export default defineConfig(({ mode }): UserConfig => {
   const env = loadEnv(mode, process.cwd(), '');
+
   return {
     plugins: [
       vue({
@@ -37,13 +35,13 @@ export default defineConfig(({ command, mode }) => {
     },
     server: {
       host: "0.0.0.0",
-      allowedHosts: [
-        '.net.ecm',
-        '.updatemirror.cc',
-      ],
-      https: false,
+      allowedHosts: true,
+      https: undefined,
       port: 8080,
       strictPort: true,
+    },
+    preview: {
+      allowedHosts: true
     },
     base: env.VUE_APP_PATH_SUFFIX ? ('/' + env.VUE_APP_PATH_SUFFIX + '/') : undefined,
   }

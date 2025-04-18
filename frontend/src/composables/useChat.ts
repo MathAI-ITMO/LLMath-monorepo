@@ -2,7 +2,10 @@ import axios, { type AxiosInstance } from 'axios'
 import type { Chat } from '@/models/Chat'
 import type { Message } from '@/models/Message'
 import type { ChatDto, CreateChatDto, MessageDto, SendMessageRequestDto, ProblemsResponseDto } from '@/types/BackendDtos'
-import { Stream } from 'stream'
+
+interface Stream<T> {
+  [Symbol.asyncIterator](): AsyncIterator<T>;
+}
 
 const baseUrl = import.meta.env.VITE_MATHLLM_BACKEND_ADDRESS
 
@@ -43,9 +46,7 @@ export function useChat() {
     const dto: SendMessageRequestDto = { chatId, text }
     const resp = await client.post<Stream<string>>('/api/Message/complete', dto, {
       withCredentials: true,
-      headers: {
-        responseType: 'stream',
-      },
+      responseType: 'stream',
     })
     return resp.data
   }

@@ -218,7 +218,7 @@
                 }"
                 density="compact"
               >
-                <v-icon v-if="message.type === 'bot'" class="bot-icon">mdi-robot</v-icon>                
+                <v-icon v-if="message.type === 'bot'" class="bot-icon">mdi-robot</v-icon>
                 <div v-html="formatMessage(message.text)"></div>
                 <small>{{ moment(message?.time).fromNow() }}</small>
               </v-list-item>
@@ -279,7 +279,7 @@ import type { Message } from '@/models/Message'
 import moment from 'moment'
 import { useChat } from '@/composables/useChat.ts'
 import { useRoute, useRouter } from 'vue-router'
-import type { ProblemDto } from '@/types/BackendDtos'
+import type { ProblemDto, CreateChatDto } from '@/types/BackendDtos'
 
 import 'katex/dist/katex.min.css'
 import katex from 'katex'
@@ -316,7 +316,7 @@ const pageCount = computed(() => {
 })
 
 const isCreateDisabled = computed(() => {
-  if (!chatName.value || (chatMode.value === 'problem-solving' && !selectedProblem) || isCreatingChat.value) {
+  if (!chatName.value || (chatMode.value === 'problem-solving' && !selectedProblem.value) || isCreatingChat.value) {
     return true
   }
   if (hasDuplicateName.value && !needsConfirmation.value) {
@@ -432,9 +432,11 @@ async function sendMessage() {
 
   messages.value.push(userMessage)
   scrollToBottom()
+
+  const messageText = currentMessageText.value
   currentMessageText.value = ""
 
-  const botMessage = await getNextMessage(currentMessageText.value, chatId!.value)
+  const botMessage = await getNextMessage(messageText, chatId!.value)
 
   const message : Message = {
       id: "",
