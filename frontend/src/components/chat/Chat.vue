@@ -397,14 +397,19 @@ function proceedWrappedSubStrings(str: string, lSymbols: string, rSymbols: strin
 
 function formatMessage(message: string): string {
   let buff = message ?? ''
-  buff = proceedWrappedSubStrings(message, '$$', '$$', bigFormula)
+  buff = proceedWrappedSubStrings(buff, '$$', '$$', bigFormula)
+  buff = proceedWrappedSubStrings(buff, '\\\[', '\\\]', bigFormula)
+  buff = proceedWrappedSubStrings(buff, '\\\(', '\\\)', bigFormula)
   buff = proceedWrappedSubStrings(buff, '$', '$', normalFormula)
   buff = proceedWrappedSubStrings(buff, '**', '**', (str: string)=>{return `<b>${str.substring(2, str.length - 2)}<\/b>`})
   buff = proceedWrappedSubStrings(buff, '\`\`\`', '\`\`\`', (str: string)=>{return `<code>${str.substring(3, str.length - 3)}<\/code>`})
   buff = proceedWrappedSubStrings(buff, '\`', '\`', (str: string)=>{return `<u>${str.substring(1, str.length - 1)}<\/u>`})
   buff = proceedWrappedSubStrings(buff, '\\textbf{', '}', (str: string)=>{return `<b>${str.substring(8, str.length - 1)}<\/b>`})
-  buff = buff.replace(/\\\\/g, "<br>")
-  buff = buff.replace(/\n/g, '<br>')
+  buff = buff.replace(/\\\\/g, '\n')
+  buff = buff.replace(/^[ ]*### .*/gm, (str: string)=>{return `<h3>${str.substring(4)}<\/h3>`})
+  buff = buff.replace(/^[ ]*## .*/gm, (str: string)=>{return `<h2>${str.substring(3)}<\/h2>`})
+  buff = buff.replace(/^[ ]*# .*/gm, (str: string)=>{return `<h1>${str.substring(2)}<\/h1>`})
+  buff = buff.replace(/\n/g, '<br>')  
  return buff
 }
 
