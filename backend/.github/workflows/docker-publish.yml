@@ -38,10 +38,9 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.API_IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=ref,event=branch,enable=${{ github.ref != 'refs/heads/master' }}
+            type=semver,pattern={{version}},enable=${{ github.ref == 'refs/heads/master' }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ github.ref == 'refs/heads/master' }}
             type=sha,format=long
             type=raw,value=prerelease-${{ github.head_ref }},enable=${{ github.event_name == 'pull_request' }}
 
