@@ -2,7 +2,8 @@ using MathLLMBackend.Core.Services.GeolinService;
 using MathLLMBackend.Presentation.Dtos.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-
+using MathLLMBackend.GeolinClient;
+using MathLLMBackend.GeolinClient.Models;
 namespace MathLLMBackend.Presentation.Controllers;
 
 [Route("api/[controller]")]
@@ -10,12 +11,14 @@ namespace MathLLMBackend.Presentation.Controllers;
 public class TasksController : ControllerBase
 {
     private readonly IGeolinService _geolinService;
-    private readonly ILogger<TasksController> _logger;
+    private readonly IGeolinApi _geolinApi;
+    private readonly ILogger<TasksController> _logger;  
 
-    public TasksController(IGeolinService geolinService, ILogger<TasksController> logger)
+    public TasksController(IGeolinService geolinService, ILogger<TasksController> logger, IGeolinApi geolinApi)
     {
         _geolinService = geolinService;
         _logger = logger;
+        _geolinApi = geolinApi;
     }
 
     [HttpGet("problems")]
@@ -37,5 +40,22 @@ public class TasksController : ControllerBase
         );
 
         return Ok(result);
+    }
+
+    [HttpPost("saveProblem")]
+    [Authorize]
+    public async Task<IActionResult> SaveProblem(string name, string problemHash, [FromQuery] int variationCount = 10, CancellationToken ct = default)
+    {
+        var problem = await _geolinApi.GetProblemCondition(
+            new ProblemConditionRequest()
+            {
+                Hash = problemHash,
+                Seed = new Random().Next(),
+                Lang = "ru"
+            });
+        
+        
+    
+        return Ok();
     }
 } 
