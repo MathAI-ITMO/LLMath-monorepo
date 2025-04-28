@@ -21,7 +21,7 @@ public class ProblemsService : IProblemsService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching problems from mongodb");
+            _logger.LogError(ex, "Error fetching problems from external problems service {message}", ex.Message);
             throw;
         }
     }
@@ -33,7 +33,7 @@ public class ProblemsService : IProblemsService
         }
                 catch (Exception ex)
         {
-            _logger.LogError(ex, "Error saving problem in mongodb");
+            _logger.LogError(ex, "Error fetching problems from external problems service {message}", ex.Message);
             throw;
         }
     }

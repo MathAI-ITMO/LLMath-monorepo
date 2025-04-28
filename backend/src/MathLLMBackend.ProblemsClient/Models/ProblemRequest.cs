@@ -5,14 +5,14 @@ namespace MathLLMBackend.ProblemsClient.Models;
 public class ProblemRequest
 {
     [JsonPropertyName("statement")]
-    public string _statement { get; set; } = string.Empty;
+    public string Statement { get; set; } = string.Empty;
 
     [JsonPropertyName("geolin_ans_key")]
-    public GeolinKey _geolinAnsKey { get; set; } = new();
+    public GeolinKey GeolinAnsKey { get; set; } = new();
     
     [JsonPropertyName("result")]
-    public string _result { get; set; } = string.Empty;
+    public string Result { get; set; } = string.Empty;
 
     [JsonPropertyName("solution")]
-    public Solution _solution { get; set; } = new();
+    public Solution Solution { get; set; } = new();
 }

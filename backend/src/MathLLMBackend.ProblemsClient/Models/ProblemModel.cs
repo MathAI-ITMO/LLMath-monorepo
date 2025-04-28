@@ -2,14 +2,9 @@ using System.Text.Json.Serialization;
 
 namespace MathLLMBackend.ProblemsClient.Models;
 
-public class AbstractProperty
-{
-
-}
 public class AdditionalProperty
 {
-    [JsonPropertyName("additionalProp1")]
-    public AbstractProperty AdditionalProp1 { get; set;} = new();
+
 }
 
 public class ProblemStep
@@ -30,32 +25,32 @@ public class ProblemStep
 public class GeolinKey
 {
     [JsonPropertyName("hash")]
-    public string _hash { get; set; } = string.Empty;
+    public string Hash { get; set; } = string.Empty;
 
     [JsonPropertyName("seed")]
-    public int _seed { get; set; }
+    public int Seed { get; set; }
 }
 
 public class Solution
 {
     [JsonPropertyName("steps")]
-    public List<ProblemStep> _steps { get; set; } = new();
+    public List<ProblemStep> Steps { get; set; } = new();
 }
 
 public class Problem
 {
     [JsonPropertyName("_id")]
-    public string? _id { get; set; }
+    public string? Id { get; set; }
 
     [JsonPropertyName("statement")]
-    public string _statement { get; set; } = string.Empty;
+    public string Statement { get; set; } = string.Empty;
 
     [JsonPropertyName("geolin_ans_key")]
-    public GeolinKey _geolinAnsKey { get; set; } = new();
+    public GeolinKey GeolinAnsKey { get; set; } = new();
 
     [JsonPropertyName("result")]
-    public string _result { get; set; } = string.Empty;
+    public string Result { get; set; } = string.Empty;
 
     [JsonPropertyName("solution")]
-    public Solution _solution { get; set; } = new();
+    public Solution Solution { get; set; } = new();
 }

@@ -8,13 +8,15 @@ RUN mkdir -p src/MathLLMBackend.Presentation \
     src/MathLLMBackend.Core \
     src/MathLLMBackend.DataAccess \
     src/MathLLMBackend.Domain \
-    src/MathLLMBackend.GeolinClient
+    src/MathLLMBackend.GeolinClient \
+    src/MathLLMBackend.ProblemsClient
 
 COPY src/MathLLMBackend.Presentation/MathLLMBackend.Presentation.csproj ./src/MathLLMBackend.Presentation/
 COPY src/MathLLMBackend.Core/MathLLMBackend.Core.csproj ./src/MathLLMBackend.Core/
 COPY src/MathLLMBackend.DataAccess/MathLLMBackend.DataAccess.csproj ./src/MathLLMBackend.DataAccess/
 COPY src/MathLLMBackend.Domain/MathLLMBackend.Domain.csproj ./src/MathLLMBackend.Domain/
 COPY src/MathLLMBackend.GeolinClient/MathLLMBackend.GeolinClient.csproj ./src/MathLLMBackend.GeolinClient/
+COPY src/MathLLMBackend.ProblemsClient/MathLLMBackend.ProblemsClient.csproj ./src/MathLLMBackend.ProblemsClient/
 
 RUN dotnet restore
 

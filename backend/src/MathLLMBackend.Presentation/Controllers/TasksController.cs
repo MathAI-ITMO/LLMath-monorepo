@@ -63,11 +63,11 @@ public class TasksController : ControllerBase
                 });
             var problemMongo = new ProblemRequest()
             {
-                _statement = problem.Condition,
-                _geolinAnsKey = new GeolinKey()
+                Statement = problem.Condition,
+                GeolinAnsKey = new GeolinKey()
                 {
-                    _hash = problemHash,
-                    _seed = seed
+                    Hash = problemHash,
+                    Seed = seed
                 }
             };
             result.Add(await _problemsAPI.CreateProblem(problemMongo));
