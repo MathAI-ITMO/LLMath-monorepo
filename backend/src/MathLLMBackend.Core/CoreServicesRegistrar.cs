@@ -3,6 +3,7 @@ using MathLLMBackend.Core.Services.ChatService;
 using MathLLMBackend.Core.Services.GeolinService;
 using MathLLMBackend.Core.Services.LlmService;
 using MathLLMBackend.Core.Services.PromptService;
+using MathLLMBackend.Core.Services.ProblemsService;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,6 +17,7 @@ public class CoreServicesRegistrar
         services.AddTransient<ILlmService, LlmService>();
         services.AddTransient<IPromptService, PromptService>();
         services.AddTransient<IGeolinService, GeolinService>();
+        services.AddTransient<IProblemsService, ProblemsService>();
         
         services.Configure<LlmServiceConfiguration>(configuration.GetSection("OpenAi"));
         services.Configure<PromptConfiguration>(configuration.GetSection("DefaultPrompts"));

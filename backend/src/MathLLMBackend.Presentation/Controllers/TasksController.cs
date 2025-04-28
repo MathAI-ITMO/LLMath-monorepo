@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using MathLLMBackend.GeolinClient;
 using MathLLMBackend.GeolinClient.Models;
+using MathLLMBackend.ProblemsClient;
+using MathLLMBackend.ProblemsClient.Models;
 namespace MathLLMBackend.Presentation.Controllers;
 
 [Route("api/[controller]")]
@@ -12,13 +14,15 @@ public class TasksController : ControllerBase
 {
     private readonly IGeolinService _geolinService;
     private readonly IGeolinApi _geolinApi;
+    private readonly IProblemsAPI _problemsAPI;
     private readonly ILogger<TasksController> _logger;  
 
-    public TasksController(IGeolinService geolinService, ILogger<TasksController> logger, IGeolinApi geolinApi)
+    public TasksController(IGeolinService geolinService, ILogger<TasksController> logger, IGeolinApi geolinApi, IProblemsAPI problemsAPI)
     {
         _geolinService = geolinService;
         _logger = logger;
         _geolinApi = geolinApi;
+        _problemsAPI = problemsAPI;
     }
 
     [HttpGet("problems")]
@@ -44,18 +48,38 @@ public class TasksController : ControllerBase
 
     [HttpPost("saveProblem")]
     [Authorize]
-    public async Task<IActionResult> SaveProblem(string name, string problemHash, [FromQuery] int variationCount = 10, CancellationToken ct = default)
+    public async Task<IActionResult> SaveProblem(string name, string problemHash, [FromQuery] int variationCount = 1, CancellationToken ct = default)
     {
-        var problem = await _geolinApi.GetProblemCondition(
-            new ProblemConditionRequest()
+        List <Problem> result = new();
+        for (int i = 0; i < variationCount; ++i)
+        {    
+            int seed = new Random().Next();
+            var problem = await _geolinApi.GetProblemCondition(
+                new ProblemConditionRequest()
+                {
+                    Hash = problemHash,
+                    Seed = seed,
+                    Lang = "ru"
+                });
+            var problemMongo = new ProblemRequest()
             {
-                Hash = problemHash,
-                Seed = new Random().Next(),
-                Lang = "ru"
-            });
-        
-        
-    
-        return Ok();
+                _statement = problem.Condition,
+                _geolinAnsKey = new GeolinKey()
+                {
+                    _hash = problemHash,
+                    _seed = seed
+                }
+            };
+            result.Add(await _problemsAPI.CreateProblem(problemMongo));
+        }      
+        return Ok(result);
+    }
+
+    [HttpGet("getSavedProblems")]
+    [Authorize]
+    public async Task<IActionResult> GetSavedProblems(CancellationToken ct = default)
+    {
+        var problems = await _problemsAPI.GetProblems();
+        return Ok(problems);
     }
 } 

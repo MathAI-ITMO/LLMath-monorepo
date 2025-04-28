@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathLLMBackend.Domain", "sr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathLLMBackend.GeolinClient", "src\MathLLMBackend.GeolinClient\MathLLMBackend.GeolinClient.csproj", "{5309CD07-D814-43DD-8957-BA6C6529BA0B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathLLMBackend.ProblemsAPI", "src\MathLLMBackend.ProblemsAPI\MathLLMBackend.ProblemsAPI.csproj", "{57654690-DC7B-4AA7-81E0-6E8CC229B9C9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathLLMBackend.ProblemsClient", "src\MathLLMBackend.ProblemsClient\MathLLMBackend.ProblemsClient.csproj", "{57654690-DC7B-4AA7-81E0-6E8CC229B9C9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
