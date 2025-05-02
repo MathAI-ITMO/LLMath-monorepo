@@ -6,6 +6,7 @@ using MathLLMBackend.GeolinClient;
 using MathLLMBackend.GeolinClient.Models;
 using MathLLMBackend.ProblemsClient;
 using MathLLMBackend.ProblemsClient.Models;
+using System.Linq.Expressions;
 namespace MathLLMBackend.Presentation.Controllers;
 
 [Route("api/[controller]")]
@@ -88,5 +89,21 @@ public class TasksController : ControllerBase
     {
         var problems = await _problemsAPI.GetProblems();
         return Ok(problems);
+    }
+
+    [HttpGet("getSavedProblemsByNames")]
+    [Authorize]
+    public async Task<IActionResult> GetSavedProblemsByNames(string name, CancellationToken ct = default)
+    {
+        try
+        {
+            var problems = await _problemsAPI.GetAllProblemsByName(name);
+            return Ok(problems);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching problems from external problems service {message}", ex.Message);
+            return NotFound();
+        }        
     }
 } 

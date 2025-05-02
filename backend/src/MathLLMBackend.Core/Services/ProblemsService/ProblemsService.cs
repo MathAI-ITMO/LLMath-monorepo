@@ -37,4 +37,16 @@ public class ProblemsService : IProblemsService
             throw;
         }
     }
+    public async Task<List<Problem>> GetSavedProblemsByNames(string name, CancellationToken ct = default)
+    {
+        try
+        {
+            return await _problemsApi.GetAllProblemsByName(name);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching problems from external problems service {message}", ex.Message);
+            throw;
+        }
+    }
 }
