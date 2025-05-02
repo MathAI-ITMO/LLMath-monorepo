@@ -40,7 +40,7 @@ public class Solution
 public class Problem
 {
     [JsonPropertyName("_id")]
-    public string? Id { get; set; }
+    public string Id { get; set; } = string.Empty;
 
     [JsonPropertyName("statement")]
     public string Statement { get; set; } = string.Empty;

@@ -10,4 +10,7 @@ public interface IProblemsAPI
 
     [Post("/api/problems")]
     Task<Problem> CreateProblem([Body] ProblemRequest request);
+
+    [Post("/api/give_a_name")]
+    Task<string> GiveANameProblem([Body] ProblemWithNameRequest request);
 } 

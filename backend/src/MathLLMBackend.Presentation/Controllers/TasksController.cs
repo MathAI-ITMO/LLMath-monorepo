@@ -70,7 +70,14 @@ public class TasksController : ControllerBase
                     Seed = seed
                 }
             };
-            result.Add(await _problemsAPI.CreateProblem(problemMongo));
+            var createdProblem = await _problemsAPI.CreateProblem(problemMongo);
+            result.Add(createdProblem);
+            var tmp = await _problemsAPI.GiveANameProblem(new ProblemWithNameRequest()
+                {
+                    Name = name, 
+                    ProblemId = createdProblem.Id
+                }
+            );
         }      
         return Ok(result);
     }
