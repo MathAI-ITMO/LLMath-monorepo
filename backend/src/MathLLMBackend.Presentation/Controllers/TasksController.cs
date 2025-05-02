@@ -106,4 +106,12 @@ public class TasksController : ControllerBase
             return NotFound();
         }        
     }
+
+    [HttpGet("getAllNames")]
+    [Authorize]
+    public async Task<IActionResult> GetAllNames(CancellationToken ct = default)
+    {
+        var names = await _problemsAPI.GetNames();
+        return Ok(names);  
+    }    
 } 

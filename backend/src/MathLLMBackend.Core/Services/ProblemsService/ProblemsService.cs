@@ -49,4 +49,16 @@ public class ProblemsService : IProblemsService
             throw;
         }
     }
+    public async Task<List<string>> GetAllNames(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _problemsApi.GetNames();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching problems from external problems service {message}", ex.Message);
+            throw;
+        }
+    }
 }
