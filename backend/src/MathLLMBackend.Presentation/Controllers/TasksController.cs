@@ -2,11 +2,7 @@ using MathLLMBackend.Core.Services.GeolinService;
 using MathLLMBackend.Presentation.Dtos.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using MathLLMBackend.GeolinClient;
-using MathLLMBackend.GeolinClient.Models;
-using MathLLMBackend.ProblemsClient;
-using MathLLMBackend.ProblemsClient.Models;
-using System.Linq.Expressions;
+using MathLLMBackend.Core.Services.ProblemsService;
 namespace MathLLMBackend.Presentation.Controllers;
 
 [Route("api/[controller]")]
@@ -14,16 +10,12 @@ namespace MathLLMBackend.Presentation.Controllers;
 public class TasksController : ControllerBase
 {
     private readonly IGeolinService _geolinService;
-    private readonly IGeolinApi _geolinApi;
-    private readonly IProblemsAPI _problemsAPI;
-    private readonly ILogger<TasksController> _logger;  
+    private readonly IProblemsService _problemsService;
 
-    public TasksController(IGeolinService geolinService, ILogger<TasksController> logger, IGeolinApi geolinApi, IProblemsAPI problemsAPI)
+    public TasksController(IGeolinService geolinService, IProblemsService problemsService)
     {
         _geolinService = geolinService;
-        _logger = logger;
-        _geolinApi = geolinApi;
-        _problemsAPI = problemsAPI;
+        _problemsService = problemsService;
     }
 
     [HttpGet("problems")]
@@ -51,35 +43,7 @@ public class TasksController : ControllerBase
     [Authorize]
     public async Task<IActionResult> SaveProblem(string name, string problemHash, [FromQuery] int variationCount = 1, CancellationToken ct = default)
     {
-        List <Problem> result = new();
-        for (int i = 0; i < variationCount; ++i)
-        {    
-            int seed = new Random().Next();
-            var problem = await _geolinApi.GetProblemCondition(
-                new ProblemConditionRequest()
-                {
-                    Hash = problemHash,
-                    Seed = seed,
-                    Lang = "ru"
-                });
-            var problemMongo = new ProblemRequest()
-            {
-                Statement = problem.Condition,
-                GeolinAnsKey = new GeolinKey()
-                {
-                    Hash = problemHash,
-                    Seed = seed
-                }
-            };
-            var createdProblem = await _problemsAPI.CreateProblem(problemMongo);
-            result.Add(createdProblem);
-            var tmp = await _problemsAPI.GiveANameProblem(new ProblemWithNameRequest()
-                {
-                    Name = name, 
-                    ProblemId = createdProblem.Id
-                }
-            );
-        }      
+        var result = await _problemsService.SaveProblems(name, problemHash, variationCount, ct);
         return Ok(result);
     }
 
@@ -87,7 +51,7 @@ public class TasksController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetSavedProblems(CancellationToken ct = default)
     {
-        var problems = await _problemsAPI.GetProblems();
+        var problems = await _problemsService.GetSavedProblems(ct);
         return Ok(problems);
     }
 
@@ -95,23 +59,19 @@ public class TasksController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetSavedProblemsByNames(string name, CancellationToken ct = default)
     {
-        try
+        var problems = await _problemsService.GetSavedProblemsByNames(name, ct);
+        if (problems.Count == 0)
         {
-            var problems = await _problemsAPI.GetAllProblemsByName(name);
-            return Ok(problems);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error fetching problems from external problems service {message}", ex.Message);
             return NotFound();
-        }        
+        }
+        return Ok(problems);     
     }
 
     [HttpGet("getAllNames")]
     [Authorize]
     public async Task<IActionResult> GetAllNames(CancellationToken ct = default)
     {
-        var names = await _problemsAPI.GetNames();
-        return Ok(names);  
+        var names = await _problemsService.GetAllNames(ct);
+        return Ok(names);
     }    
 } 
