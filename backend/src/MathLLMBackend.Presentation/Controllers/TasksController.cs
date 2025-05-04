@@ -2,7 +2,7 @@ using MathLLMBackend.Core.Services.GeolinService;
 using MathLLMBackend.Presentation.Dtos.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-
+using MathLLMBackend.Core.Services.ProblemsService;
 namespace MathLLMBackend.Presentation.Controllers;
 
 [Route("api/[controller]")]
@@ -10,12 +10,12 @@ namespace MathLLMBackend.Presentation.Controllers;
 public class TasksController : ControllerBase
 {
     private readonly IGeolinService _geolinService;
-    private readonly ILogger<TasksController> _logger;
+    private readonly IProblemsService _problemsService;
 
-    public TasksController(IGeolinService geolinService, ILogger<TasksController> logger)
+    public TasksController(IGeolinService geolinService, IProblemsService problemsService)
     {
         _geolinService = geolinService;
-        _logger = logger;
+        _problemsService = problemsService;
     }
 
     [HttpGet("problems")]
@@ -38,4 +38,40 @@ public class TasksController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpPost("saveProblem")]
+    [Authorize]
+    public async Task<IActionResult> SaveProblem(string name, string problemHash, [FromQuery] int variationCount = 1, CancellationToken ct = default)
+    {
+        var result = await _problemsService.SaveProblems(name, problemHash, variationCount, ct);
+        return Ok(result);
+    }
+
+    [HttpGet("getSavedProblems")]
+    [Authorize]
+    public async Task<IActionResult> GetSavedProblems(CancellationToken ct = default)
+    {
+        var problems = await _problemsService.GetSavedProblems(ct);
+        return Ok(problems);
+    }
+
+    [HttpGet("getSavedProblemsByNames")]
+    [Authorize]
+    public async Task<IActionResult> GetSavedProblemsByNames(string name, CancellationToken ct = default)
+    {
+        var problems = await _problemsService.GetSavedProblemsByNames(name, ct);
+        if (problems.Count == 0)
+        {
+            return NotFound();
+        }
+        return Ok(problems);     
+    }
+
+    [HttpGet("getAllNames")]
+    [Authorize]
+    public async Task<IActionResult> GetAllNames(CancellationToken ct = default)
+    {
+        var names = await _problemsService.GetAllNames(ct);
+        return Ok(names);
+    }    
 } 
