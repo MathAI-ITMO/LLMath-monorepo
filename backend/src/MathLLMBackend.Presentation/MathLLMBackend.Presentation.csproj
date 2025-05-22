@@ -12,6 +12,7 @@
   </ItemGroup>
   
   <ItemGroup>
+    <PackageReference Include="DotNetEnv" />
     <PackageReference Include="Microsoft.AspNetCore.Identity" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>

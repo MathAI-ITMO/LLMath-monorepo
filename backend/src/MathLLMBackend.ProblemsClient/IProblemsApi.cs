@@ -18,5 +18,11 @@ public interface IProblemsAPI
     Task<List<Problem>> GetAllProblemsByName([AliasAs("problem_name")] string name);
 
     [Get("/api/names")]
-    Task<List<string>> GetNames();
+    Task<List<string>> GetTypes();
+
+    [Get("/api/problems/{id}")]
+    Task<Problem> GetProblemById([AliasAs("id")] string problemId);
+
+    [Get("/api/get_problems_by_type")]
+    Task<List<Problem>> GetProblemsByType([AliasAs("problem_type")] string typeName);
 } 

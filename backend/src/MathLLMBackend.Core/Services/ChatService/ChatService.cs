@@ -7,10 +7,13 @@ using MathLLMBackend.Domain.Entities;
 using MathLLMBackend.Domain.Enums;
 using MathLLMBackend.GeolinClient;
 using MathLLMBackend.GeolinClient.Models;
+using MathLLMBackend.Core.Services.ProblemsService;
+using MathLLMBackend.ProblemsClient.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Runtime.CompilerServices; // Added for EnumeratorCancellation
 
 namespace MathLLMBackend.Core.Services.ChatService;
 
@@ -18,7 +21,7 @@ public class ChatService : IChatService
 {
     private readonly AppDbContext _dbContext;
     private readonly ILlmService _llmService;
-    private readonly IGeolinApi _geolinApi;
+    private readonly IProblemsService _problemsService;
     private readonly IPromptService _promptService;
     private readonly IOptions<LlmServiceConfiguration> _llmConfig;
     private readonly ILogger<ChatService> _logger;
@@ -26,14 +29,14 @@ public class ChatService : IChatService
     public ChatService(
         AppDbContext dbContext, 
         ILlmService llmService, 
-        IGeolinApi geolinApi, 
+        IProblemsService problemsService,
         IPromptService promptService,
         IOptions<LlmServiceConfiguration> llmConfig,
         ILogger<ChatService> logger)
     {
         _dbContext = dbContext;
         _llmService = llmService;
-        _geolinApi = geolinApi;
+        _problemsService = problemsService;
         _promptService = promptService;
         _llmConfig = llmConfig;
         _logger = logger;
@@ -54,43 +57,97 @@ public class ChatService : IChatService
         return res.Entity;
     }
 
-    public async Task<Chat> Create(Chat chat, string problemHash, CancellationToken ct)
+    public async Task<Chat> Create(Chat chat, string problemDbId, int explicitTaskType, CancellationToken ct)
     {
         chat.Type = ChatType.ProblemSolver;
-        
-        var problem = await _geolinApi.GetProblemCondition(
-            new ProblemConditionRequest()
-            {
-                Hash = problemHash,
-                Seed = new Random().Next(),
-                Lang = "ru"
-            });
+        _logger.LogInformation("Creating chat for ProblemSolver. ProblemDB_ID: {ProblemDbId}, ExplicitTaskType: {ExplicitTaskType}", problemDbId, explicitTaskType);
 
-        _logger.LogInformation("Problem hash: {ProblemHash}, Problem condition: {ProblemCondition}", 
-            problemHash, problem.Condition);
-        
-        var solution = await _llmService.SolveProblem(problem.Condition, ct);
-        _logger.LogInformation("Solution for problem {ProblemHash}: {Solution}", problemHash, solution);
+        // 1. Получаем задачу из нашей базы LLMath-Problems по ID
+        var problemFromDb = await _problemsService.GetProblemFromDbAsync(problemDbId, ct);
 
-        var newChat = await _dbContext.Chats.AddAsync(chat, ct);
-        var tutorSystemPrompt = _promptService.GetTutorSystemPrompt();
-        var tutorSolutionPrompt = _promptService.GetTutorSolutionPrompt(solution);
+        if (problemFromDb == null)
+        {
+            _logger.LogError("Problem with ID {ProblemDbId} not found in LLMath-Problems database.", problemDbId);
+            // Можно выбросить исключение или вернуть null/ошибку, чтобы это обработалось выше
+            // Пока что просто логируем и создаем чат без условия/решения, что не очень хорошо
+            // Лучше выбросить исключение, чтобы StartUserTask его поймал.
+            throw new KeyNotFoundException($"Problem with ID {problemDbId} not found in LLMath-Problems database.");
+        }
+
+        string problemCondition = problemFromDb.Statement;
+        // Берём заранее сгенерированное решение из БД
+        string? llmSolution = problemFromDb.LlmSolution is string sol && !string.IsNullOrWhiteSpace(sol)
+            ? sol
+            : problemFromDb.LlmSolution?.ToString();
+        if (string.IsNullOrWhiteSpace(llmSolution))
+        {
+            _logger.LogWarning("Problem {ProblemDbId} from DB has no LLM solution. Tutor solution will not be included.", problemDbId);
+        }
         
-        var tutorSystemMessage = new Message(newChat.Entity, tutorSystemPrompt, MessageType.System);
-        var tutorUserMessage = new Message(newChat.Entity, tutorSolutionPrompt, MessageType.User, isSystemPrompt: true);
-        var firstBotMessage = new Message(newChat.Entity, problem.Condition, MessageType.Assistant);
+        _logger.LogInformation("Using problem: {ProblemTitle}, Condition snippet: {ConditionSnippet}", 
+            problemFromDb.Id, // Используем ID вместо Title
+            problemCondition.Substring(0, Math.Min(50, problemCondition.Length)) + "...");
+
+        var addedChatEntityEntry = await _dbContext.Chats.AddAsync(chat, ct);
+        await _dbContext.SaveChangesAsync(ct); 
+        var newChatEntity = addedChatEntityEntry.Entity;
+
+        int taskTypeToUse = explicitTaskType;
+        string systemPromptText = _promptService.GetSystemPromptByTaskType(taskTypeToUse);
         
-        await _dbContext.Messages.AddRangeAsync([tutorSystemMessage, tutorUserMessage, firstBotMessage], ct);
+        var userTask = await _dbContext.UserTasks
+            .FirstOrDefaultAsync(ut => ut.ProblemHash == problemDbId && 
+                                   ut.ApplicationUserId == chat.UserId && 
+                                   ut.Status == UserTaskStatus.InProgress, ct);
+        if (userTask != null)
+        {
+            userTask.AssociatedChatId = newChatEntity.Id;
+            _dbContext.UserTasks.Update(userTask);
+        }
+        
+        var systemMessage = new Message(newChatEntity, systemPromptText, MessageType.System);
+        Message? solutionMessageForLlm = null;
+        if (taskTypeToUse != 3 && !string.IsNullOrWhiteSpace(llmSolution)) // Не для режима Экзамена и если решение есть
+        {
+            var tutorSolutionText = _promptService.GetTutorSolutionPrompt(llmSolution); // Передаем готовое решение LLM
+            solutionMessageForLlm = new Message(newChatEntity, tutorSolutionText, MessageType.User, isSystemPrompt: true);
+        }
+        
+        var conditionTextForDisplay = $"🟢 **Условие задачи:** ({problemFromDb.Id})\n\n{problemCondition}\n\n";
+        var conditionMessageForDisplay = new Message(newChatEntity, conditionTextForDisplay, MessageType.Assistant);
+        
+        var messagesToSaveInDb = new List<Message> { systemMessage, conditionMessageForDisplay };
+        if (solutionMessageForLlm != null)
+        {
+             messagesToSaveInDb.Add(solutionMessageForLlm);
+        }
+        await _dbContext.Messages.AddRangeAsync(messagesToSaveInDb, ct);
         
         await _dbContext.SaveChangesAsync(ct);
         
-        return chat;
+        var initialPromptForLlm = _promptService.GetInitialPromptByTaskType(taskTypeToUse, problemCondition, "");
+        var messagesForInitialBotGeneration = new List<Message> { systemMessage };
+        if (solutionMessageForLlm != null) messagesForInitialBotGeneration.Add(solutionMessageForLlm);
+        // Передаем оригинальное условие задачи LLM для генерации первого сообщения, а не форматированное
+        messagesForInitialBotGeneration.Add(new Message(newChatEntity, problemCondition, MessageType.User, isSystemPrompt: true)); 
+        messagesForInitialBotGeneration.Add(new Message(newChatEntity, initialPromptForLlm, MessageType.User, isSystemPrompt: true));
+
+        _logger.LogInformation("Start initial LLM generation for chat {ChatId} | taskType = {TaskTypeToUse}", newChatEntity.Id, taskTypeToUse);
+        var initialBotMessageText = await _llmService.GenerateNextMessageAsync(messagesForInitialBotGeneration, taskTypeToUse, ct);
+        _logger.LogInformation("Initial bot message generated for chat {ChatId} | taskType = {TaskTypeToUse}", newChatEntity.Id, taskTypeToUse);
+        
+        var botInitialDisplayMessage = new Message(newChatEntity, initialBotMessageText, MessageType.Assistant);
+        await _dbContext.Messages.AddAsync(botInitialDisplayMessage, ct);
+        await _dbContext.SaveChangesAsync(ct);
+        
+        return newChatEntity;
     }
 
     public async Task<List<Chat>> GetUserChats(string userId, CancellationToken ct)
     {
         var chats = await _dbContext.Chats.Where(c => c.User.Id == userId).ToListAsync(cancellationToken: ct);
-        await _dbContext.SaveChangesAsync(ct);
+        // Не уверен, нужен ли здесь SaveChangesAsync, так как это операция чтения
+        // await _dbContext.SaveChangesAsync(ct);
         return chats;
     }
 
@@ -100,28 +157,67 @@ public class ChatService : IChatService
         await _dbContext.SaveChangesAsync(ct);
     }
     
-    public async IAsyncEnumerable<string> CreateMessage(Message message, CancellationToken ct)
+    public async IAsyncEnumerable<string> CreateMessage(Message message, [EnumeratorCancellation] CancellationToken ct)
     {
-        _dbContext.Messages.Add(message);
-        var messages = await _dbContext.Messages.Where(m => m.Chat == message.Chat).ToListAsync(cancellationToken: ct);
-        messages.Add(message);
-        var text = _llmService.GenerateNextMessageStreaming(messages, ct);
+        await _dbContext.Messages.AddAsync(message, ct); // Сохраняем сообщение пользователя
+        await _dbContext.SaveChangesAsync(ct); // Сохраняем сразу, чтобы оно было в истории для LLM
+
+        var currentChat = await _dbContext.Chats
+            .Include(c => c.Messages) // Загружаем все сообщения чата
+            .FirstOrDefaultAsync(c => c.Id == message.ChatId, ct);
+
+        if (currentChat == null)
+        {
+            _logger.LogError("Chat with ID {ChatId} not found in CreateMessage.", message.ChatId);
+            yield break; 
+        }
+
+        // Определяем taskType для текущего чата.
+        // Это упрощенный вариант. В идеале, taskType должен храниться в самом Chat или UserTask.
+        int taskType = 0; 
+        var systemMessageInHistory = currentChat.Messages.FirstOrDefault(m => m.MessageType == MessageType.System);
+        
+        if (currentChat.Type == ChatType.ProblemSolver)
+        {
+             var userTask = await _dbContext.UserTasks
+                .FirstOrDefaultAsync(ut => ut.AssociatedChatId == currentChat.Id, ct);
+            if (userTask != null) taskType = userTask.TaskType;
+            else if (systemMessageInHistory != null) // Пытаемся угадать по системному промпту если UserTask нет
+            {
+                if(systemMessageInHistory.Text == _promptService.GetLearningSystemPrompt()) taskType = 1;
+                else if(systemMessageInHistory.Text == _promptService.GetGuidedSystemPrompt()) taskType = 2;
+                else if(systemMessageInHistory.Text == _promptService.GetExamSystemPrompt()) taskType = 3;
+            }
+        }
+        // Для ChatType.Chat taskType останется 0 (Default/Tutor)
+        
+        _logger.LogInformation("Generating response in chat {ChatId} | taskType = {TaskType}", currentChat.Id, taskType);
+        
+        var messagesForLlm = currentChat.Messages.ToList();
+        
+        // В режиме экзамена (3) не передаем LLM скрытое решение, если оно там было
+        if (taskType == 3)
+        {
+            messagesForLlm.RemoveAll(m => m.IsSystemPrompt && m.MessageType == MessageType.User && m.Text.Contains("Вот правильное решение задачи для вашего руководства"));
+        }
+
+        var llmResponseStream = _llmService.GenerateNextMessageStreaming(messagesForLlm, taskType, ct);
 
         var fullText = new StringBuilder();
-        await foreach (var messageText in text)
+        await foreach (var messageTextChunk in llmResponseStream)
         {
-            fullText.Append(messageText);
-            yield return messageText;
+            fullText.Append(messageTextChunk);
+            yield return messageTextChunk;
         }
         
-        var newMessage = new Message(message.Chat, fullText.ToString(), MessageType.Assistant);
-        _dbContext.Messages.Add(newMessage);
+        var newAssistantMessage = new Message(currentChat, fullText.ToString(), MessageType.Assistant);
+        _dbContext.Messages.Add(newAssistantMessage);
         await _dbContext.SaveChangesAsync(ct);
     }
     
     public async Task<List<Message>> GetAllMessageFromChat(Chat chat, CancellationToken ct)
     {
-        return await _dbContext.Messages.Where(m => m.Chat == chat).ToListAsync(ct);
+        return await _dbContext.Messages.Where(m => m.ChatId == chat.Id).OrderBy(m=>m.CreatedAt).ToListAsync(ct);
     }
 
     public async Task<Chat?> GetChatById(Guid id, CancellationToken ct)
@@ -129,6 +225,21 @@ public class ChatService : IChatService
         return await _dbContext.Chats
             .Include(c => c.User)
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken: ct);
+    }
+
+    public async Task<Guid> GetOrCreateProblemChatAsync(string problemHash, string userId, string taskDisplayName, int taskType, CancellationToken ct)
+    {
+        var chatName = $"{taskDisplayName} {DateTime.Now:dd.MM.yyyy HH:mm}";
+        var newChatEntity = new Chat
+        {
+            Name = chatName,
+            UserId = userId,
+            Type = ChatType.ProblemSolver // Явно указываем тип
+        };
+
+        // Передаем taskType в метод Create
+        var createdChat = await Create(newChatEntity, problemHash, taskType, ct);
+        return createdChat.Id;
     }
 
     public async Task<Message?> GetMessageId(Guid id, CancellationToken ct)
