@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Dapper" Version="2.1.28" />
+    <PackageVersion Include="DotNetEnv" Version="3.1.1" />
     <PackageVersion Include="Microsoft.AspNetCore.Identity" Version="2.2.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.3" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.3" />
@@ -13,10 +14,11 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageVersion>
-    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.3" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.3" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.5" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.5" />
     <PackageVersion Include="Microsoft.Extensions.Identity.Stores" Version="9.0.3" />
-    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.3" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="9.0.5" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.5" />
     <PackageVersion Include="NLog.Web.AspNetCore" Version="5.3.8" />
     <PackageVersion Include="Npgsql" Version="9.0.3" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.3" />

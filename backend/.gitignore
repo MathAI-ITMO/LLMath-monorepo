@@ -135,3 +135,6 @@ _NCrunch*
 .idea/
 
 .vscode/
+
+# Ignore secrets file
+src/MathLLMBackend.Presentation/appsettings.Secrets.json

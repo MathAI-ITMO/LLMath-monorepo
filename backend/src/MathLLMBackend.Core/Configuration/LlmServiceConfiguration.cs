@@ -4,6 +4,7 @@ public class LlmServiceConfiguration
 {
     public required ModelConfiguration ChatModel { get; init; }
     public required ModelConfiguration SolverModel { get; init; }
+    public ModelConfiguration? OllamaConfig { get; init; }
     
     public class ModelConfiguration
     {

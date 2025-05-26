@@ -71,7 +71,7 @@ public class TasksController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetAllNames(CancellationToken ct = default)
     {
-        var names = await _problemsService.GetAllNames(ct);
+        var names = await _problemsService.GetAllTypes(ct);
         return Ok(names);
     }    
 } 

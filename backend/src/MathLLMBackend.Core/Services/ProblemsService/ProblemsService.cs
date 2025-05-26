@@ -4,6 +4,7 @@ using MathLLMBackend.ProblemsClient;
 using MathLLMBackend.ProblemsClient.Models;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
+using Refit;
 
 namespace MathLLMBackend.Core.Services.ProblemsService;
 
@@ -84,19 +85,53 @@ public class ProblemsService : IProblemsService
             {
                 return new List<Problem>();
             }
-            _logger.LogError(ex, "Error fetching problems from external problems service {message}", ex.Message);
+            _logger.LogError(ex, "Error fetching problems by name {name} from external problems service: {message}", name, ex.Message);
             throw;
         }  
     }
-    public async Task<List<string>> GetAllNames(CancellationToken ct = default)
+    public async Task<List<Problem>> GetSavedProblemsByTypes(string typeName, CancellationToken ct = default)
     {
         try
         {
-            return await _problemsApi.GetNames();
+            var problems = await _problemsApi.GetProblemsByType(typeName);
+            return problems;
+        }
+        catch (Exception ex)
+        {
+            if (ex.Message.Contains("404"))
+            {
+                return new List<Problem>();
+            }
+            _logger.LogError(ex, "Error fetching problems by type {typeName} from external problems service: {message}", typeName, ex.Message);
+            throw;
+        }  
+    }
+    public async Task<List<string>> GetAllTypes(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _problemsApi.GetTypes();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error fetching problems from external problems service {message}", ex.Message);
+            throw;
+        }
+    }
+    public async Task<Problem?> GetProblemFromDbAsync(string problemDbId, CancellationToken ct = default)
+    {
+        try  
+        {
+            return await _problemsApi.GetProblemById(problemDbId);
+        }
+        catch (ApiException apiEx) when (apiEx.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            _logger.LogWarning("Problem with ID {ProblemDbId} not found in LLMath-Problems DB.", problemDbId);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching problem {ProblemDbId} from LLMath-Problems DB: {message}", problemDbId, ex.Message);
             throw;
         }
     }

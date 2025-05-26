@@ -3,6 +3,7 @@ using System;
 using MathLLMBackend.DataAccess.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MathLLMBackend.DataAccess.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250513004822_CreateUserTasksEntity")]
+    partial class CreateUserTasksEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -171,10 +174,6 @@ namespace MathLLMBackend.DataAccess.Migrations
                         .IsRequired()
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
-
-                    b.Property<string>("ProblemHash")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<string>("ProblemId")
                         .IsRequired()

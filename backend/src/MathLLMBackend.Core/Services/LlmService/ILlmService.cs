@@ -5,7 +5,7 @@ namespace MathLLMBackend.Core.Services.LlmService;
 
 public interface ILlmService
 {
-    IAsyncEnumerable<string> GenerateNextMessageStreaming(List<Message> messages, CancellationToken ct);
-    Task<string> SolveProblem(string message, CancellationToken ct);
-    Task<string> GenerateNextMessageAsync(List<Message> messages, CancellationToken ct);
+    IAsyncEnumerable<string> GenerateNextMessageStreaming(List<Message> messages, int taskType, CancellationToken ct);
+    Task<string> SolveProblem(string problemDescription, CancellationToken ct);
+    Task<string> GenerateNextMessageAsync(List<Message> messages, int taskType, CancellationToken ct);
 }

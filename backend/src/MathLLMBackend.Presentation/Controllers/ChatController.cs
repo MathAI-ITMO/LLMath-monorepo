@@ -14,9 +14,9 @@ namespace MathLLMBackend.Presentation.Controllers
     {
         private readonly IChatService _chatService;
         private readonly ILogger<ChatController> _logger;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public ChatController(IChatService chatService, ILogger<ChatController> logger, UserManager<IdentityUser> userManager)
+        public ChatController(IChatService chatService, ILogger<ChatController> logger, UserManager<ApplicationUser> userManager)
         {
             _chatService = chatService;
             _logger = logger;
@@ -42,7 +42,7 @@ namespace MathLLMBackend.Presentation.Controllers
             }
             else
             {
-                await _chatService.Create(chat, dto.ProblemHash, ct);
+                await _chatService.Create(chat, dto.ProblemHash, 0, ct);
             }
             
             return Ok(

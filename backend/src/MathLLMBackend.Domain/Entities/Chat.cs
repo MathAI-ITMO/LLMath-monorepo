@@ -16,7 +16,7 @@ public class Chat
     public Guid Id { get; set; }
     public string Name { get; set; }
     public string UserId { get; set; }
-    public IdentityUser User { get; set; }
+    public ApplicationUser User { get; set; }
     public IEnumerable<Message> Messages { get; set; }
     public ChatType? Type { get; set; }
 }

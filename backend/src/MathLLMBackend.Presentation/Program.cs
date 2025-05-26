@@ -15,12 +15,15 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MathLLMBackend.DataAccess.Contexts;
 using MathLLMBackend.Presentation.Configuration;
+using MathLLMBackend.Domain.Entities;
 
 var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
 
 try
 {
     var builder = WebApplication.CreateBuilder(args);
+    // Загружаем секретные настройки (не фиксированы в репозитории)
+    builder.Configuration.AddJsonFile("appsettings.Secrets.json", optional: true, reloadOnChange: true);
     builder.Services.AddHttpLogging(o => { });
     var configuration = builder.Configuration;
     var corsConfiguration = configuration.GetSection(nameof(CorsConfiguration)).Get<CorsConfiguration>() ?? new CorsConfiguration();
@@ -48,7 +51,7 @@ try
     ProblemsClientRegistrar.Configure(builder.Services, configuration.GetSection(nameof(ProblemsClientOptions)).Bind);
     DataAccessRegistrar.Configure(builder.Services, configuration);
     
-    builder.Services.AddIdentityApiEndpoints<IdentityUser>(options =>
+    builder.Services.AddIdentityApiEndpoints<ApplicationUser>(options =>
     {
         options.User.RequireUniqueEmail = true;
         options.SignIn.RequireConfirmedEmail = false;
@@ -121,7 +124,7 @@ try
         app.UseCors();
     }
 
-    app.MapIdentityApi<IdentityUser>();
+    app.MapIdentityApi<ApplicationUser>();
     app.UseMiddleware<ExceptionHandlingMiddleware>();
     app.UseAuthentication();
     app.UseAuthorization();
