@@ -15,7 +15,8 @@ export interface ChatDto {
   id: string;
   userId: string;
   name: string;
-  type: 'ProblemSolver' | 'Chat';
+  type: string;
+  taskType?: number;
 }
 
 export interface CreateChatDto {

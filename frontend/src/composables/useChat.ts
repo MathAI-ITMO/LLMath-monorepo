@@ -38,8 +38,21 @@ export function useChat() {
   }
 
   async function getChatById(id: string): Promise<Chat | undefined> {
-    const resp = await client.get<ChatDto[]>('/api/chat/get', { withCredentials: true })
-    return resp.data.map((c) => ({ id: c.id, name: c.name, type: c.type }) as Chat).find((c) => c.id === id)
+    try {
+      const resp = await client.get<ChatDto>(`/api/chat/get/${id}`, { withCredentials: true });
+      if (resp.data) {
+        return { 
+          id: resp.data.id, 
+          name: resp.data.name, 
+          type: resp.data.type, 
+          taskType: resp.data.taskType
+        } as Chat;
+      }
+      return undefined;
+    } catch (error) {
+      console.error(`Error fetching chat by ID ${id}:`, error);
+      return undefined;
+    }
   }
 
   async function getNextMessage(text: string, chatId: string): Promise<Stream<string>> {

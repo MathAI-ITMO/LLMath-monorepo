@@ -41,6 +41,7 @@
             :class="{'list-item-odd': index % 2 !== 0, 'task-list-item': true}"
           >
             <v-list-item-title>{{ task.DisplayName || task.displayName }}</v-list-item-title>
+            <v-list-item-subtitle>{{ formatTaskType(task.TaskType || task.taskType) }}</v-list-item-subtitle>
           </v-list-item>
           <div v-if="details.solvedTasks.length === 0" class="text-caption mb-4">Нет решённых задач.</div>
         </v-list>
@@ -53,6 +54,7 @@
             :class="{'list-item-odd': index % 2 !== 0, 'task-list-item': true}"
           >
             <v-list-item-title>{{ task.DisplayName || task.displayName }}</v-list-item-title>
+            <v-list-item-subtitle>{{ formatTaskType(task.TaskType || task.taskType) }}</v-list-item-subtitle>
           </v-list-item>
           <div v-if="details.inProgressTasks.length === 0" class="text-caption mb-4">Нет задач в процессе.</div>
         </v-list>
@@ -77,15 +79,17 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
-import { VContainer, VCard, VBtn, VIcon, VList, VListItem, VListItemTitle, VListItemAction, VProgressCircular, VAlert } from 'vuetify/components';
+import { VContainer, VCard, VBtn, VIcon, VList, VListItem, VListItemTitle, VListItemSubtitle, VProgressCircular, VAlert } from 'vuetify/components';
 
 interface TaskItemDto { 
   UserTaskId: string; 
   DisplayName: string; 
   ChatId?: string;
+  TaskType?: number;
   userTaskId?: string;
   displayName?: string;
   chatId?: string;
+  taskType?: number;
 }
 
 interface ChatItemDto { 
@@ -116,10 +120,21 @@ const details = ref<UserDetailDto>({ solvedTasks: [], inProgressTasks: [], chats
 const loading = ref(false);
 const error = ref<string | null>(null);
 const userInfo = ref<UserInfo | null>(null);
+const taskModeTitles = ref<Record<string, string>>({}); // Хранилище для названий типов задач
 
 onMounted(async () => {
   loading.value = true;
   error.value = null;
+
+  try { // Загрузка названий типов задач
+    const baseUrl = import.meta.env.VITE_MATHLLM_BACKEND_ADDRESS;
+    const titlesResponse = await axios.get<Record<string, string>>(`${baseUrl}/api/stats/task-mode-titles`, { withCredentials: true });
+    taskModeTitles.value = titlesResponse.data;
+    console.log('Loaded task mode titles:', taskModeTitles.value);
+  } catch (e) {
+    console.error('Failed to load task mode titles:', e);
+    // Можно установить значения по умолчанию или показать ошибку
+  }
   
   await fetchUserInfo();
   
@@ -149,42 +164,29 @@ onMounted(async () => {
 async function fetchUserInfo() {
   try {
     const baseUrl = import.meta.env.VITE_MATHLLM_BACKEND_ADDRESS;
-    
-    // Вместо использования /api/stats/user-stats + /api/user/profile
-    // Получаем информацию напрямую через /api/user/me
-    try {
-      const userResponse = await axios.get(`${baseUrl}/api/user/me`, { withCredentials: true });
-      if (userResponse.data) {
-        userInfo.value = {
-          firstName: userResponse.data.firstName,
-          lastName: userResponse.data.lastName,
-          email: userResponse.data.email || 'Не указан',
-          studentGroup: userResponse.data.studentGroup || 'Не указана'
-        };
-        console.log('User info loaded from /api/user/me:', userInfo.value);
-        return;
-      }
-    } catch (userError) {
-      console.warn('Could not fetch user via /api/user/me:', userError);
-      // Продолжаем выполнение если не удалось получить через /api/user/me
-    }
-    
-    // Запасной вариант через /api/stats/user-stats
-    const resp = await axios.get(`${baseUrl}/api/stats/user-stats`, { withCredentials: true });
-    const userData = resp.data.find((user: any) => user.userId === userId);
-    if (userData) {
+    // Загружаем данные пользователя, статистику которого мы просматриваем,
+    // используя userId из параметров маршрута.
+    const statsResp = await axios.get(`${baseUrl}/api/stats/user-stats`, { withCredentials: true });
+    const userDataFromStats = statsResp.data.find((user: any) => user.userId === userId);
+
+    if (userDataFromStats) {
       userInfo.value = {
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        email: 'Не указан', // Предполагаем, что email отсутствует
-        studentGroup: userData.studentGroup || 'Не указана'
+        firstName: userDataFromStats.firstName,
+        lastName: userDataFromStats.lastName,
+        email: userDataFromStats.email || 'Не указан', // Используем полученный email
+        studentGroup: userDataFromStats.studentGroup || 'Не указана'
       };
-      console.log('User info loaded from stats API:', userInfo.value);
+      console.log('User info for displayed user loaded from stats API:', userInfo.value);
     } else {
-      console.warn('User not found in stats');
+      console.warn(`User with ID ${userId} not found in stats API response.`);
+      error.value = 'Не удалось загрузить информацию о пользователе.';
+      // Можно дополнительно запросить /api/user/me, если это админ смотрит свою страницу,
+      // но для общего случая просмотра чужой статистики это не нужно.
     }
-  } catch (error) {
-    console.error('Failed to load user info:', error);
+  } catch (e) {
+    console.error('Failed to load user info from stats API:', e);
+    error.value = 'Ошибка при загрузке информации о пользователе.';
+    userInfo.value = null; // Очищаем, если были предыдущие данные
   }
 }
 
@@ -192,6 +194,17 @@ function goToChat(chatId?: string) {
   console.log('goToChat called with:', chatId);
   if (chatId) router.push(`/admin-chat/${chatId}`);
 }
+
+const formatTaskType = (type: number | undefined): string => {
+  if (type === undefined) return 'Тип не указан';
+  const typeStr = type.toString();
+  if (taskModeTitles.value && taskModeTitles.value[typeStr]) {
+    return taskModeTitles.value[typeStr];
+  }
+  // Фоллбэк, если тип не найден в загруженных данных
+  if (type === 0) return 'Упражнение (из списка)'; // Это может быть тип задач, не покрываемый TaskModeTitles
+  return `Неизвестный тип (${type})`;
+};
 </script>
 
 <style scoped>
