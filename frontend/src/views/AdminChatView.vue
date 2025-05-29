@@ -6,7 +6,11 @@
         <v-btn icon variant="text" color="primary" @click="goBack">
           <v-icon>mdi-arrow-left</v-icon>
         </v-btn>
-        <v-toolbar-title>{{ chat?.name || 'Чат' }}</v-toolbar-title>
+        <v-toolbar-title>
+          {{ chat?.name || 'Чат' }}
+          <v-chip v-if="chat?.type === 'ProblemSolver' && chat.taskType !== undefined && taskModeTitlesReady" size="small" class="ml-2" color="secondary" label>{{ formatTaskTypeForChat(chat.taskType) }}</v-chip>
+          <v-chip v-else-if="chat?.type" size="small" class="ml-2" color="primary" label>{{ chat.type }}</v-chip>
+        </v-toolbar-title>
       </v-toolbar>
       
       <div class="messages-container">
@@ -52,6 +56,7 @@ import 'katex/dist/katex.min.css';
 import renderMathInElement from 'katex/dist/contrib/auto-render.mjs';
 import type { Chat } from '@/models/Chat';
 import type { Message } from '@/models/Message';
+import axios from 'axios';
 
 const route = useRoute();
 const router = useRouter();
@@ -61,8 +66,21 @@ const chatId = ref<string | undefined>();
 const chat = ref<Chat>();
 const messages = ref<Message[]>([]);
 const messagesCard = ref<HTMLElement | null>(null);
+const taskModeTitles = ref<Record<string, string>>({}); // Для названий типов задач
+const taskModeTitlesReady = ref(false); // Флаг готовности названий
 
 onMounted(async () => {
+  // Загрузка названий типов задач
+  try {
+    const baseUrl = import.meta.env.VITE_MATHLLM_BACKEND_ADDRESS;
+    const titlesResponse = await axios.get<Record<string, string>>(`${baseUrl}/api/stats/task-mode-titles`, { withCredentials: true });
+    taskModeTitles.value = titlesResponse.data;
+    taskModeTitlesReady.value = true;
+    console.log('AdminChatView: Loaded task mode titles:', taskModeTitles.value);
+  } catch (e) {
+    console.error('AdminChatView: Failed to load task mode titles:', e);
+  }
+
   chatId.value = route.params.chatId as string;
   if (chatId.value) {
     await loadChatData();
@@ -82,6 +100,7 @@ async function loadChatData() {
   try {
     const receivedChat = await getChatById(chatId.value);
     chat.value = receivedChat;
+    console.log('Loaded chat details:', receivedChat);
     
     const receivedMessages = await getChatMessages(chatId.value);
     messages.value = receivedMessages;
@@ -175,6 +194,16 @@ function formatMessage(message: string): string {
 function goBack() {
   router.go(-1);
 }
+
+const formatTaskTypeForChat = (type: number | undefined): string => {
+  if (type === undefined) return 'Тип задачи не определен';
+  const typeStr = type.toString();
+  if (taskModeTitles.value && taskModeTitles.value[typeStr]) {
+    return taskModeTitles.value[typeStr];
+  }
+  if (type === 0) return 'Упражнение (из списка)'; // Фоллбэк, если тип 0 не описан в TaskModeTitles
+  return `Тип задачи (${type})`;
+};
 </script>
 
 <style scoped>
