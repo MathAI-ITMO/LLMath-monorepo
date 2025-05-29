@@ -60,22 +60,45 @@
           icon
           variant="text"
           @click="sidebarOpen = !sidebarOpen"
+          class="sidebar-toggle"
         >
-          <v-icon>mdi-menu</v-icon>
+          <v-icon>mdi-message-outline</v-icon>
         </v-btn>
 
         <v-btn
           icon
           variant="text"
-          to="/"
-          class="ml-2"
+          :to="userTaskId ? `/select-task?taskType=${taskType}` : '/'"
+          class="ml-2 nav-button"
         >
-          <v-icon>mdi-home</v-icon>
+          <v-icon>{{ userTaskId ? 'mdi-view-list' : 'mdi-home' }}</v-icon>
         </v-btn>
 
         <v-app-bar-title class="ml-4">
           {{ chat?.name || 'Новый чат' }}
         </v-app-bar-title>
+        <v-spacer></v-spacer>
+        <v-btn
+          v-if="userTaskId && taskStatus === UserTaskStatus.Solved"
+          variant="elevated"
+          color="success"
+          class="solved-btn"
+          density="comfortable"
+          disabled
+        >
+          Задача отмечена решенной
+        </v-btn>
+        <v-btn
+          v-else-if="userTaskId && taskStatus !== UserTaskStatus.Solved"
+          variant="outlined"
+          color="success"
+          :loading="markingSolved"
+          @click="markTaskSolved"
+          class="mark-solved-btn"
+          density="comfortable"
+        >
+          Отметить задачу решенной
+        </v-btn>
       </v-app-bar>
     </div>
 
@@ -199,7 +222,7 @@
       </template>
       <template v-else>
         <div ref="messagesCard" class="messages-wrapper">
-          <v-card class="messages-container">
+          <div class="messages-container">
             <v-list class="messages-list" :lines="false">
               <template v-if="messages.length === 0">
                 <v-list-item>
@@ -214,52 +237,45 @@
                 class="message-item"
                 :class="{
                   'user-message': message.type === 'user',
-                  'bot-message': message.type === 'bot',
+                  'bot-message': message.type === 'bot' && !message.text.includes('Условие задачи'),
+                  'problem-condition-message': message.type === 'bot' && message.text.includes('Условие задачи')
                 }"
                 density="compact"
+                rounded="0"
               >
-                <v-icon v-if="message.type === 'bot'" class="bot-icon">mdi-robot</v-icon>
-                <div v-html="formatMessage(message.text)"></div>
-                <small>{{ moment(message?.time).fromNow() }}</small>
+                <div v-html="formatMessage(message.text)" :class="{ 'text-left': message.type === 'user' }"></div>
+                <small class="message-time">{{ moment(message?.time).fromNow() }}</small>
               </v-list-item>
             </v-list>
-          </v-card>
+          </div>
         </div>
 
         <div ref="inputCard" class="input-container">
-          <v-card class="input-card" elevation="4">
-            <v-container class="pa-2">
-              <v-row align="center" no-gutters>
-                <v-col>
-                  <v-text-field
-                    hide-details="auto"
-                    placeholder="Введите сообщение..."
-                    v-model="currentMessageText"
-                    auto-grow
-                    rows="1"
-                    max-rows="1"
-                    variant="solo"
-                    density="comfortable"
-                    bg-color="surface"
-                    class="message-input"
-                    @keyup.enter="sendMessage"
-                  ></v-text-field>
-                </v-col>
-                <v-col cols="auto" class="pl-2">
-                  <v-btn
-                    @click="sendMessage"
-                    :disabled="isSending"
-                    :loading="isSending"
-                    color="primary"
-                    variant="elevated"
-                  >
-                    <v-icon icon="mdi-send" class="mr-1"></v-icon>
-                    Отправить
-                  </v-btn>
-                </v-col>
-              </v-row>
-            </v-container>
-          </v-card>
+          <div class="input-panel">
+            <v-text-field
+              hide-details="auto"
+              placeholder="Введите сообщение..."
+              v-model="currentMessageText"
+              auto-grow
+              rows="1"
+              max-rows="1"
+              variant="outlined"
+              density="comfortable"
+              class="message-input"
+              @keyup.enter="sendMessage"
+            ></v-text-field>
+            <v-btn
+              @click="sendMessage"
+              :disabled="isSending"
+              :loading="isSending"
+              color="primary"
+              variant="elevated"
+              class="send-button"
+            >
+              <v-icon icon="mdi-send" class="mr-1"></v-icon>
+              Отправить
+            </v-btn>
+          </div>
         </div>
       </template>
     </div>
@@ -273,21 +289,26 @@ defineOptions({
 
 const emit = defineEmits(['chatSelected', 'chatDeleted', 'update:chatId'])
 
-import { ref, watch, onMounted, computed } from 'vue'
+import { ref, watch, onMounted, computed, nextTick } from 'vue'
 import type { Chat } from '@/models/Chat'
 import type { Message } from '@/models/Message'
 import moment from 'moment'
 import { useChat } from '@/composables/useChat.ts'
 import { useRoute, useRouter } from 'vue-router'
 import type { ProblemDto, CreateChatDto } from '@/types/BackendDtos'
+import { useUserTasks } from '@/composables/useUserTasks'
+import { UserTaskStatus } from '@/types/BackendDtos'
 
 import 'katex/dist/katex.min.css'
 import katex from 'katex'
+// @ts-ignore
+import renderMathInElement from 'katex/dist/contrib/auto-render.mjs'
 
 const route = useRoute()
 const router = useRouter()
 
 const { getChatById, getChatMessages, getNextMessage, createChat, getChats, deleteChat, getProblems } = useChat()
+const { completeUserTask, fetchUserTasks } = useUserTasks()
 
 const props = defineProps({
   chatId: String,
@@ -333,6 +354,11 @@ const messages = ref<Message[]>([])
 const currentMessageText = ref<string>('')
 const isSending = ref<boolean>(false)
 
+const userTaskId = ref<number | null>(null)
+const taskStatus = ref<UserTaskStatus | null>(null)
+const taskType = ref<number | null>(null)
+const markingSolved = ref(false)
+
 function scrollToBottom() {
   if (messagesCard.value) {
     const card = messagesCard.value;
@@ -349,6 +375,7 @@ onMounted(async () => {
   emit('update:chatId', chatId.value);
   await onChatUpdate();
   await fetchProblems();
+  await updateTaskInfo();
 })
 
 watch(() => route.params.chatId, async (newChatId) => {
@@ -375,42 +402,77 @@ async function onChatUpdate() {
   scrollToBottom();
 }
 
-function bigFormula(str:string):string {
-    return katex.renderToString(str.substring(2, str.length - 2))
-}
-
-function normalFormula(str:string):string {
-    return katex.renderToString(str.substring(1, str.length - 1))
-}
-
-function proceedWrappedSubStrings(str: string, lSymbols: string, rSymbols: string, replacer: (str: string) => string): string {
-  let res = str
-  let start = res.indexOf(lSymbols)
-  let end = res.indexOf(rSymbols, start + lSymbols.length)
-  while (start != -1 && end != -1) {
-    res = res.substring(0, start) + replacer(res.substring(start, end + rSymbols.length)) + res.substring(end + rSymbols.length)
-    start = res.indexOf(lSymbols)
-    end = res.indexOf(rSymbols, start + lSymbols.length)
-  }
-  return res
-}
-
 function formatMessage(message: string): string {
-  let buff = message ?? ''
-  buff = proceedWrappedSubStrings(buff, '$$', '$$', bigFormula)
-  buff = proceedWrappedSubStrings(buff, '\\\[', '\\\]', bigFormula)
-  buff = proceedWrappedSubStrings(buff, '\\\(', '\\\)', bigFormula)
-  buff = proceedWrappedSubStrings(buff, '$', '$', normalFormula)
-  buff = proceedWrappedSubStrings(buff, '**', '**', (str: string)=>{return `<b>${str.substring(2, str.length - 2)}<\/b>`})
-  buff = proceedWrappedSubStrings(buff, '\`\`\`', '\`\`\`', (str: string)=>{return `<code>${str.substring(3, str.length - 3)}<\/code>`})
-  buff = proceedWrappedSubStrings(buff, '\`', '\`', (str: string)=>{return `<u>${str.substring(1, str.length - 1)}<\/u>`})
-  buff = proceedWrappedSubStrings(buff, '\\textbf{', '}', (str: string)=>{return `<b>${str.substring(8, str.length - 1)}<\/b>`})
-  buff = buff.replace(/\\\\/g, '\n')
-  buff = buff.replace(/^[ ]*### .*/gm, (str: string)=>{return `<h3>${str.substring(4)}<\/h3>`})
-  buff = buff.replace(/^[ ]*## .*/gm, (str: string)=>{return `<h2>${str.substring(3)}<\/h2>`})
-  buff = buff.replace(/^[ ]*# .*/gm, (str: string)=>{return `<h1>${str.substring(2)}<\/h1>`})
-  buff = buff.replace(/\n/g, '<br>')  
- return buff
+  if (!message) return '';
+  
+  let buff = message;
+  
+  // Прямая замена \textbf{...} на <b>...</b> перед обработкой формул
+  buff = buff.replace(/\\textbf\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}/g, '<b>$1</b>');
+  
+  // Сначала создаем временный элемент для обработки формул
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = buff;
+  
+  // Применяем KaTeX к временному элементу с базовыми настройками
+  renderMathInElement(tempDiv, {
+    delimiters: [
+      {left: "$$", right: "$$", display: true},
+      {left: "$", right: "$", display: false},
+      {left: "\\(", right: "\\)", display: false},
+      {left: "\\[", right: "\\]", display: true},
+      {left: "\\begin{equation}", right: "\\end{equation}", display: true},
+      {left: "\\begin{equation*}", right: "\\end{equation*}", display: true},
+      {left: "\\begin{align}", right: "\\end{align}", display: true},
+      {left: "\\begin{alignat}", right: "\\end{alignat}", display: true},
+      {left: "\\begin{gather}", right: "\\end{gather}", display: true},
+      {left: "\\begin{CD}", right: "\\end{CD}", display: true},
+      {left: "\\begin{pmatrix}", right: "\\end{pmatrix}", display: true},
+      {left: "\\begin{bmatrix}", right: "\\end{bmatrix}", display: true},
+      {left: "\\begin{vmatrix}", right: "\\end{vmatrix}", display: true},
+      {left: "\\begin{Vmatrix}", right: "\\end{Vmatrix}", display: true},
+      {left: "\\begin{cases}", right: "\\end{cases}", display: true}
+    ],
+    throwOnError: false,
+    errorColor: '#cc0000',
+    strict: false,
+    trust: true,
+    macros: {
+      // Только самые необходимые и безопасные макросы
+      "\\R": "\\mathbb{R}",
+      "\\C": "\\mathbb{C}",
+      "\\N": "\\mathbb{N}",
+      "\\Z": "\\mathbb{Z}"
+    },
+    ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code", "option"]
+  });
+  
+  // Получаем текст с обработанным LaTeX
+  buff = tempDiv.innerHTML;
+  
+  // Заголовки
+  buff = buff.replace(/(?:^|\n)##### (.*?)(?:\n|$)/g, '<h5>$1</h5>');
+  buff = buff.replace(/(?:^|\n)#### (.*?)(?:\n|$)/g, '<h4>$1</h4>');
+  buff = buff.replace(/(?:^|\n)### (.*?)(?:\n|$)/g, '<h3>$1</h3>');
+  buff = buff.replace(/(?:^|\n)## (.*?)(?:\n|$)/g, '<h2>$1</h2>');
+  buff = buff.replace(/(?:^|\n)# (.*?)(?:\n|$)/g, '<h1>$1</h1>');
+  
+  // Жирный текст
+  buff = buff.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+  
+  // Курсив
+  buff = buff.replace(/\*(.*?)\*/g, '<i>$1</i>');
+  
+  // Подчеркивание
+  buff = buff.replace(/__(.*?)__/g, '<u>$1</u>');
+  
+  // Обработка двойных обратных слешей - преобразуем \\ в перенос строки
+  buff = buff.replace(/\\\\(?![^<>]*>)/g, '<br/>');
+  
+  // Перенос строки
+  buff = buff.replace(/\n/g, '<br/>');
+  
+  return buff;
 }
 
 async function sendMessage() {
@@ -547,6 +609,72 @@ watch(chatName, () => {
   hasDuplicateName.value = chats.value.some(chat => chat.name === chatName.value)
   needsConfirmation.value = false
 })
+
+async function updateTaskInfo() {
+  if (!chatId.value) {
+    userTaskId.value = null;
+    taskStatus.value = null;
+    taskType.value = null;
+    return;
+  }
+  // Загружаем задачи пользователя (все типы)
+  try {
+    // Сначала проверяем тип 0
+    const tasks0 = await fetchUserTasks(0);
+    let task = tasks0.find(t => t.associatedChatId === chatId.value);
+    
+    // Если не нашли в типе 0, проверяем типы 1-3
+    if (!task) {
+      for (let i = 1; i <= 3; i++) {
+        const tasksI = await fetchUserTasks(i);
+        task = tasksI.find(t => t.associatedChatId === chatId.value);
+        if (task) {
+          taskType.value = i;
+          break;
+        }
+      }
+    } else {
+      taskType.value = 0;
+    }
+    
+    if (task) {
+      userTaskId.value = task.id as unknown as number; // id is number
+      taskStatus.value = task.status;
+    } else {
+      // Это обычный чат, не связанный с задачей
+      userTaskId.value = null;
+      taskStatus.value = null;
+      taskType.value = null;
+    }
+  } catch (err) {
+    console.error('Failed to fetch user tasks for chat view:', err);
+  }
+}
+
+watch(chatId, () => {
+  updateTaskInfo();
+});
+
+async function markTaskSolved() {
+  if (!userTaskId.value) return;
+  markingSolved.value = true;
+  try {
+    const res = await completeUserTask(userTaskId.value);
+    if (res) {
+      taskStatus.value = UserTaskStatus.Solved;
+      // Переходим к списку задач с правильным типом
+      if (taskType.value !== null) {
+        router.push(`/select-task?taskType=${taskType.value}`);
+      } else {
+        router.push('/select-task');
+      }
+    }
+  } catch (err) {
+    console.error('Failed to mark task solved:', err);
+  } finally {
+    markingSolved.value = false;
+  }
+}
 </script>
 
 <style lang="css" scoped>
@@ -572,6 +700,7 @@ watch(chatName, () => {
   min-height: 0;
   overflow: hidden;
   padding-top: var(--v-layout-top);
+  background-color: var(--v-theme-background);
 }
 
 .messages-wrapper {
@@ -585,20 +714,20 @@ watch(chatName, () => {
   width: 90%;
   max-width: 75rem;
   margin: 0 auto;
-  border-radius: 1rem;
-  overflow: hidden;
 }
 
 .messages-list {
   padding: 1rem;
   --v-border-opacity: 0;
+  background-color: transparent !important;
 }
 
 .message-item {
   min-height: 0;
   padding: 0.25rem 0;
-  border-radius: 1rem;
+  border-radius: 1rem !important;
   margin-bottom: 0.5rem;
+  overflow: hidden;
 }
 
 .message-item::before,
@@ -606,21 +735,60 @@ watch(chatName, () => {
   display: none;
 }
 
+.message-time {
+  display: block;
+  font-size: 0.7rem;
+  color: rgba(var(--v-theme-on-surface), 0.4);
+  margin-top: 0.25rem;
+}
+
 .user-message {
-  text-align: right;
-  border-radius: 1rem;
+  text-align: left;
+  border-radius: 1.25rem !important;
   padding: 0.75rem 1rem;
-  margin: 0.5rem 0;
-  background: rgba(var(--v-theme-primary), 0.1);
+  margin: 0.5rem 0 0.5rem auto;
+  max-width: 80%;
+  background: rgba(var(--v-theme-primary), 0.25);
+  overflow: hidden;
 }
 
 .bot-message {
   text-align: left;
-  margin-left: 2rem;
   border-radius: 1rem;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 1rem 0.5rem 1rem;
   margin: 0.5rem 0;
-  background: rgba(var(--v-theme-surface-variant), 0.1);
+  max-width: 80%;
+  background: transparent;
+  color: rgba(var(--v-theme-on-surface), 0.87);
+}
+
+.problem-condition-message {
+  background: #1E293B !important; /* Темный серо-синий фон */
+  color: white !important;
+  border-radius: 1rem !important;
+  padding: 1rem !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  margin-bottom: 1.5rem;
+  max-width: 95% !important; /* Чуть шире обычных сообщений */
+}
+
+.problem-condition-message :deep(h1),
+.problem-condition-message :deep(h2),
+.problem-condition-message :deep(h3),
+.problem-condition-message :deep(h4),
+.problem-condition-message :deep(h5),
+.problem-condition-message :deep(h6) {
+  color: #50E3C2; /* Бирюзовый цвет для заголовков внутри условия */
+}
+
+.problem-condition-message :deep(.katex) {
+  color: #F0F4F8; /* Светлый цвет для формул внутри условия */
+}
+
+/* Выделяем зеленую метку условия задачи */
+.problem-condition-message :deep(b) {
+  color: #50E3C2;
+  font-size: 1.1em;
 }
 
 .input-container {
@@ -632,31 +800,82 @@ watch(chatName, () => {
   z-index: 10;
 }
 
-.input-card {
+.input-panel {
   width: 90%;
   max-width: 75rem;
   margin: 0 auto;
+  display: flex;
+  align-items: center;
   border-radius: 1.25rem;
-  backdrop-filter: blur(0.625rem);
-  overflow: hidden;
+  border: 2px solid rgba(var(--v-theme-primary), 0.7);
+  padding: 0.5rem 0.5rem 0.5rem 1.5rem;
+  background-color: var(--v-theme-background);
+  min-height: 4.25rem;
+}
+
+.input-panel:focus-within {
+  border-color: white;
 }
 
 .message-input {
-  border-radius: 0.75rem;
+  flex: 1;
 }
 
 .message-input :deep(.v-field__input) {
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0;
   min-height: 2.75rem;
-  border-radius: 0.75rem;
 }
 
-.message-input :deep(.v-field) {
+.message-input :deep(.v-field__outline) {
+  display: none;
+}
+
+.send-button {
+  margin-left: 0.5rem;
   border-radius: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.send-button:hover {
+  background-color: white !important;
+  color: rgba(var(--v-theme-primary), 1) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-toggle {
+  color: rgba(var(--v-theme-primary), 0.8);
+}
+
+.nav-button {
+  color: rgba(var(--v-theme-primary), 0.8);
 }
 
 .v-btn {
   border-radius: 0.75rem;
+}
+
+.mark-solved-btn {
+  transition: all 0.3s ease;
+  border-color: rgba(var(--v-theme-success), 0.7) !important;
+  color: rgba(var(--v-theme-success), 0.9) !important;
+  font-size: 0.875rem;
+  text-transform: none;
+}
+
+.mark-solved-btn:hover {
+  background-color: rgba(var(--v-theme-success), 0.9) !important;
+  color: white !important;
+  border-color: rgba(var(--v-theme-success), 0.9) !important;
+}
+
+.solved-btn {
+  background-color: rgb(0 0 0) !important;
+  color: #00ff32 !important;
+  font-size: 0.875rem;
+  text-transform: none;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  opacity: 1 !important;
 }
 
 .new-chat-card {

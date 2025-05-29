@@ -1,7 +1,7 @@
 import axios, { type AxiosInstance } from 'axios'
 import type { Chat } from '@/models/Chat'
 import type { Message } from '@/models/Message'
-import type { ChatDto, CreateChatDto, MessageDto, SendMessageRequestDto, ProblemsResponseDto } from '@/types/BackendDtos'
+import type { ChatDto, CreateChatDto, MessageDto, SendMessageRequestDto, ProblemsResponseDto, ProblemDto } from '@/types/BackendDtos'
 
 interface Stream<T> {
   [Symbol.asyncIterator](): AsyncIterator<T>;
@@ -79,6 +79,45 @@ export function useChat() {
     return resp.data;
   }
 
+  async function getProblemByPrefix(prefix: string): Promise<ProblemDto | null> {
+    const resp = await client.get<ProblemsResponseDto>(`/api/Tasks/problems?page=1&size=10&prefixName=${encodeURIComponent(prefix)}`, { withCredentials: true });
+    return resp.data.problems.length > 0 ? resp.data.problems[0] : null;
+  }
+
+  async function getAllProblemsByPrefix(prefix: string): Promise<ProblemDto[]> {
+    const allProblems: ProblemDto[] = [];
+    let page = 1;
+    const size = 50; // Берем по 50 задач на странице для оптимизации
+    
+    while (true) {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        size: size.toString()
+      });
+      
+      if (prefix) {
+        params.append('prefixName', prefix);
+      }
+      
+      const resp = await client.get<ProblemsResponseDto>(`/api/Tasks/problems?${params.toString()}`, { withCredentials: true });
+      const problems = resp.data.problems;
+      
+      if (problems.length === 0) {
+        break; // Если задач больше нет, выходим из цикла
+      }
+      
+      allProblems.push(...problems);
+      
+      if (problems.length < size) {
+        break; // Если получили меньше задач, чем размер страницы, значит это последняя страница
+      }
+      
+      page++; // Переходим к следующей странице
+    }
+    
+    return allProblems;
+  }
+
   return {
     createChat,
     deleteChat,
@@ -87,5 +126,7 @@ export function useChat() {
     getNextMessage,
     getChatMessages,
     getProblems,
+    getProblemByPrefix,
+    getAllProblemsByPrefix,
   }
 }

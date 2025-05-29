@@ -15,6 +15,41 @@
               required
             ></v-text-field>
 
+            <template v-if="!isLogin">
+              <v-text-field
+                v-model="firstName"
+                label="Имя"
+                type="text"
+                placeholder="Иван"
+                :rules="[v => !!v || 'Имя обязательно']"
+                maxlength="20"
+                counter
+                required
+              ></v-text-field>
+
+              <v-text-field
+                v-model="lastName"
+                label="Фамилия"
+                type="text"
+                placeholder="Иванов"
+                :rules="[v => !!v || 'Фамилия обязательна']"
+                maxlength="20"
+                counter
+                required
+              ></v-text-field>
+
+              <v-text-field
+                v-model="studentGroup"
+                label="Номер группы"
+                type="text"
+                placeholder="М-123"
+                :rules="[v => !!v || 'Номер группы обязателен']"
+                maxlength="20"
+                counter
+                required
+              ></v-text-field>
+            </template>
+
             <v-text-field
               v-model="password"
               label="Пароль"
@@ -72,17 +107,30 @@
 </template>
 
 <script setup lang="ts">
-import { ref, type Ref } from 'vue';
+import { ref, type Ref, onMounted } from 'vue';
 import { useAuth } from '@/composables/useAuth';
-import router from '@/router'
+import router from '@/router';
+import { useRoute } from 'vue-router';
 
-const { login, register } = useAuth()
+const route = useRoute();
+
+const { login, register } = useAuth();
 
 const errorMessage: Ref<string> = ref("");
 const email: Ref<string> = ref("");
 const password: Ref<string> = ref("");
 const confirmPassword: Ref<string> = ref("");
+const firstName: Ref<string> = ref("");
+const lastName: Ref<string> = ref("");
+const studentGroup: Ref<string> = ref("");
 const isLogin: Ref<boolean> = ref(true);
+
+onMounted(() => {
+  // Проверяем наличие параметра register в URL и переключаемся на форму регистрации
+  if (route.query.register === 'true') {
+    isLogin.value = false;
+  }
+});
 
 function onSubmit() {
   if (isLogin.value) {
@@ -113,7 +161,13 @@ function onRegister() {
     return;
   }
 
-  register(email.value, password.value)
+  register(
+    email.value, 
+    password.value, 
+    firstName.value, 
+    lastName.value, 
+    studentGroup.value
+  )
     .then((result) => {
       if (result.success) {
         router.push('/');
@@ -121,23 +175,23 @@ function onRegister() {
       }
 
       if (result.error) {
-        if (result.error.errors) {
-          // Handle validation errors
+        if (result.error.detail) {
+          // Приоритет отображения конкретной ошибки
+          errorMessage.value = result.error.detail;
+        } else if (result.error.errors) {
+          // Объединяем все сообщения об ошибках
           const errorMessages = Object.values(result.error.errors)
             .flat()
             .join('\n');
           errorMessage.value = errorMessages;
-        } else if (result.error.detail) {
-          // Handle general error message
-          errorMessage.value = result.error.detail;
         } else {
           errorMessage.value = "Ошибка при регистрации";
         }
       }
     })
     .catch((err: Error) => {
-      errorMessage.value = "Ошибка при регистрации";
-      console.log(err);
+      console.error("Непредвиденная ошибка:", err);
+      errorMessage.value = "Ошибка при регистрации. Проверьте правильность введенных данных.";
     });
 }
 </script>
