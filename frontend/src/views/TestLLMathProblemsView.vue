@@ -16,7 +16,7 @@
       <h2>Список задач</h2>
       <div v-if="loading && !problems.length" class="loading-message">Загрузка списка задач...</div>
       <div v-if="!loading && problems.length === 0 && attemptedLoad" class="info-message">Задачи не найдены. Вы можете добавить их ниже.</div>
-      
+
       <table v-if="problems.length > 0" class="problems-list-simple">
         <thead>
           <tr>
@@ -130,7 +130,7 @@
         </div>
         <button @click="addProblemFromManagementTab" :disabled="apiCallLoading.managementAddProblem">Добавить задачу</button>
       </section>
-      
+
       <datalist id="existingTypesDatalist">
         <option v-for="type in allTypes" :key="type" :value="type"></option>
       </datalist>
@@ -491,9 +491,9 @@ watch(activeTab, (newTab) => {
   }
 });
 
-const LLMATH_PROBLEMS_API_URL_BASE = 'http://localhost:8001';
+const LLMATH_PROBLEMS_API_URL_BASE = 'https://math-llm-problems.dev.mgsds.com';
 const LLMATH_PROBLEMS_API_URL = `${LLMATH_PROBLEMS_API_URL_BASE}/api`;
-const MATHLLM_BACKEND_API_URL = 'http://localhost:5000'; // URL основного бэкенда
+const MATHLLM_BACKEND_API_URL = 'https://math-llm-back.dev.mgsds.com'; // URL основного бэкенда
 
 interface GeoilonAnsKey {
   hash: string;
@@ -512,8 +512,8 @@ interface Solution {
 }
 
 interface Problem {
-  _id?: string; 
-  id?: string; 
+  _id?: string;
+  id?: string;
   title?: string;
   statement: string;
   geolin_ans_key: GeoilonAnsKey;
@@ -533,7 +533,7 @@ interface GeolinProblemData {
   hash?: string;
   condition?: string;
   seed?: number;
-  error?: string; 
+  error?: string;
   problemParams?: string; // Добавляем поле для полного объекта problem_params
 }
 
@@ -546,7 +546,7 @@ const selectedProblem = ref<Problem | null>(null);
 const problemTypesMap = ref<Record<string, string[]>>({});
 
 const foundProblemsByTypeList = ref<Problem[]>([]);
-const foundProblemByIdList = ref<Problem[]>([]); 
+const foundProblemByIdList = ref<Problem[]>([]);
 
 const apiCallLoading = reactive({
   createProblem: false,
@@ -648,7 +648,7 @@ function showEditForm(problem: Problem) {
     currentEditProblem.llm_solution = editingProblem.value.llm_solution !== undefined ? editingProblem.value.llm_solution : null;
 
     currentEditProblemSolutionStepsJson.value = JSON.stringify(currentEditProblem.solution.steps, null, 2);
-    currentEditProblemLlmSolutionJson.value = currentEditProblem.llm_solution 
+    currentEditProblemLlmSolutionJson.value = currentEditProblem.llm_solution
       ? (typeof currentEditProblem.llm_solution === 'string' ? currentEditProblem.llm_solution : JSON.stringify(currentEditProblem.llm_solution, null, 2))
       : '';
 
@@ -682,7 +682,7 @@ async function updateProblemFromManagementTab() {
       solution: { steps },
       llm_solution: llmSolution,
       // Важно: geolin_ans_key нужно взять из оригинального editingProblem.value, т.к. оно не редактируется в этой форме
-      geolin_ans_key: editingProblem.value.geolin_ans_key 
+      geolin_ans_key: editingProblem.value.geolin_ans_key
     };
 
     const updateResponse = await makeApiCall(`/problems/${problemIdToUpdate}`, 'PUT', payload, 'managementUpdateProblem', 'managementUpdateProblem');
@@ -705,10 +705,10 @@ async function updateProblemFromManagementTab() {
         }
         // Удаление старого типа не реализовано через API (только удаление задачи целиком удаляет связи)
       }
-      
+
       await fetchAllProblems(); // Обновляем список и карту типов
       cancelEdit(); // Скрываем форму
-    } 
+    }
   } catch (e) {
     console.error("Ошибка при обновлении задачи (management tab):", e);
     apiResponse.managementUpdateProblem = { error: true, message: "Ошибка парсинга JSON или API (management tab)", details: e };
@@ -718,7 +718,7 @@ async function updateProblemFromManagementTab() {
 async function makeApiCall(endpoint: string, method: string, body?: any, loadingKey?: keyof typeof apiCallLoading, responseKey?: keyof typeof apiResponse) {
   if (loadingKey) apiCallLoading[loadingKey] = true;
   if (responseKey) apiResponse[responseKey] = null;
-  if (responseKey === 'fetchAllTypesError' || loadingKey === 'fetchAllTypes') { 
+  if (responseKey === 'fetchAllTypesError' || loadingKey === 'fetchAllTypes') {
     apiResponse.fetchAllTypesError = null;
   }
 
@@ -733,20 +733,20 @@ async function makeApiCall(endpoint: string, method: string, body?: any, loading
       options.body = JSON.stringify(body);
     }
     const response = await fetch(`${LLMATH_PROBLEMS_API_URL}${endpoint}`, options);
-    
+
     let responseData;
     const contentType = response.headers.get("content-type");
     if (contentType && contentType.indexOf("application/json") !== -1) {
       responseData = await response.json();
     } else {
-      responseData = await response.text(); 
+      responseData = await response.text();
     }
 
     if (!response.ok) {
       const errorDetail = typeof responseData === 'object' ? responseData : { message: responseData, status: response.status };
-      throw errorDetail; 
+      throw errorDetail;
     }
-    
+
     if (responseKey && responseKey !== 'fetchAllTypesError') {
       apiResponse[responseKey] = responseData;
     } else if (endpoint === '/types' && method === 'GET') {
@@ -757,12 +757,12 @@ async function makeApiCall(endpoint: string, method: string, body?: any, loading
     console.error(`Ошибка при вызове ${method} ${LLMATH_PROBLEMS_API_URL}${endpoint}:`, e);
     if (responseKey && responseKey !== 'fetchAllTypesError') {
       apiResponse[responseKey] = { error: true, details: e };
-    } else if (loadingKey === 'fetchAllTypes' || responseKey === 'fetchAllTypesError') { 
+    } else if (loadingKey === 'fetchAllTypes' || responseKey === 'fetchAllTypesError') {
         apiResponse.fetchAllTypesError = { error: true, details: e };
-    } else if (endpoint === '/problems' && method === 'GET' && !loadingKey && !responseKey) { 
-        error.value = e; 
+    } else if (endpoint === '/problems' && method === 'GET' && !loadingKey && !responseKey) {
+        error.value = e;
     }
-    return { error: true, details: e }; 
+    return { error: true, details: e };
   } finally {
     if (loadingKey) apiCallLoading[loadingKey] = false;
   }
@@ -773,15 +773,15 @@ async function populateProblemTypesMap() {
   if (!apiCallLoading.fetchAllTypes && allTypes.value.length === 0) {
       await fetchAllTypes(); // Убедимся, что типы загружены
   }
-  
+
   if (allTypes.value && allTypes.value.length > 0 && !apiResponse.fetchAllTypesError) {
     console.log("Fetched unique types for map:", allTypes.value);
-    
+
     const tempMap: Record<string, string[]> = {};
 
     for (const typeStr of allTypes.value) {
       const problemsForTypeResponse = await makeApiCall(`/get_problems_by_type?problem_type=${encodeURIComponent(typeStr)}`, 'GET');
-      
+
       if (problemsForTypeResponse && !problemsForTypeResponse.error && Array.isArray(problemsForTypeResponse)) {
         const problemsWithType: Problem[] = problemsForTypeResponse;
         for (const problem of problemsWithType) {
@@ -801,7 +801,7 @@ async function populateProblemTypesMap() {
     console.log("Problem types map populated:", problemTypesMap.value);
   } else {
     console.warn('Could not fetch all types to build problemTypesMap or no types found.', apiResponse.fetchAllTypesError);
-    problemTypesMap.value = {}; 
+    problemTypesMap.value = {};
   }
 }
 
@@ -815,7 +815,7 @@ async function fetchAllProblems() {
   error.value = null;
   attemptedLoad.value = true;
   foundProblemByIdList.value = [];
-  foundProblemsByTypeList.value = []; 
+  foundProblemsByTypeList.value = [];
   apiResponse.fetchProblemById = null;
   apiResponse.fetchProblemsByType = null;
 
@@ -829,9 +829,9 @@ async function fetchAllProblems() {
     problems.value = data;
     await fetchAllTypes(); // Загружаем типы
     if (problems.value.length > 0) {
-      await populateProblemTypesMap(); 
+      await populateProblemTypesMap();
     } else {
-      problemTypesMap.value = {}; 
+      problemTypesMap.value = {};
     }
   } catch (e) {
     console.error('Failed to fetch problems:', e);
@@ -847,7 +847,7 @@ function tryParseJson(jsonString: string, defaultValue: any = null) {
     return JSON.parse(jsonString);
   } catch (e) {
     console.warn("Failed to parse JSON, returning as text: ", jsonString, e);
-    return jsonString; 
+    return jsonString;
   }
 }
 
@@ -862,7 +862,7 @@ async function createProblem() {
       llm_solution: llmSolution,
     };
     await makeApiCall('/problems', 'POST', problemToCreate, 'createProblem', 'createProblem');
-    fetchAllProblems(); 
+    fetchAllProblems();
     newProblem.title = '';
     newProblem.statement = '';
     newProblem.geolin_ans_key = { hash: '', seed: 0 };
@@ -879,11 +879,11 @@ async function createProblem() {
 
 async function fetchProblemById() {
   if (!problemIdToFetch.value) return;
-  foundProblemByIdList.value = []; 
+  foundProblemByIdList.value = [];
   const responseData = await makeApiCall(`/problems/${problemIdToFetch.value}`, 'GET', undefined, 'fetchProblemById', 'fetchProblemById');
   if (responseData && !responseData.error) {
     foundProblemByIdList.value = [responseData as Problem];
-    apiResponse.fetchProblemById = null; 
+    apiResponse.fetchProblemById = null;
   }
 }
 
@@ -895,7 +895,7 @@ function setProblemToUpdate(problem: Problem) {
   updateProblemData.result = problem.result || '';
   updateProblemData.solution = { ...(problem.solution || { steps: [] }) };
   updateProblemData.llm_solution = problem.llm_solution !== undefined ? problem.llm_solution : null;
-  
+
   updateProblemSolutionStepsJson.value = JSON.stringify(problem.solution?.steps || [], null, 2);
   updateProblemLlmSolutionJson.value = problem.llm_solution ? (typeof problem.llm_solution === 'string' ? problem.llm_solution : JSON.stringify(problem.llm_solution, null, 2)) : '';
 }
@@ -907,7 +907,7 @@ async function loadProblemForUpdate() {
   apiCallLoading.loadProblemForUpdate = false;
   if (problem && !problem.error) {
     setProblemToUpdate(problem);
-    apiResponse.updateProblem = null; 
+    apiResponse.updateProblem = null;
   } else {
     apiResponse.updateProblem = { error: true, details: "Не удалось загрузить задачу для обновления." };
   }
@@ -933,7 +933,7 @@ async function updateProblem() {
     };
 
     await makeApiCall(`/problems/${idForUpdate}`, 'PUT', problemToUpdatePayload, 'updateProblem', 'updateProblem');
-    fetchAllProblems(); 
+    fetchAllProblems();
   } catch (e) {
      console.error("Ошибка парсинга JSON или при обновлении задачи:", e);
     apiResponse.updateProblem = { error: true, message: "Ошибка парсинга JSON или API", details: e };
@@ -942,7 +942,7 @@ async function updateProblem() {
 
 function setProblemToDelete(id: string | undefined) {
     if (id) {
-        problemIdToDeleteValue.value = id; 
+        problemIdToDeleteValue.value = id;
     } else {
         console.warn("ID для удаления не предоставлен");
         apiResponse.deleteProblem = { error: true, message: "ID для удаления не предоставлен" };
@@ -951,9 +951,9 @@ function setProblemToDelete(id: string | undefined) {
 
 async function deleteProblemFromDbTab() {
   if (!problemIdToDeleteValue.value) return;
-  await makeApiCall(`/problems/${problemIdToDeleteValue.value}`, 'DELETE', undefined, 'deleteProblem', 'deleteProblem'); 
-  fetchAllProblems(); 
-  problemIdToDeleteValue.value = ''; 
+  await makeApiCall(`/problems/${problemIdToDeleteValue.value}`, 'DELETE', undefined, 'deleteProblem', 'deleteProblem');
+  fetchAllProblems();
+  problemIdToDeleteValue.value = '';
 }
 
 async function deleteProblemByIdAndRefresh(problemId: string | undefined) {
@@ -963,7 +963,7 @@ async function deleteProblemByIdAndRefresh(problemId: string | undefined) {
     return;
   }
   await makeApiCall(`/problems/${problemId}`, 'DELETE', undefined, 'deleteProblem', 'deleteProblem');
-  await fetchAllProblems(); 
+  await fetchAllProblems();
 }
 
 async function addProblemFromManagementTab() {
@@ -989,16 +989,16 @@ async function addProblemFromManagementTab() {
       const newProblemId = createdProblemResponse._id || createdProblemResponse.id;
       apiResponse.managementAddProblem = { success: true, createdProblem: createdProblemResponse };
 
-      if (managementNewProblemType.value.trim() !== '') { 
-        const typePayload: ProblemWithTypePayload = { 
+      if (managementNewProblemType.value.trim() !== '') {
+        const typePayload: ProblemWithTypePayload = {
           problem_id: newProblemId,
-          type_name: managementNewProblemType.value.trim(), 
+          type_name: managementNewProblemType.value.trim(),
         };
         const assignTypeResponse = await makeApiCall('/assign_type', 'POST', typePayload, 'assignType', 'assignType');
          if (assignTypeResponse && !assignTypeResponse.error) {
             console.log("Тип успешно присвоен:", assignTypeResponse);
             if (typeof apiResponse.managementAddProblem === 'object' && apiResponse.managementAddProblem !== null) {
-                 apiResponse.managementAddProblem.typeAssignment = assignTypeResponse; 
+                 apiResponse.managementAddProblem.typeAssignment = assignTypeResponse;
             }
         } else {
             console.warn("Ошибка при присвоении типа:", assignTypeResponse?.details || 'Неизвестная ошибка');
@@ -1007,8 +1007,8 @@ async function addProblemFromManagementTab() {
              }
         }
       }
-      
-      await fetchAllProblems(); 
+
+      await fetchAllProblems();
 
       managementNewProblem.title = '';
       managementNewProblem.statement = '';
@@ -1016,7 +1016,7 @@ async function addProblemFromManagementTab() {
       managementNewProblemSolutionStepsJson.value = '[]';
       managementNewProblemLlmSolutionJson.value = '';
       managementNewProblem.llm_solution = null;
-      managementNewProblemType.value = ''; 
+      managementNewProblemType.value = '';
 
     } else {
       console.error("Ошибка при создании задачи (management tab):", createdProblemResponse?.details);
@@ -1028,27 +1028,27 @@ async function addProblemFromManagementTab() {
   }
 }
 
-async function assignTypeToProblem() { 
+async function assignTypeToProblem() {
   if (!typeAssignment.problem_id || !typeAssignment.type_name) return;
   const response = await makeApiCall('/assign_type', 'POST', typeAssignment, 'assignType', 'assignType');
   if (response && !response.error) {
-    typeAssignment.type_name = ''; 
+    typeAssignment.type_name = '';
     typeAssignment.problem_id = '';
-    await populateProblemTypesMap(); 
+    await populateProblemTypesMap();
   }
 }
 
-async function fetchProblemsByType() { 
+async function fetchProblemsByType() {
   if (!typeToFetchProblemsBy.value) return;
-  foundProblemsByTypeList.value = []; 
+  foundProblemsByTypeList.value = [];
   const responseData = await makeApiCall(`/get_problems_by_type?problem_type=${encodeURIComponent(typeToFetchProblemsBy.value)}`, 'GET', undefined, 'fetchProblemsByType', 'fetchProblemsByType');
   if (responseData && !responseData.error && Array.isArray(responseData)) {
     foundProblemsByTypeList.value = responseData as Problem[];
-    apiResponse.fetchProblemsByType = null; 
+    apiResponse.fetchProblemsByType = null;
   }
 }
 
-async function fetchAllTypes() { 
+async function fetchAllTypes() {
  await makeApiCall('/types', 'GET', undefined, 'fetchAllTypes', 'fetchAllTypesError');
 }
 
@@ -1068,19 +1068,19 @@ async function fetchFromGeolinProxy(prefix: string) {
     // Запрашиваем задачу со случайным seed, генерируемым на сервере
     const url = `${MATHLLM_BACKEND_API_URL}/api/v1/geolin-proxy/problem-data?prefix=${encodeURIComponent(prefix)}`;
     console.log("Запрашиваем задачу со случайным seed");
-    
+
     const response = await fetch(url);
-    const data = await response.json(); 
+    const data = await response.json();
 
     if (!response.ok) {
       const errorMsg = data.error || `HTTP error! status: ${response.status}`;
       console.error("Ошибка от GeoLin API:", data);
       throw new Error(typeof errorMsg === 'object' ? JSON.stringify(errorMsg) : errorMsg);
     }
-    
+
     // Добавляем проверку полученных данных
     console.log("Получены данные от GeoLin:", data);
-    
+
     apiResponse.loadFromGeolin = data;
     return data;
   } catch (e: any) {
@@ -1100,16 +1100,16 @@ async function loadFromGeolin() {
   const data = await fetchFromGeolinProxy(geolinPrefixToLoad.value);
   if (data && !data.error) {
     console.log("Успешно получены данные от GeoLin:", data);
-    
+
     managementNewProblem.title = data.name || '';
     managementNewProblem.statement = data.condition || '';
     managementNewProblem.geolin_ans_key.hash = data.hash || '';
-    
+
     // Обновленная логика работы с seed - приоритет отдаём непосредственно seed из ответа
     if (data.seed !== undefined && data.seed !== null) {
       managementNewProblem.geolin_ans_key.seed = Number(data.seed);
       console.log("Полученный seed из GeoLin API:", data.seed);
-      
+
       // Добавляем сообщение для пользователя
       const seedDiv = document.createElement('div');
       seedDiv.innerHTML = `<div style="color: green; margin-top: 10px; font-weight: bold;">Загружена задача с уникальным seed: ${data.seed}</div>`;
@@ -1147,7 +1147,7 @@ async function loadFromGeolin() {
       managementNewProblem.geolin_ans_key.seed = 0;
       console.log("Ни seed, ни problem_params не получены от GeoLin, устанавливаем значение по умолчанию: 0");
     }
-    
+
     // Очищаем поля решения, так как они не приходят от GeoLin
     managementNewProblemSolutionStepsJson.value = '[]';
     managementNewProblem.solution = { steps: [] };
@@ -1162,7 +1162,7 @@ async function loadFromGeolin() {
 async function getLlmSolution(formType: 'management' | 'database' | 'update') {
   activeForm.value = formType;
   let problemStatement = '';
-  
+
   if (formType === 'management') {
     problemStatement = managementNewProblem.statement;
   } else if (formType === 'database') {
@@ -1170,14 +1170,14 @@ async function getLlmSolution(formType: 'management' | 'database' | 'update') {
   } else if (formType === 'update') {
     problemStatement = updateProblemData.statement;
   }
-  
+
   if (!problemStatement) {
     alert('Поле "Условие" не может быть пустым для получения решения LLM');
     return;
   }
-  
+
   apiCallLoading.getLlmSolution = true;
-  
+
   try {
     // Создаем клиент axios с базовым URL и настройками для авторизации
     const client = axios.create({
@@ -1192,9 +1192,9 @@ async function getLlmSolution(formType: 'management' | 'database' | 'update') {
     const response = await client.post('/api/v1/llm/solve-problem', {
       problemDescription: problemStatement
     });
-    
+
     const solution = response.data.solution;
-    
+
     // Обновляем соответствующее поле в зависимости от типа формы
     if (formType === 'management') {
       managementNewProblemLlmSolutionJson.value = solution;
@@ -1211,7 +1211,7 @@ async function getLlmSolution(formType: 'management' | 'database' | 'update') {
     // Более информативное сообщение об ошибке
     let errorMessage = 'Неизвестная ошибка';
     if (axios.isAxiosError(error)) {
-      errorMessage = error.response?.status === 401 
+      errorMessage = error.response?.status === 401
         ? 'Ошибка авторизации. Возможно, вам нужно выполнить вход в систему.'
         : `Ошибка: ${error.response?.status || 'сетевая ошибка'} - ${error.response?.data || error.message}`;
     } else if (error instanceof Error) {
@@ -1361,8 +1361,8 @@ onMounted(() => {
   font-size: 0.9em;
 }
 .llm-solution-preview, .llm-solution-preview-simple {
-  max-height: 70px; 
-  background-color: #3b004b; 
+  max-height: 70px;
+  background-color: #3b004b;
 }
 .llm-solution-preview-simple {
     background-color: #4a003b; /* Немного другой оттенок для simple таблицы, если нужно */
@@ -1446,7 +1446,7 @@ onMounted(() => {
   border: 1px solid #555;
   border-radius: 4px;
   box-sizing: border-box;
-  background-color: #fff; 
+  background-color: #fff;
   color: #333;
 }
 .form-group textarea {
@@ -1494,12 +1494,12 @@ onMounted(() => {
 }
 
 .btn-details {
-  background-color: #007bff !important; 
+  background-color: #007bff !important;
   color: white !important;
 }
 .btn-edit {
-  background-color: #ffc107 !important; 
-  color: #212529 !important; 
+  background-color: #ffc107 !important;
+  color: #212529 !important;
 }
 .btn-delete {
     background-color: #dc3545 !important;
@@ -1511,7 +1511,7 @@ onMounted(() => {
     margin-right: 5px;
     margin-left: 0;
 }
-.small-btn:last-of-type { 
+.small-btn:last-of-type {
     margin-right: 0;
 }
 .result-table {
@@ -1534,7 +1534,7 @@ onMounted(() => {
   background-color: transparent;
 }
 
-.form-section { 
+.form-section {
   padding: 20px;
   border-radius: 8px;
   border: 1px solid #444;
@@ -1615,4 +1615,4 @@ onMounted(() => {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
-</style> 
+</style>
