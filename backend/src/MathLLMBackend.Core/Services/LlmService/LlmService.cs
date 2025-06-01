@@ -60,6 +60,7 @@ public class LlmService : ILlmService
             {
                 var textChunk = chunk.ContentUpdate[0].Text;
                 fullResponseText.Append(textChunk);
+                _logger.LogInformation("LlmService: Streaming chunk: {textChunk}", textChunk);
                 yield return textChunk;
         }
     }
@@ -118,5 +119,31 @@ public class LlmService : ILlmService
         await _loggingService.LogInteraction(taskType, messages, response, config.Model);
         
         return response;
+    }
+
+    public async Task<string> ExtractAnswer(string problemStatement, string solution, CancellationToken ct)
+    {
+        var config = _config.Value.SolverModel;
+
+        var client = new ChatClient(
+            model: config.Model,
+            credential: new ApiKeyCredential(config.Token),
+            options: new OpenAIClientOptions() { Endpoint = new Uri(config.Url) });
+        
+        var extractAnswerSystemPrompt = _promptService.GetExtractAnswerSystemPrompt();
+        var extractAnswerPrompt = _promptService.GetExtractAnswerPrompt(problemStatement, solution);
+
+        var openaiMessages = new ChatMessage[]
+            {
+                new SystemChatMessage(extractAnswerSystemPrompt),
+                new UserChatMessage(extractAnswerPrompt),
+            };
+    
+        var completion = await client.CompleteChatAsync(openaiMessages, cancellationToken: ct);
+        var extractedAnswer = completion!.Value.Content[0].Text;
+        
+        _logger.LogInformation("Extracted answer: {ExtractedAnswer}", extractedAnswer);
+        
+        return extractedAnswer;
     }
 }

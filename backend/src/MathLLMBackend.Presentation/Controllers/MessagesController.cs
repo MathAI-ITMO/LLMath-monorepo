@@ -25,41 +25,42 @@ namespace MathLLMBackend.Presentation.Controllers
     
         [HttpPost("complete")]
         [Authorize]
-        public async Task Complete([FromBody] MessageCreateDto dto, CancellationToken ct)
+        public async Task<IActionResult> Complete([FromBody] MessageCreateDto dto, CancellationToken ct)
         {
             var userId = _userManager.GetUserId(User);
             if (userId is null)
             {
-                Response.StatusCode = 401;
-                return;
+                return Unauthorized();
             }
 
             var chat = await _service.GetChatById(dto.ChatId, ct);
-
             if (chat is null)
             {
-                Response.StatusCode = 400;
-                return;
+                return BadRequest("Chat not found.");
             }
 
             if (chat.UserId != userId)
             {
-                Response.StatusCode = 401;
-                return;
+                return Forbid();
             }
             
             var message = new Message(chat, dto.Text, MessageType.User);
-            var response = _service.CreateMessage(message, ct);
+            
+            string llmResponseText = await _service.CreateMessage(message, ct);
 
-            var outputStream = Response.Body;
-
-            await using var writer = new StreamWriter(outputStream);
-
-            await foreach (var messageLine in response)
+            if (Response.HasStarted)
             {
-                await writer.WriteAsync(messageLine);
-                await writer.FlushAsync(ct);
+                _logger.LogWarning("Response has already started before attempting to write LLM response for chat {ChatId}.", dto.ChatId);
+                return new EmptyResult();
             }
+
+            if (string.IsNullOrEmpty(llmResponseText))
+            {
+                _logger.LogWarning("LLM service returned empty or null response for chat {ChatId}, user message: {UserMessage}", dto.ChatId, dto.Text);
+                return Ok(string.Empty);
+            }
+            
+            return Ok(llmResponseText);
         }
     
         [HttpGet("get-messages-from-chat")]

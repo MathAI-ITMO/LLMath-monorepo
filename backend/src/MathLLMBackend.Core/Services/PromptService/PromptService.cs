@@ -93,4 +93,16 @@ public class PromptService : IPromptService
             _ => GetTutorInitialPrompt() // используем TutorInitialPrompt как стандартный для обычных задач
         };
     }
+
+    public string GetExtractAnswerSystemPrompt()
+    {
+        return _promptConfiguration.ExtractAnswerSystemPrompt;
+    }
+
+    public string GetExtractAnswerPrompt(string problemStatement, string solution)
+    {
+        return _promptConfiguration.ExtractAnswerPrompt
+            .Replace("{problemStatement}", problemStatement)
+            .Replace("{solution}", solution);
+    }
 } 
