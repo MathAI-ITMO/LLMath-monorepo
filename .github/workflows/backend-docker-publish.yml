@@ -8,7 +8,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  API_IMAGE_NAME: ${{ github.repository }}
+  API_IMAGE_NAME: mathllm-backend
 
 jobs:
   build-and-push:
@@ -38,17 +38,14 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.API_IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
-            type=ref,event=branch,enable=${{ github.ref != 'refs/heads/master' }}
-            type=semver,pattern={{version}},enable=${{ github.ref == 'refs/heads/master' }}
-            type=semver,pattern={{major}}.{{minor}},enable=${{ github.ref == 'refs/heads/master' }}
+            type=raw,value=dev-${{ github.ref_name }},enable=${{ github.ref != 'refs/heads/main' }}
             type=sha,format=long
-            type=raw,value=prerelease-${{ github.head_ref }},enable=${{ github.event_name == 'pull_request' }}
 
       - name: Build and push API image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./backend
+          file: ./backend/Dockerfile
           push: true
           tags: ${{ steps.meta-api.outputs.tags }}
           labels: ${{ steps.meta-api.outputs.labels }}
