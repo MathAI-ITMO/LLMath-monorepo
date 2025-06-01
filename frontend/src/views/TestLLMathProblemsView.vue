@@ -69,6 +69,13 @@
         </div>
         <div class="form-group">
           <label for="editLlmSolution">Решение LLM (JSON/text):</label>
+          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
+            <button @click="checkSolution('edit')" 
+                    class="small-btn btn-check-solution" 
+                    :disabled="apiCallLoading.checkSolution || !currentEditProblem.statement || !currentEditProblemLlmSolutionJson">
+              Проверить решение
+            </button>
+          </div>
           <textarea id="editLlmSolution" v-model="currentEditProblemLlmSolutionJson" rows="3"></textarea>
         </div>
         <button @click="updateProblemFromManagementTab" :disabled="apiCallLoading.managementUpdateProblem">Обновить задачу</button>
@@ -113,7 +120,14 @@
         <div class="form-group">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <label for="mgmtNewLlmSolution">Решение LLM (опционально, JSON/text):</label>
-            <button @click="getLlmSolution('management')" class="small-btn btn-llm-solution" :disabled="apiCallLoading.getLlmSolution || !managementNewProblem.statement">Получить решение LLM</button>
+            <div style="display: flex; gap: 10px;">
+              <button @click="getLlmSolution('management')" class="small-btn btn-llm-solution" :disabled="apiCallLoading.getLlmSolution || !managementNewProblem.statement">Получить решение LLM</button>
+              <button @click="checkSolution('management')" 
+                      class="small-btn btn-check-solution" 
+                      :disabled="apiCallLoading.checkSolution || !managementNewProblem.statement || !managementNewProblemLlmSolutionJson || !managementNewProblem.geolin_ans_key.hash">
+                Проверить решение
+              </button>
+            </div>
           </div>
           <div class="textarea-container">
             <textarea id="mgmtNewLlmSolution" v-model="managementNewProblemLlmSolutionJson" rows="12"></textarea>
@@ -218,7 +232,14 @@
         <div class="form-group">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <label for="newLlmSolution">Решение LLM (опционально, JSON/text):</label>
-            <button @click="getLlmSolution('database')" class="small-btn btn-llm-solution" :disabled="apiCallLoading.getLlmSolution || !newProblem.statement">Получить решение LLM</button>
+            <div style="display: flex; gap: 10px;">
+              <button @click="getLlmSolution('database')" class="small-btn btn-llm-solution" :disabled="apiCallLoading.getLlmSolution || !newProblem.statement">Получить решение LLM</button>
+              <button @click="checkSolution('database')" 
+                      class="small-btn btn-check-solution" 
+                      :disabled="apiCallLoading.checkSolution || !newProblem.statement || !newProblemLlmSolutionJson || !newProblem.geolin_ans_key.hash">
+                Проверить решение
+              </button>
+            </div>
           </div>
           <div class="textarea-container">
             <textarea id="newLlmSolution" v-model="newProblemLlmSolutionJson" rows="12"></textarea>
@@ -322,7 +343,14 @@
         <div class="form-group">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <label for="updateLlmSolution">Решение LLM (JSON/text):</label>
-            <button @click="getLlmSolution('update')" class="small-btn btn-llm-solution" :disabled="apiCallLoading.getLlmSolution || !updateProblemData.statement">Получить решение LLM</button>
+            <div style="display: flex; gap: 10px;">
+              <button @click="getLlmSolution('update')" class="small-btn btn-llm-solution" :disabled="apiCallLoading.getLlmSolution || !updateProblemData.statement">Получить решение LLM</button>
+              <button @click="checkSolution('update')" 
+                      class="small-btn btn-check-solution" 
+                      :disabled="apiCallLoading.checkSolution || !updateProblemData.statement || !updateProblemLlmSolutionJson || !updateProblemData.geolin_ans_key.hash">
+                Проверить решение
+              </button>
+            </div>
           </div>
           <div class="textarea-container">
             <textarea id="updateLlmSolution" v-model="updateProblemLlmSolutionJson" rows="6"></textarea>
@@ -468,6 +496,51 @@
       </div>
     </div>
 
+    <!-- Модальное окно результатов проверки решения -->
+    <div v-if="checkResultModal.show" class="modal-overlay" @click.self="closeCheckResultModal">
+      <div class="modal-content check-result-modal">
+        <button class="close-button" @click="closeCheckResultModal">×</button>
+        <h2>Результат проверки решения</h2>
+        
+        <div class="check-result-section">
+          <h3>📝 Проверенное решение:</h3>
+          <div class="solution-preview">
+            <pre>{{ checkResultModal.solution.substring(0, 300) }}{{ checkResultModal.solution.length > 300 ? '...' : '' }}</pre>
+          </div>
+        </div>
+
+        <div class="check-result-section">
+          <h3>🎯 Извлеченный ответ:</h3>
+          <div class="extracted-answer">
+            <pre>{{ checkResultModal.extractedAnswer }}</pre>
+          </div>
+        </div>
+
+        <div class="check-result-section">
+          <h3>✅ Результат проверки:</h3>
+          <div class="check-result" :class="{ 'correct': checkResultModal.checkResult?.isCorrect, 'incorrect': !checkResultModal.checkResult?.isCorrect }">
+            <div class="result-status">
+              <span v-if="checkResultModal.checkResult?.isCorrect" class="status-icon">✅</span>
+              <span v-else class="status-icon">❌</span>
+              <strong>{{ checkResultModal.checkResult?.isCorrect ? 'ПРАВИЛЬНО' : 'НЕПРАВИЛЬНО' }}</strong>
+            </div>
+            <div v-if="checkResultModal.checkResult?.message" class="result-message">
+              {{ checkResultModal.checkResult.message }}
+            </div>
+          </div>
+        </div>
+
+        <div class="check-result-section">
+          <h3>🔧 Детали проверки:</h3>
+          <div class="check-details">
+            <p><strong>Hash задачи:</strong> {{ checkResultModal.hash }}</p>
+            <p><strong>Seed:</strong> {{ checkResultModal.seed || 'не указан' }}</p>
+            <p><strong>Отправленный ответ в GeoLin:</strong> <code>{{ checkResultModal.extractedAnswer }}</code></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -561,6 +634,7 @@ const apiCallLoading = reactive({
   managementUpdateProblem: false,
   loadFromGeolin: false,
   getLlmSolution: false,
+  checkSolution: false,
 });
 
 const apiResponse = reactive<Record<string, any>>({
@@ -574,6 +648,7 @@ const apiResponse = reactive<Record<string, any>>({
   managementAddProblem: null,
   managementUpdateProblem: null,
   loadFromGeolin: null,
+  checkSolution: null,
 });
 
 const newProblem = reactive<Omit<Problem, '_id' | 'id'>>({
@@ -1223,6 +1298,176 @@ async function getLlmSolution(formType: 'management' | 'database' | 'update') {
   }
 }
 
+async function checkSolution(formType: 'management' | 'database' | 'update' | 'edit') {
+  let problemStatement = '';
+  let solution = '';
+  let hash = '';
+  let seed: number | undefined;
+  
+  if (formType === 'management') {
+    problemStatement = managementNewProblem.statement;
+    solution = managementNewProblemLlmSolutionJson.value;
+    hash = managementNewProblem.geolin_ans_key.hash;
+    seed = managementNewProblem.geolin_ans_key.seed;
+  } else if (formType === 'database') {
+    problemStatement = newProblem.statement;
+    solution = newProblemLlmSolutionJson.value;
+    hash = newProblem.geolin_ans_key.hash;
+    seed = newProblem.geolin_ans_key.seed;
+  } else if (formType === 'update') {
+    problemStatement = updateProblemData.statement;
+    solution = updateProblemLlmSolutionJson.value;
+    hash = updateProblemData.geolin_ans_key.hash;
+    seed = updateProblemData.geolin_ans_key.seed;
+  } else if (formType === 'edit') {
+    problemStatement = currentEditProblem.statement;
+    solution = currentEditProblemLlmSolutionJson.value;
+    hash = editingProblem.value?.geolin_ans_key?.hash || '';
+    seed = editingProblem.value?.geolin_ans_key?.seed;
+  }
+  
+  console.log('🔍 CheckSolution - Входные данные:', {
+    formType,
+    problemStatement: problemStatement.substring(0, 200) + '...',
+    solution: solution.substring(0, 200) + '...',
+    hash,
+    seed
+  });
+  
+  if (!problemStatement) {
+    alert('Поле "Условие" не может быть пустым для проверки решения');
+    return;
+  }
+  
+  if (!solution) {
+    alert('Поле "Решение LLM" не может быть пустым для проверки');
+    return;
+  }
+  
+  if (!hash) {
+    alert('Hash задачи отсутствует. Невозможно проверить решение.');
+    return;
+  }
+  
+  apiCallLoading.checkSolution = true;
+  
+  try {
+    const client = axios.create({
+      baseURL: MATHLLM_BACKEND_API_URL,
+      withCredentials: true,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    // Шаг 1: Извлекаем ответ из решения с помощью LLM
+    const extractRequestData = {
+      problemStatement: problemStatement,
+      solution: solution
+    };
+    
+    console.log('📤 Отправляем запрос на extract-answer:', extractRequestData);
+    
+    const extractResponse = await client.post('/api/v1/llm/extract-answer', extractRequestData);
+    
+    console.log('📥 Ответ от extract-answer:', extractResponse.data);
+    
+    const extractedAnswer = extractResponse.data.extractedAnswer;
+    
+    if (!extractedAnswer) {
+      throw new Error('LLM не смог извлечь ответ из решения - получен пустой ответ');
+    }
+    
+    console.log('🎯 Извлеченный ответ:', extractedAnswer);
+    
+    // Шаг 2: Проверяем извлеченный ответ через GeoLin
+    const checkRequestData = {
+      hash: hash,
+      answerAttempt: extractedAnswer,
+      seed: seed
+    };
+    
+    console.log('📤 Отправляем запрос на check-answer-direct:', checkRequestData);
+    
+    const checkResponse = await client.post('/api/v1/geolin-proxy/check-answer-direct', checkRequestData);
+    
+    console.log('📥 Ответ от check-answer-direct:', checkResponse.data);
+    
+    const checkResult = checkResponse.data;
+    
+    // Показываем результат во всплывающем окне
+    showCheckResultModal({
+      problemStatement,
+      solution,
+      extractedAnswer,
+      checkResult,
+      hash,
+      seed
+    });
+    
+  } catch (error) {
+    console.error('❌ Ошибка при проверке решения:', error);
+    
+    if (axios.isAxiosError(error)) {
+      console.error('📋 Детали ошибки axios:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          data: error.config?.data
+        }
+      });
+    }
+    
+    let errorMessage = 'Неизвестная ошибка';
+    if (axios.isAxiosError(error)) {
+      errorMessage = error.response?.status === 401 
+        ? 'Ошибка авторизации. Возможно, вам нужно выполнить вход в систему.'
+        : `Ошибка: ${error.response?.status || 'сетевая ошибка'} - ${JSON.stringify(error.response?.data) || error.message}`;
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    alert(`Ошибка при проверке решения: ${errorMessage}`);
+  } finally {
+    apiCallLoading.checkSolution = false;
+  }
+}
+
+// Состояние для модального окна результатов проверки
+const checkResultModal = reactive({
+  show: false,
+  problemStatement: '',
+  solution: '',
+  extractedAnswer: '',
+  checkResult: null as any,
+  hash: '',
+  seed: undefined as number | undefined
+});
+
+function showCheckResultModal(data: {
+  problemStatement: string;
+  solution: string;
+  extractedAnswer: string;
+  checkResult: any;
+  hash: string;
+  seed: number | undefined;
+}) {
+  checkResultModal.show = true;
+  checkResultModal.problemStatement = data.problemStatement;
+  checkResultModal.solution = data.solution;
+  checkResultModal.extractedAnswer = data.extractedAnswer;
+  checkResultModal.checkResult = data.checkResult;
+  checkResultModal.hash = data.hash;
+  checkResultModal.seed = data.seed;
+}
+
+function closeCheckResultModal() {
+  checkResultModal.show = false;
+}
+
 onMounted(() => {
   fetchAllProblems(); // Это также вызовет fetchAllTypes и populateProblemTypesMap
 });
@@ -1614,5 +1859,118 @@ onMounted(() => {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.btn-check-solution {
+  background-color: #28a745 !important;
+  color: white !important;
+  margin-top: 0 !important;
+  padding: 5px 15px !important;
+  font-size: 0.9em !important;
+}
+
+.btn-check-solution:disabled {
+  background-color: #6c757d !important;
+  color: #aaa !important;
+}
+
+/* Стили для модального окна результатов проверки */
+.check-result-modal {
+  max-width: 900px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.check-result-section {
+  margin-bottom: 25px;
+  padding: 15px;
+  border: 1px solid #555;
+  border-radius: 8px;
+  background-color: #2a2a2a;
+}
+
+.check-result-section h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #fff;
+  font-size: 1.1em;
+}
+
+.solution-preview pre {
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.extracted-answer pre {
+  background-color: #003366;
+  color: #66ccff;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #0066cc;
+  font-weight: bold;
+  text-align: center;
+}
+
+.check-result {
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.check-result.correct {
+  background-color: #155724;
+  border: 2px solid #28a745;
+  color: #d4edda;
+}
+
+.check-result.incorrect {
+  background-color: #721c24;
+  border: 2px solid #dc3545;
+  color: #f8d7da;
+}
+
+.result-status {
+  font-size: 1.3em;
+  margin-bottom: 10px;
+}
+
+.status-icon {
+  font-size: 1.5em;
+  margin-right: 10px;
+}
+
+.result-message {
+  font-style: italic;
+  margin-top: 10px;
+}
+
+.check-details {
+  background-color: #1a1a1a;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #444;
+}
+
+.check-details p {
+  margin: 5px 0;
+  color: #e0e0e0;
+}
+
+.check-details code {
+  background-color: #333;
+  color: #66ccff;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
 }
 </style>

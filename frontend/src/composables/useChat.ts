@@ -55,12 +55,15 @@ export function useChat() {
     }
   }
 
-  async function getNextMessage(text: string, chatId: string): Promise<Stream<string>> {
+  async function getNextMessage(text: string, chatId: string): Promise<string> {
     const dto: SendMessageRequestDto = { chatId, text }
-    const resp = await client.post<Stream<string>>('/api/Message/complete', dto, {
+    const resp = await client.post<string>('/api/Message/complete', dto, {
       withCredentials: true,
-      responseType: 'stream',
     })
+    
+    // Логируем ответ в консоль для диагностики
+    console.log('🔍 LLM Response:', resp.data);
+    
     return resp.data
   }
 

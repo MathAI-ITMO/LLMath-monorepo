@@ -4,7 +4,7 @@ import { defineConfig, loadEnv, UserConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import vueDevTools from 'vite-plugin-vue-devtools'
-import basicSsl from '@vitejs/plugin-basic-ssl'
+//import basicSsl from '@vitejs/plugin-basic-ssl'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }): UserConfig => {
@@ -20,13 +20,13 @@ export default defineConfig(({ mode }): UserConfig => {
         },
       }),
       vueJsx(),
-      vueDevTools(),
-      basicSsl({
-        name: 'SandboxWebUICert',
-        /** custom trust domains */
-        domains: ['textgen.net.ecm', 'engine.updatemirror.cc'],
-        certDir: './.devServer/cert',
-      }),
+    //  vueDevTools(),
+    //  basicSsl({
+    //    name: 'SandboxWebUICert',
+    //    /** custom trust domains */
+    //    domains: ['textgen.net.ecm', 'engine.updatemirror.cc'],
+    //    certDir: './.devServer/cert',
+    //  }),
     ],
     resolve: {
       alias: {
