@@ -36,7 +36,7 @@ export default defineConfig(({ mode }): UserConfig => {
     server: {
       host: "0.0.0.0",
       allowedHosts: true,
-      https: false,
+      https: undefined,
       port: 8080,
       strictPort: true,
     },
