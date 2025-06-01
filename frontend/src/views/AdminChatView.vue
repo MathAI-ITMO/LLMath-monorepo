@@ -13,33 +13,23 @@
         </v-toolbar-title>
       </v-toolbar>
       
-      <div class="messages-container">
-        <v-list class="messages-list" :lines="false">
+      <div ref="messagesCard" class="messages-container">
+        <div class="messages-list">
           <template v-if="messages.length === 0">
-            <v-list-item>
-              <v-list-item-title class="text-center">
+            <div class="no-messages">
+              <div class="text-center">
                 Загрузка сообщений...
-              </v-list-item-title>
-            </v-list-item>
+              </div>
+            </div>
           </template>
-          <v-list-item
+          
+          <!-- Используем MessageItem компонент вместо прямого вывода -->
+          <MessageItem
             v-for="message in messages"
             :key="message.id"
-            class="message-item"
-            :class="{
-              'user-message': message.type === 'user',
-              'bot-message': message.type === 'bot' && !message.text.includes('Условие задачи'),
-              'problem-condition-message': message.type === 'bot' && message.text.includes('Условие задачи')
-            }"
-            density="compact"
-            rounded="0"
-          >
-            <div class="message-content">
-              <div v-html="formatMessage(message.text)" :class="{ 'text-left': message.type === 'user' }" class="message-text"></div>
-              <small class="message-time">{{ moment(message?.time).fromNow() }}</small>
-            </div>
-          </v-list-item>
-        </v-list>
+            :message="message"
+          />
+        </div>
       </div>
     </v-card>
   </div>
@@ -50,13 +40,11 @@ import { ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import moment from 'moment';
 import { useChat } from '@/composables/useChat';
-import katex from 'katex';
-import 'katex/dist/katex.min.css';
-// @ts-ignore
-import renderMathInElement from 'katex/dist/contrib/auto-render.mjs';
+import MessageItem from '@/components/MessageItem.vue';
 import type { Chat } from '@/models/Chat';
 import type { Message } from '@/models/Message';
 import axios from 'axios';
+import 'katex/dist/katex.min.css';
 
 const route = useRoute();
 const router = useRouter();
@@ -66,8 +54,8 @@ const chatId = ref<string | undefined>();
 const chat = ref<Chat>();
 const messages = ref<Message[]>([]);
 const messagesCard = ref<HTMLElement | null>(null);
-const taskModeTitles = ref<Record<string, string>>({}); // Для названий типов задач
-const taskModeTitlesReady = ref(false); // Флаг готовности названий
+const taskModeTitles = ref<Record<string, string>>({});
+const taskModeTitlesReady = ref(false);
 
 onMounted(async () => {
   // Загрузка названий типов задач
@@ -112,83 +100,9 @@ async function loadChatData() {
 }
 
 function scrollToBottom() {
-  // Прокрутка всей страницы вниз
   setTimeout(() => {
     window.scrollTo(0, document.body.scrollHeight);
   }, 100);
-}
-
-function formatMessage(message: string): string {
-  if (!message) return '';
-  
-  let buff = message;
-  
-  // Прямая замена \textbf{...} на <b>...</b> перед обработкой формул
-  buff = buff.replace(/\\textbf\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}/g, '<b>$1</b>');
-  
-  // Сначала создаем временный элемент для обработки формул
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = buff;
-  
-  // Применяем KaTeX к временному элементу с базовыми настройками
-  renderMathInElement(tempDiv, {
-    delimiters: [
-      {left: "$$", right: "$$", display: true},
-      {left: "$", right: "$", display: false},
-      {left: "\\(", right: "\\)", display: false},
-      {left: "\\[", right: "\\]", display: true},
-      {left: "\\begin{equation}", right: "\\end{equation}", display: true},
-      {left: "\\begin{equation*}", right: "\\end{equation*}", display: true},
-      {left: "\\begin{align}", right: "\\end{align}", display: true},
-      {left: "\\begin{alignat}", right: "\\end{alignat}", display: true},
-      {left: "\\begin{gather}", right: "\\end{gather}", display: true},
-      {left: "\\begin{CD}", right: "\\end{CD}", display: true},
-      {left: "\\begin{pmatrix}", right: "\\end{pmatrix}", display: true},
-      {left: "\\begin{bmatrix}", right: "\\end{bmatrix}", display: true},
-      {left: "\\begin{vmatrix}", right: "\\end{vmatrix}", display: true},
-      {left: "\\begin{Vmatrix}", right: "\\end{Vmatrix}", display: true},
-      {left: "\\begin{cases}", right: "\\end{cases}", display: true}
-    ],
-    throwOnError: false,
-    errorColor: '#cc0000',
-    strict: false,
-    trust: true,
-    macros: {
-      // Только самые необходимые и безопасные макросы
-      "\\R": "\\mathbb{R}",
-      "\\C": "\\mathbb{C}",
-      "\\N": "\\mathbb{N}",
-      "\\Z": "\\mathbb{Z}"
-    },
-    ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code", "option"]
-  });
-  
-  // Получаем текст с обработанным LaTeX
-  buff = tempDiv.innerHTML;
-  
-  // Заголовки
-  buff = buff.replace(/(?:^|\n)##### (.*?)(?:\n|$)/g, '<h5>$1</h5>');
-  buff = buff.replace(/(?:^|\n)#### (.*?)(?:\n|$)/g, '<h4>$1</h4>');
-  buff = buff.replace(/(?:^|\n)### (.*?)(?:\n|$)/g, '<h3>$1</h3>');
-  buff = buff.replace(/(?:^|\n)## (.*?)(?:\n|$)/g, '<h2>$1</h2>');
-  buff = buff.replace(/(?:^|\n)# (.*?)(?:\n|$)/g, '<h1>$1</h1>');
-  
-  // Жирный текст
-  buff = buff.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-  
-  // Курсив
-  buff = buff.replace(/\*(.*?)\*/g, '<i>$1</i>');
-  
-  // Подчеркивание
-  buff = buff.replace(/__(.*?)__/g, '<u>$1</u>');
-  
-  // Обработка двойных обратных слешей - преобразуем \\ в перенос строки
-  buff = buff.replace(/\\\\(?![^<>]*>)/g, '<br/>');
-  
-  // Перенос строки
-  buff = buff.replace(/\n/g, '<br/>');
-  
-  return buff;
 }
 
 function goBack() {
@@ -201,7 +115,7 @@ const formatTaskTypeForChat = (type: number | undefined): string => {
   if (taskModeTitles.value && taskModeTitles.value[typeStr]) {
     return taskModeTitles.value[typeStr];
   }
-  if (type === 0) return 'Упражнение (из списка)'; // Фоллбэк, если тип 0 не описан в TaskModeTitles
+  if (type === 0) return 'Упражнение (из списка)';
   return `Тип задачи (${type})`;
 };
 </script>
@@ -214,7 +128,6 @@ const formatTaskTypeForChat = (type: number | undefined): string => {
 }
 
 .chat-card {
-  /* Убираем фиксированную высоту, чтобы контент мог растягиваться */
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -229,17 +142,23 @@ const formatTaskTypeForChat = (type: number | undefined): string => {
   max-width: 75rem;
   margin: 0 auto;
   padding: 1rem;
-  /* Убираем лишние свойства, чтобы избежать двойной полосы прокрутки */
 }
 
 .messages-list {
-  padding: 0;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
   background-color: transparent;
 }
 
-.message-item {
+.no-messages {
+  padding: 2rem;
+  text-align: center;
+  color: rgba(var(--v-theme-on-surface), 0.6);
+}
+
+/* Переопределяем стили MessageItem для AdminChatView */
+.messages-list :deep(.message-item) {
   position: relative;
   padding: 1rem;
   margin-bottom: 1rem;
@@ -250,32 +169,22 @@ const formatTaskTypeForChat = (type: number | undefined): string => {
   line-height: 1.5;
 }
 
-.user-message {
+.messages-list :deep(.user-message) {
   align-self: flex-start;
-  margin-left: 2rem; /* Отступ от левого края */
-  min-width: 30%; /* Минимальная ширина 30% от диалога */
+  margin-left: 2rem;
+  min-width: 30%;
   background-color: rgba(var(--v-theme-primary), 0.15) !important;
   border-bottom-right-radius: 0.25rem;
 }
 
-.bot-message {
+.messages-list :deep(.bot-message) {
   align-self: flex-start;
   background-color: transparent !important;
   border-bottom-left-radius: 0.25rem;
   margin-right: auto;
 }
 
-.message-content {
-  position: relative;
-  width: 100%;
-  padding-bottom: 1.2rem; /* Место для метки времени */
-}
-
-.message-text {
-  margin-bottom: 0.5rem;
-}
-
-.message-time {
+.messages-list :deep(.message-time) {
   position: absolute;
   bottom: 0;
   right: 0;
@@ -283,7 +192,7 @@ const formatTaskTypeForChat = (type: number | undefined): string => {
   opacity: 0.7;
 }
 
-.problem-condition-message {
+.messages-list :deep(.problem-condition-message) {
   background-color: rgba(var(--v-theme-primary), 0.15) !important;
   color: rgb(240, 244, 248);
   align-self: flex-start;
@@ -293,21 +202,30 @@ const formatTaskTypeForChat = (type: number | undefined): string => {
   max-width: 95% !important;
 }
 
-.problem-condition-message :deep(h1),
-.problem-condition-message :deep(h2),
-.problem-condition-message :deep(h3),
-.problem-condition-message :deep(h4),
-.problem-condition-message :deep(h5),
-.problem-condition-message :deep(h6) {
+.messages-list :deep(.problem-condition-message h1),
+.messages-list :deep(.problem-condition-message h2),
+.messages-list :deep(.problem-condition-message h3),
+.messages-list :deep(.problem-condition-message h4),
+.messages-list :deep(.problem-condition-message h5),
+.messages-list :deep(.problem-condition-message h6) {
   color: #50E3C2;
 }
 
-.problem-condition-message :deep(.katex) {
+.messages-list :deep(.problem-condition-message .katex) {
   color: #F0F4F8;
 }
 
-.problem-condition-message :deep(b) {
+.messages-list :deep(.problem-condition-message b) {
   color: #50E3C2;
   font-size: 1.1em;
+}
+
+/* Стили для правильного отображения матриц KaTeX */
+:deep(.katex) {
+  display: inline-block;
+}
+
+:deep(.katex .base) {
+  display: inline-block;
 }
 </style> 

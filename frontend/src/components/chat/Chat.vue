@@ -223,30 +223,25 @@
       <template v-else>
         <div ref="messagesCard" class="messages-wrapper">
           <div class="messages-container">
-            <v-list class="messages-list" :lines="false">
-              <template v-if="messages.length === 0">
-                <v-list-item>
-                  <v-list-item-title class="text-center">
-                    Сообщений пока нет, напишите первое сообщение
-                  </v-list-item-title>
-                </v-list-item>
-              </template>
-              <v-list-item
-                v-for="message in messages"
-                :key="message.id"
-                class="message-item"
-                :class="{
-                  'user-message': message.type === 'user',
-                  'bot-message': message.type === 'bot' && !message.text.includes('Условие задачи'),
-                  'problem-condition-message': message.type === 'bot' && message.text.includes('Условие задачи')
-                }"
-                density="compact"
-                rounded="0"
-              >
-                <div v-html="formatMessage(message.text)" :class="{ 'text-left': message.type === 'user' }"></div>
-                <small class="message-time">{{ moment(message?.time).fromNow() }}</small>
-              </v-list-item>
-            </v-list>
+            
+			<div class="messages-list">
+			  <!-- блок 'пока нет сообщений' -->
+			  <template v-if="messages.length === 0">
+				<div class="no-messages">
+				  <div class="text-center">
+					Сообщений пока нет, напишите первое сообщение
+				  </div>
+				</div>
+			  </template>
+
+			  <!-- список сообщений -->
+			  <MessageItem
+				v-for="m in messages"
+				:key="m.id"         
+				:message="m"
+			  />
+			</div>
+			
           </div>
         </div>
 
@@ -298,11 +293,10 @@ import { useRoute, useRouter } from 'vue-router'
 import type { ProblemDto, CreateChatDto } from '@/types/BackendDtos'
 import { useUserTasks } from '@/composables/useUserTasks'
 import { UserTaskStatus } from '@/types/BackendDtos'
+import MessageItem from '@/components/MessageItem.vue'
+import { renderMessage } from '@/utils/renderMessage' 
 
 import 'katex/dist/katex.min.css'
-import katex from 'katex'
-// @ts-ignore
-import renderMathInElement from 'katex/dist/contrib/auto-render.mjs'
 
 const route = useRoute()
 const router = useRouter()
@@ -360,14 +354,15 @@ const taskType = ref<number | null>(null)
 const markingSolved = ref(false)
 
 function scrollToBottom() {
-  if (messagesCard.value) {
-    const card = messagesCard.value;
-    setTimeout(() => {
-      if (card) {
-        card.scrollTop = card.scrollHeight;
+  nextTick(() => {
+    if (messagesCard.value) {
+      try {
+        messagesCard.value.scrollTop = messagesCard.value.scrollHeight;
+      } catch (error) {
+        console.warn('Error scrolling to bottom:', error);
       }
-    }, 100)
-  }
+    }
+  });
 }
 
 onMounted(async () => {
@@ -397,82 +392,11 @@ async function onChatUpdate() {
   const receivedChat = await getChatById(chatId.value);
   chat.value = receivedChat;
   const receivedMessages = await getChatMessages(chatId.value);
+  
   messages.value = receivedMessages;
-  console.log(receivedMessages);
-  scrollToBottom();
-}
 
-function formatMessage(message: string): string {
-  if (!message) return '';
-  
-  let buff = message;
-  
-  // Прямая замена \textbf{...} на <b>...</b> перед обработкой формул
-  buff = buff.replace(/\\textbf\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}/g, '<b>$1</b>');
-  
-  // Сначала создаем временный элемент для обработки формул
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = buff;
-  
-  // Применяем KaTeX к временному элементу с базовыми настройками
-  renderMathInElement(tempDiv, {
-    delimiters: [
-      {left: "$$", right: "$$", display: true},
-      {left: "$", right: "$", display: false},
-      {left: "\\(", right: "\\)", display: false},
-      {left: "\\[", right: "\\]", display: true},
-      {left: "\\begin{equation}", right: "\\end{equation}", display: true},
-      {left: "\\begin{equation*}", right: "\\end{equation*}", display: true},
-      {left: "\\begin{align}", right: "\\end{align}", display: true},
-      {left: "\\begin{alignat}", right: "\\end{alignat}", display: true},
-      {left: "\\begin{gather}", right: "\\end{gather}", display: true},
-      {left: "\\begin{CD}", right: "\\end{CD}", display: true},
-      {left: "\\begin{pmatrix}", right: "\\end{pmatrix}", display: true},
-      {left: "\\begin{bmatrix}", right: "\\end{bmatrix}", display: true},
-      {left: "\\begin{vmatrix}", right: "\\end{vmatrix}", display: true},
-      {left: "\\begin{Vmatrix}", right: "\\end{Vmatrix}", display: true},
-      {left: "\\begin{cases}", right: "\\end{cases}", display: true}
-    ],
-    throwOnError: false,
-    errorColor: '#cc0000',
-    strict: false,
-    trust: true,
-    macros: {
-      // Только самые необходимые и безопасные макросы
-      "\\R": "\\mathbb{R}",
-      "\\C": "\\mathbb{C}",
-      "\\N": "\\mathbb{N}",
-      "\\Z": "\\mathbb{Z}"
-    },
-    ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code", "option"]
-  });
-  
-  // Получаем текст с обработанным LaTeX
-  buff = tempDiv.innerHTML;
-  
-  // Заголовки
-  buff = buff.replace(/(?:^|\n)##### (.*?)(?:\n|$)/g, '<h5>$1</h5>');
-  buff = buff.replace(/(?:^|\n)#### (.*?)(?:\n|$)/g, '<h4>$1</h4>');
-  buff = buff.replace(/(?:^|\n)### (.*?)(?:\n|$)/g, '<h3>$1</h3>');
-  buff = buff.replace(/(?:^|\n)## (.*?)(?:\n|$)/g, '<h2>$1</h2>');
-  buff = buff.replace(/(?:^|\n)# (.*?)(?:\n|$)/g, '<h1>$1</h1>');
-  
-  // Жирный текст
-  buff = buff.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-  
-  // Курсив
-  buff = buff.replace(/\*(.*?)\*/g, '<i>$1</i>');
-  
-  // Подчеркивание
-  buff = buff.replace(/__(.*?)__/g, '<u>$1</u>');
-  
-  // Обработка двойных обратных слешей - преобразуем \\ в перенос строки
-  buff = buff.replace(/\\\\(?![^<>]*>)/g, '<br/>');
-  
-  // Перенос строки
-  buff = buff.replace(/\n/g, '<br/>');
-  
-  return buff;
+  console.log('Loaded', receivedMessages?.length || 0, 'messages for chat', chatId.value);
+  scrollToBottom();
 }
 
 async function sendMessage() {
@@ -490,7 +414,7 @@ async function sendMessage() {
   isSending.value = true
 
   const userMessage : Message = {
-    id: "",
+    id: `temp-user-${Date.now()}-${Math.random()}`,
     chatId: chatId!.value,
     type: 'user',
     text: currentMessageText.value,
@@ -503,26 +427,25 @@ async function sendMessage() {
   const messageText = currentMessageText.value
   currentMessageText.value = ""
 
-  const botMessage = await getNextMessage(messageText, chatId!.value)
+  try {
+    const botResponseText = await getNextMessage(messageText, chatId!.value)
 
   const message : Message = {
-      id: "",
+        id: `temp-bot-${Date.now()}-${Math.random()}`,
       chatId: chatId!.value,
       type: 'bot',
-      text: "",
+        text: botResponseText,
       time: new Date()
     }
 
   messages.value.push(message)
-  scrollToBottom()
-
-  for await (const chunk of botMessage) {
-    message.text = message.text + chunk
-    messages.value = [...messages.value]
-    scrollToBottom()
-  }
-
+      scrollToBottom()
+    } catch (error) {
+    console.error('Error sending message:', error);
+    alert('Ошибка при отправке сообщения. Попробуйте снова.');
+  } finally {
   isSending.value = false
+  }
 }
 
 async function onChatCreate() {
@@ -722,73 +645,10 @@ async function markTaskSolved() {
   background-color: transparent !important;
 }
 
-.message-item {
-  min-height: 0;
-  padding: 0.25rem 0;
-  border-radius: 1rem !important;
-  margin-bottom: 0.5rem;
-  overflow: hidden;
-}
-
-.message-item::before,
-.message-item::after {
-  display: none;
-}
-
-.message-time {
-  display: block;
-  font-size: 0.7rem;
-  color: rgba(var(--v-theme-on-surface), 0.4);
-  margin-top: 0.25rem;
-}
-
-.user-message {
-  text-align: left;
-  border-radius: 1.25rem !important;
-  padding: 0.75rem 1rem;
-  margin: 0.5rem 0 0.5rem auto;
-  max-width: 80%;
-  background: rgba(var(--v-theme-primary), 0.25);
-  overflow: hidden;
-}
-
-.bot-message {
-  text-align: left;
-  border-radius: 1rem;
-  padding: 0.75rem 1rem 0.5rem 1rem;
-  margin: 0.5rem 0;
-  max-width: 80%;
-  background: transparent;
-  color: rgba(var(--v-theme-on-surface), 0.87);
-}
-
-.problem-condition-message {
-  background: #1E293B !important; /* Темный серо-синий фон */
-  color: white !important;
-  border-radius: 1rem !important;
-  padding: 1rem !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  margin-bottom: 1.5rem;
-  max-width: 95% !important; /* Чуть шире обычных сообщений */
-}
-
-.problem-condition-message :deep(h1),
-.problem-condition-message :deep(h2),
-.problem-condition-message :deep(h3),
-.problem-condition-message :deep(h4),
-.problem-condition-message :deep(h5),
-.problem-condition-message :deep(h6) {
-  color: #50E3C2; /* Бирюзовый цвет для заголовков внутри условия */
-}
-
-.problem-condition-message :deep(.katex) {
-  color: #F0F4F8; /* Светлый цвет для формул внутри условия */
-}
-
-/* Выделяем зеленую метку условия задачи */
-.problem-condition-message :deep(b) {
-  color: #50E3C2;
-  font-size: 1.1em;
+.no-messages {
+  padding: 2rem;
+  text-align: center;
+  color: rgba(var(--v-theme-on-surface), 0.6);
 }
 
 .input-container {
@@ -965,5 +825,14 @@ async function markTaskSolved() {
 
 .problem-item:hover {
   background-color: rgba(var(--v-theme-primary), 0.1);
+}
+
+/* Стили для правильного отображения матриц KaTeX */
+:deep(.katex) {
+  display: inline-block;
+}
+
+:deep(.katex .base) {
+  display: inline-block;
 }
 </style>
