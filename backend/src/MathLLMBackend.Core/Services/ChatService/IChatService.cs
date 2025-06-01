@@ -11,7 +11,7 @@ public interface IChatService
     Task<Guid> GetOrCreateProblemChatAsync(string problemHash, string userId, string taskDisplayName, int taskType, CancellationToken ct);
     Task Delete(Chat chat, CancellationToken ct);
     Task<List<Chat>> GetUserChats(string userId, CancellationToken ct);
-    IAsyncEnumerable<string> CreateMessage(Message message, CancellationToken ct);
+    Task<string> CreateMessage(Message message, CancellationToken ct);
     public Task<List<Message>> GetAllMessageFromChat(Chat chat, CancellationToken ct);
     public Task<Chat?> GetChatById(Guid id, CancellationToken ct);
     public Task<Message?> GetMessageId(Guid id, CancellationToken ct);

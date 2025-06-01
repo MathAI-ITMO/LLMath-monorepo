@@ -40,6 +40,47 @@ public class LlmController : ControllerBase
             return StatusCode(500, "Error solving problem: " + ex.Message);
         }
     }
+
+    /// <summary>
+    /// Извлекает финальный ответ из готового решения задачи
+    /// </summary>
+    [HttpPost("extract-answer")]
+    public async Task<IActionResult> ExtractAnswer([FromBody] ExtractAnswerRequest request, CancellationToken ct)
+    {
+        _logger.LogInformation("ExtractAnswer called with ProblemStatement length: {ProblemStatementLength}, Solution length: {SolutionLength}", 
+            request.ProblemStatement?.Length ?? 0, request.Solution?.Length ?? 0);
+        
+        if (string.IsNullOrWhiteSpace(request.ProblemStatement))
+        {
+            _logger.LogWarning("ExtractAnswer: Problem statement is empty");
+            return BadRequest("Problem statement cannot be empty");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Solution))
+        {
+            _logger.LogWarning("ExtractAnswer: Solution is empty");
+            return BadRequest("Solution cannot be empty");
+        }
+
+        try
+        {
+            _logger.LogInformation("Extracting answer from solution for problem. ProblemStatement preview: {ProblemPreview}", 
+                request.ProblemStatement.Substring(0, Math.Min(100, request.ProblemStatement.Length)));
+            _logger.LogInformation("Solution preview: {SolutionPreview}", 
+                request.Solution.Substring(0, Math.Min(200, request.Solution.Length)));
+                
+            var extractedAnswer = await _llmService.ExtractAnswer(request.ProblemStatement, request.Solution, ct);
+            
+            _logger.LogInformation("Successfully extracted answer: {ExtractedAnswer}", extractedAnswer);
+            return Ok(new ExtractAnswerResponse { ExtractedAnswer = extractedAnswer });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error extracting answer from solution. Exception type: {ExceptionType}, Message: {ExceptionMessage}", 
+                ex.GetType().Name, ex.Message);
+            return StatusCode(500, "Error extracting answer: " + ex.Message);
+        }
+    }
 }
 
 public class SolveProblemRequest
@@ -50,4 +91,15 @@ public class SolveProblemRequest
 public class SolveProblemResponse
 {
     public string Solution { get; set; } = "";
+}
+
+public class ExtractAnswerRequest
+{
+    public string ProblemStatement { get; set; } = "";
+    public string Solution { get; set; } = "";
+}
+
+public class ExtractAnswerResponse
+{
+    public string ExtractedAnswer { get; set; } = "";
 } 

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Refit;
 using System;
 using System.Linq;
+using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -192,5 +193,260 @@ namespace MathLLMBackend.Presentation.Controllers
                 });
             }
         }
+
+        /// <summary>
+        /// Проверяет ответ на задачу через GeoLin API
+        /// </summary>
+        [HttpPost("check-answer")]
+        public async Task<IActionResult> CheckAnswer([FromBody] CheckAnswerRequest request)
+        {
+            _logger.LogInformation("CheckAnswer called with Hash: {Hash}, AnswerAttempt: {AnswerAttempt}, Seed: {Seed}, ProblemParams length: {ProblemParamsLength}",
+                request.Hash, request.AnswerAttempt, request.Seed, request.ProblemParams?.Length ?? 0);
+                
+            if (string.IsNullOrWhiteSpace(request.Hash))
+            {
+                _logger.LogWarning("CheckAnswer: Hash is empty");
+                return BadRequest(new CheckAnswerResponse 
+                { 
+                    Error = "Hash is required and cannot be empty." 
+                });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.AnswerAttempt))
+            {
+                _logger.LogWarning("CheckAnswer: AnswerAttempt is empty");
+                return BadRequest(new CheckAnswerResponse 
+                { 
+                    Error = "Answer attempt is required and cannot be empty." 
+                });
+            }
+
+            try
+            {
+                _logger.LogInformation("Checking answer for hash '{Hash}' with seed {Seed}", request.Hash, request.Seed);
+
+                var checkRequest = new ProblemAnswerCheckRequest()
+                {
+                    Hash = request.Hash,
+                    AnswerAttempt = request.AnswerAttempt
+                };
+
+                // Добавляем seed если есть
+                if (request.Seed.HasValue)
+                {
+                    checkRequest.Seed = request.Seed.Value;
+                    _logger.LogInformation("Added seed {Seed} to GeoLin request", request.Seed.Value);
+                }
+
+                // Добавляем problem_params если есть  
+                if (!string.IsNullOrWhiteSpace(request.ProblemParams))
+                {
+                    checkRequest.ProblemParams = request.ProblemParams;
+                    _logger.LogInformation("Added ProblemParams to GeoLin request: {ProblemParams}", request.ProblemParams);
+                }
+
+                _logger.LogInformation("Sending request to GeoLin API: {Request}", System.Text.Json.JsonSerializer.Serialize(checkRequest));
+                
+                var checkResult = await _geolinApi.CheckProblemAnswer(checkRequest);
+                
+                _logger.LogInformation("Received response from GeoLin API: Verdict={Verdict}", checkResult.Verdict);
+
+                // ProblemAnswerCheckResponse содержит только поле Verdict (double)
+                // Преобразуем verdict в IsCorrect - считаем что verdict >= 1.0 означает правильный ответ
+                bool isCorrect = checkResult.Verdict >= 1.0;
+                string message = isCorrect 
+                    ? $"Ответ правильный (verdict: {checkResult.Verdict})" 
+                    : $"Ответ неправильный (verdict: {checkResult.Verdict})";
+
+                var response = new CheckAnswerResponse
+                {
+                    IsCorrect = isCorrect,
+                    Message = message,
+                    Hash = request.Hash,
+                    AnswerAttempt = request.AnswerAttempt,
+                    Seed = request.Seed
+                };
+
+                _logger.LogInformation("Answer check completed for hash '{Hash}'. Result: {IsCorrect} (verdict: {Verdict})", request.Hash, isCorrect, checkResult.Verdict);
+                return Ok(response);
+            }
+            catch (ApiException apiEx)
+            {
+                _logger.LogError(apiEx, "GeoLin API error when checking answer for hash '{Hash}'. Status: {StatusCode}, Content: {Content}", 
+                    request.Hash, apiEx.StatusCode, apiEx.Content);
+                
+                return StatusCode(500, new CheckAnswerResponse 
+                { 
+                    Error = $"GeoLin API error: {apiEx.Message}. Content: {apiEx.Content}",
+                    Hash = request.Hash,
+                    AnswerAttempt = request.AnswerAttempt,
+                    Seed = request.Seed
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error when checking answer for hash '{Hash}'. Exception type: {ExceptionType}, Message: {ExceptionMessage}", 
+                    request.Hash, ex.GetType().Name, ex.Message);
+                return StatusCode(500, new CheckAnswerResponse 
+                { 
+                    Error = $"An unexpected error occurred: {ex.Message}",
+                    Hash = request.Hash,
+                    AnswerAttempt = request.AnswerAttempt,
+                    Seed = request.Seed
+                });
+            }
+        }
+
+        /// <summary>
+        /// Проверяет ответ на задачу через прямой вызов GeoLin API (обходной путь)
+        /// TODO: Эту функцию надо заменить после того как сервис LLMath-Problems научится верифицировать решения задач
+        /// </summary>
+        [HttpPost("check-answer-direct")]
+        public async Task<IActionResult> CheckAnswerDirect([FromBody] CheckAnswerRequest request)
+        {
+            // Константы для прямого обращения к GeoLin API
+            const string GEOLIN_BASE_URL = "https://geolin.dev.mgsds.com";
+            const string GEOLIN_AUTH_HEADER = "Basic Z2VvbGluLXVzZXI6RmczNXRoaDI2a2ZO";
+            
+            _logger.LogInformation("CheckAnswerDirect called with Hash: {Hash}, AnswerAttempt: {AnswerAttempt}, Seed: {Seed}",
+                request.Hash, request.AnswerAttempt, request.Seed);
+                
+            if (string.IsNullOrWhiteSpace(request.Hash))
+            {
+                return BadRequest(new CheckAnswerResponse { Error = "Hash is required and cannot be empty." });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.AnswerAttempt))
+            {
+                return BadRequest(new CheckAnswerResponse { Error = "Answer attempt is required and cannot be empty." });
+            }
+
+            try
+            {
+                using var httpClient = new HttpClient();
+                httpClient.DefaultRequestHeaders.Add("Authorization", GEOLIN_AUTH_HEADER);
+
+                var payload = new Dictionary<string, object>
+                {
+                    ["hash"] = request.Hash,
+                    ["answer_attempt"] = request.AnswerAttempt
+                };
+
+                // Добавляем problem_params если есть, иначе seed
+                if (!string.IsNullOrWhiteSpace(request.ProblemParams))
+                {
+                    // Проверяем, является ли problem_params уже JSON строкой
+                    try
+                    {
+                        var testParse = JsonDocument.Parse(request.ProblemParams);
+                        payload["problem_params"] = request.ProblemParams;
+                        _logger.LogInformation("Added problem_params as JSON string: {ProblemParams}", request.ProblemParams);
+                    }
+                    catch (JsonException)
+                    {
+                        // Если не JSON, оборачиваем в кавычки
+                        payload["problem_params"] = $"\"{request.ProblemParams}\"";
+                        _logger.LogInformation("Added problem_params as quoted string: {ProblemParams}", payload["problem_params"]);
+                    }
+                }
+                else if (request.Seed.HasValue)
+                {
+                    payload["seed"] = request.Seed.Value;
+                    _logger.LogInformation("Added seed: {Seed}", request.Seed.Value);
+                }
+
+                var jsonPayload = JsonSerializer.Serialize(payload);
+                _logger.LogInformation("Sending direct request to GeoLin: {Url}, Payload: {Payload}", 
+                    $"{GEOLIN_BASE_URL}/problem-answer-check", jsonPayload);
+
+                var content = new StringContent(jsonPayload, System.Text.Encoding.UTF8, "application/json");
+                var response = await httpClient.PostAsync($"{GEOLIN_BASE_URL}/problem-answer-check", content);
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+                _logger.LogInformation("GeoLin response: Status={Status}, Content={Content}", 
+                    response.StatusCode, responseContent);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError("GeoLin API returned error status: {Status}, Content: {Content}", 
+                        response.StatusCode, responseContent);
+                    
+                    return StatusCode(500, new CheckAnswerResponse 
+                    { 
+                        Error = $"GeoLin API error: {response.StatusCode} - {responseContent}",
+                        Hash = request.Hash,
+                        AnswerAttempt = request.AnswerAttempt,
+                        Seed = request.Seed
+                    });
+                }
+
+                // Парсим ответ от GeoLin
+                var geolinResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
+                
+                // Извлекаем verdict
+                if (!geolinResponse.TryGetProperty("verdict", out var verdictElement))
+                {
+                    _logger.LogError("GeoLin response does not contain 'verdict' field: {Response}", responseContent);
+                    return StatusCode(500, new CheckAnswerResponse 
+                    { 
+                        Error = "Invalid response from GeoLin API: missing verdict field",
+                        Hash = request.Hash,
+                        AnswerAttempt = request.AnswerAttempt,
+                        Seed = request.Seed
+                    });
+                }
+
+                var verdict = verdictElement.GetDouble();
+                bool isCorrect = verdict >= 1.0;
+                string message = isCorrect 
+                    ? $"Ответ правильный (verdict: {verdict})" 
+                    : $"Ответ неправильный (verdict: {verdict})";
+
+                var checkResponse = new CheckAnswerResponse
+                {
+                    IsCorrect = isCorrect,
+                    Message = message,
+                    Hash = request.Hash,
+                    AnswerAttempt = request.AnswerAttempt,
+                    Seed = request.Seed
+                };
+
+                _logger.LogInformation("Answer check completed for hash '{Hash}'. Result: {IsCorrect} (verdict: {Verdict})", 
+                    request.Hash, isCorrect, verdict);
+                
+                return Ok(checkResponse);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in direct GeoLin API call for hash '{Hash}'. Exception: {ExceptionType}, Message: {ExceptionMessage}", 
+                    request.Hash, ex.GetType().Name, ex.Message);
+                
+                return StatusCode(500, new CheckAnswerResponse 
+                { 
+                    Error = $"Error calling GeoLin API directly: {ex.Message}",
+                    Hash = request.Hash,
+                    AnswerAttempt = request.AnswerAttempt,
+                    Seed = request.Seed
+                });
+            }
+        }
+    }
+
+    public class CheckAnswerRequest
+    {
+        public string Hash { get; set; } = "";
+        public string AnswerAttempt { get; set; } = "";
+        public int? Seed { get; set; }
+        public string? ProblemParams { get; set; }
+    }
+
+    public class CheckAnswerResponse
+    {
+        public bool IsCorrect { get; set; }
+        public string? Message { get; set; }
+        public string? Error { get; set; }
+        public string Hash { get; set; } = "";
+        public string AnswerAttempt { get; set; } = "";
+        public int? Seed { get; set; }
     }
 } 

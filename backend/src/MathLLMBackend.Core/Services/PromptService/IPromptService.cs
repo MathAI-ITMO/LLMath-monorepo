@@ -17,4 +17,7 @@ public interface IPromptService
     string GetGuidedInitialPrompt();
     string GetExamInitialPrompt();
     string GetInitialPromptByTaskType(int taskType, string condition, string firstStep);
+    
+    string GetExtractAnswerSystemPrompt();
+    string GetExtractAnswerPrompt(string problemStatement, string solution);
 }

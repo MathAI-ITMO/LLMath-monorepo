@@ -16,11 +16,18 @@ using Microsoft.EntityFrameworkCore;
 using MathLLMBackend.DataAccess.Contexts;
 using MathLLMBackend.Presentation.Configuration;
 using MathLLMBackend.Domain.Entities;
+using System.Threading;
 
 var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
 
 try
 {
+    // Устанавливаем минимальное количество рабочих потоков и потоков завершения IOCP
+    // Значения подбираются экспериментально. Например:
+    int minWorkerThreads = 100; 
+    int minCompletionPortThreads = 100; 
+    ThreadPool.SetMinThreads(minWorkerThreads, minCompletionPortThreads);
+
     var builder = WebApplication.CreateBuilder(args);
     // Загружаем секретные настройки (не фиксированы в репозитории)
     builder.Configuration.AddJsonFile("appsettings.Secrets.json", optional: true, reloadOnChange: true);
@@ -66,7 +73,7 @@ try
     builder.Services.ConfigureApplicationCookie(options =>
     {
         options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
     });
     
     

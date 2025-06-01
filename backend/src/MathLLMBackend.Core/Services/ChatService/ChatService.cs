@@ -79,6 +79,13 @@ public class ChatService : IChatService
         string? llmSolution = problemFromDb.LlmSolution is string sol && !string.IsNullOrWhiteSpace(sol)
             ? sol
             : problemFromDb.LlmSolution?.ToString();
+        
+        // ДИАГНОСТИКА: проверяем что пришло из базы Problems
+        _logger.LogInformation("DEBUG: LlmSolution type={Type}, hasValue={HasValue}, content={Content}", 
+            problemFromDb.LlmSolution?.GetType().Name ?? "null",
+            !string.IsNullOrWhiteSpace(llmSolution),
+            llmSolution?.Substring(0, Math.Min(100, llmSolution?.Length ?? 0)) ?? "null");
+            
         if (string.IsNullOrWhiteSpace(llmSolution))
         {
             _logger.LogWarning("Problem {ProblemDbId} from DB has no LLM solution. Tutor solution will not be included.", problemDbId);
@@ -113,7 +120,14 @@ public class ChatService : IChatService
             solutionMessageForLlm = new Message(newChatEntity, tutorSolutionText, MessageType.User, isSystemPrompt: true);
         }
         
-        var conditionTextForDisplay = $"🟢 **Условие задачи:** ({problemFromDb.Id})\n\n{problemCondition}\n\n";
+        //var conditionTextForDisplay = $"🟢 **Условие задачи:** ({problemFromDb.Id})\n\n{problemCondition}\n\n";
+		
+		
+		var fixedCondition = problemCondition.Replace("\r\n", "\\\\").Replace("\n", "\\\\");
+
+		var conditionTextForDisplay = $"**Условие задачи:** ({problemFromDb.Id})<br/><br/>\n\n{fixedCondition}\n\n";
+		
+		
         var conditionMessageForDisplay = new Message(newChatEntity, conditionTextForDisplay, MessageType.Assistant);
         
         var messagesToSaveInDb = new List<Message> { systemMessage, conditionMessageForDisplay };
@@ -157,62 +171,89 @@ public class ChatService : IChatService
         await _dbContext.SaveChangesAsync(ct);
     }
     
-    public async IAsyncEnumerable<string> CreateMessage(Message message, [EnumeratorCancellation] CancellationToken ct)
+    public async Task<string> CreateMessage(Message message, CancellationToken ct)
     {
-        await _dbContext.Messages.AddAsync(message, ct); // Сохраняем сообщение пользователя
-        await _dbContext.SaveChangesAsync(ct); // Сохраняем сразу, чтобы оно было в истории для LLM
+        await _dbContext.Messages.AddAsync(message, ct);
+        await _dbContext.SaveChangesAsync(ct);
 
         var currentChat = await _dbContext.Chats
-            .Include(c => c.Messages) // Загружаем все сообщения чата
+            .Include(c => c.Messages) 
             .FirstOrDefaultAsync(c => c.Id == message.ChatId, ct);
 
         if (currentChat == null)
         {
             _logger.LogError("Chat with ID {ChatId} not found in CreateMessage.", message.ChatId);
-            yield break; 
+            return string.Empty; // Или бросить исключение
         }
 
-        // Определяем taskType для текущего чата.
-        // Это упрощенный вариант. В идеале, taskType должен храниться в самом Chat или UserTask.
+        int taskType = await DetermineTaskTypeAsync(currentChat, ct);
+
+        _logger.LogInformation("Generating (full) response in chat {ChatId} | taskType = {TaskType}", currentChat.Id, taskType);
+        
+        var messagesForLlm = currentChat.Messages.ToList();
+        
+        // ДИАГНОСТИКА: проверяем есть ли решение в сообщениях
+        var solutionMessage = messagesForLlm.FirstOrDefault(m => m.IsSystemPrompt && m.Text.Contains("Вот правильное решение задачи"));
+        _logger.LogInformation("DEBUG: Messages count={Count}, hasSolution={HasSolution}, solutionSnippet={SolutionSnippet}", 
+            messagesForLlm.Count,
+            solutionMessage != null,
+            solutionMessage?.Text.Substring(0, Math.Min(150, solutionMessage?.Text.Length ?? 0)) ?? "none");
+        
+        if (taskType == 3) // В режиме экзамена (3) не передаем LLM скрытое решение
+        {
+            messagesForLlm.RemoveAll(m => m.IsSystemPrompt && m.Text.Contains("Вот правильное решение задачи"));
+            _logger.LogInformation("DEBUG: Exam mode - removed solution, messages count now={Count}", messagesForLlm.Count);
+        }
+
+        string llmResponseText = await _llmService.GenerateNextMessageAsync(messagesForLlm, taskType, ct);
+
+        if (!string.IsNullOrEmpty(llmResponseText))
+        {
+            var botMessage = new Message(currentChat, llmResponseText, MessageType.Assistant);
+            await _dbContext.Messages.AddAsync(botMessage, ct);
+            await _dbContext.SaveChangesAsync(ct);
+            _logger.LogInformation("LLM full response saved for chat {ChatId}. Length: {Length}", currentChat.Id, llmResponseText.Length);
+        }
+        else
+        {
+            _logger.LogWarning("LLM returned empty or null full response for chat {ChatId}", currentChat.Id);
+        }
+        
+        return llmResponseText;
+    }
+
+    private async Task<int> DetermineTaskTypeAsync(Chat currentChat, CancellationToken ct)
+    {
         int taskType = 0; 
-        var systemMessageInHistory = currentChat.Messages.FirstOrDefault(m => m.MessageType == MessageType.System);
         
         if (currentChat.Type == ChatType.ProblemSolver)
         {
              var userTask = await _dbContext.UserTasks
                 .FirstOrDefaultAsync(ut => ut.AssociatedChatId == currentChat.Id, ct);
-            if (userTask != null) taskType = userTask.TaskType;
-            else if (systemMessageInHistory != null) // Пытаемся угадать по системному промпту если UserTask нет
+            if (userTask != null) 
             {
+                taskType = userTask.TaskType;
+            }
+            else 
+            { // Попытка определить по системному промпту, если UserTask не связан (маловероятно, но для надежности)
+                var systemMessageInHistory = currentChat.Messages.FirstOrDefault(m => m.MessageType == MessageType.System);
+                if (systemMessageInHistory != null) 
+                {
+                    // Эти сравнения могут быть не очень надежными, если тексты промптов изменятся.
+                    // Лучше иметь явный TaskType, хранящийся с чатом.
                 if(systemMessageInHistory.Text == _promptService.GetLearningSystemPrompt()) taskType = 1;
                 else if(systemMessageInHistory.Text == _promptService.GetGuidedSystemPrompt()) taskType = 2;
                 else if(systemMessageInHistory.Text == _promptService.GetExamSystemPrompt()) taskType = 3;
+                    else { _logger.LogWarning("Could not determine taskType from system prompt for chat {ChatId}", currentChat.Id); }
+                }
+                else
+                {
+                    _logger.LogWarning("No UserTask and no system prompt found to determine taskType for chat {ChatId}", currentChat.Id);
+                }
             }
         }
-        // Для ChatType.Chat taskType останется 0 (Default/Tutor)
-        
-        _logger.LogInformation("Generating response in chat {ChatId} | taskType = {TaskType}", currentChat.Id, taskType);
-        
-        var messagesForLlm = currentChat.Messages.ToList();
-        
-        // В режиме экзамена (3) не передаем LLM скрытое решение, если оно там было
-        if (taskType == 3)
-        {
-            messagesForLlm.RemoveAll(m => m.IsSystemPrompt && m.MessageType == MessageType.User && m.Text.Contains("Вот правильное решение задачи для вашего руководства"));
-        }
-
-        var llmResponseStream = _llmService.GenerateNextMessageStreaming(messagesForLlm, taskType, ct);
-
-        var fullText = new StringBuilder();
-        await foreach (var messageTextChunk in llmResponseStream)
-        {
-            fullText.Append(messageTextChunk);
-            yield return messageTextChunk;
-        }
-        
-        var newAssistantMessage = new Message(currentChat, fullText.ToString(), MessageType.Assistant);
-        _dbContext.Messages.Add(newAssistantMessage);
-        await _dbContext.SaveChangesAsync(ct);
+        // Для ChatType.Chat taskType останется 0 (Default/Tutor) по умолчанию
+        return taskType;
     }
     
     public async Task<List<Message>> GetAllMessageFromChat(Chat chat, CancellationToken ct)

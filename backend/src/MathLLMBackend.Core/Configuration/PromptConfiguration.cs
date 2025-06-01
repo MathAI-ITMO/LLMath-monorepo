@@ -14,4 +14,6 @@ public class PromptConfiguration
     public required string LearningInitialPrompt { get; set; }
     public required string GuidedInitialPrompt { get; set; }
     public required string ExamInitialPrompt { get; set; }
+    public required string ExtractAnswerSystemPrompt { get; set; }
+    public required string ExtractAnswerPrompt { get; set; }
 }
