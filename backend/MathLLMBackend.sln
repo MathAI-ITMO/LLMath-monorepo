@@ -1,0 +1,62 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathLLMBackend.Presentation", "src\MathLLMBackend.Presentation\MathLLMBackend.Presentation.csproj", "{9C6AA0BE-8D28-43E1-AF1A-D696BADB65BD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathLLMBackend.Core", "src\MathLLMBackend.Core\MathLLMBackend.Core.csproj", "{41613BFA-EC9A-4245-8B4C-FCF6D4959090}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathLLMBackend.DataAccess", "src\MathLLMBackend.DataAccess\MathLLMBackend.DataAccess.csproj", "{AE31F4D0-9BD4-411C-8982-AE54DC185108}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathLLMBackend.Domain", "src\MathLLMBackend.Domain\MathLLMBackend.Domain.csproj", "{845E8C24-DAC6-458F-85A5-DE0BD87FB305}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathLLMBackend.GeolinClient", "src\MathLLMBackend.GeolinClient\MathLLMBackend.GeolinClient.csproj", "{5309CD07-D814-43DD-8957-BA6C6529BA0B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathLLMBackend.ProblemsClient", "src\MathLLMBackend.ProblemsClient\MathLLMBackend.ProblemsClient.csproj", "{57654690-DC7B-4AA7-81E0-6E8CC229B9C9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9C6AA0BE-8D28-43E1-AF1A-D696BADB65BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C6AA0BE-8D28-43E1-AF1A-D696BADB65BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C6AA0BE-8D28-43E1-AF1A-D696BADB65BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C6AA0BE-8D28-43E1-AF1A-D696BADB65BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41613BFA-EC9A-4245-8B4C-FCF6D4959090}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41613BFA-EC9A-4245-8B4C-FCF6D4959090}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41613BFA-EC9A-4245-8B4C-FCF6D4959090}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41613BFA-EC9A-4245-8B4C-FCF6D4959090}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE31F4D0-9BD4-411C-8982-AE54DC185108}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE31F4D0-9BD4-411C-8982-AE54DC185108}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE31F4D0-9BD4-411C-8982-AE54DC185108}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE31F4D0-9BD4-411C-8982-AE54DC185108}.Release|Any CPU.Build.0 = Release|Any CPU
+		{845E8C24-DAC6-458F-85A5-DE0BD87FB305}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{845E8C24-DAC6-458F-85A5-DE0BD87FB305}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{845E8C24-DAC6-458F-85A5-DE0BD87FB305}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{845E8C24-DAC6-458F-85A5-DE0BD87FB305}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5309CD07-D814-43DD-8957-BA6C6529BA0B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5309CD07-D814-43DD-8957-BA6C6529BA0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5309CD07-D814-43DD-8957-BA6C6529BA0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5309CD07-D814-43DD-8957-BA6C6529BA0B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{57654690-DC7B-4AA7-81E0-6E8CC229B9C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{57654690-DC7B-4AA7-81E0-6E8CC229B9C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{57654690-DC7B-4AA7-81E0-6E8CC229B9C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{57654690-DC7B-4AA7-81E0-6E8CC229B9C9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9C6AA0BE-8D28-43E1-AF1A-D696BADB65BD} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{41613BFA-EC9A-4245-8B4C-FCF6D4959090} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{AE31F4D0-9BD4-411C-8982-AE54DC185108} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{845E8C24-DAC6-458F-85A5-DE0BD87FB305} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{5309CD07-D814-43DD-8957-BA6C6529BA0B} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{57654690-DC7B-4AA7-81E0-6E8CC229B9C9} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+	EndGlobalSection
+EndGlobal
