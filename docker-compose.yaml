@@ -40,7 +40,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 60s
 
   speaches-init:
     image: curlimages/curl:latest
@@ -104,7 +103,7 @@ services:
       VIDEOAPP_WHISPER_LANGUAGE: ru
       FLASK_RUN_HOST: 0.0.0.0
       FLASK_RUN_PORT: 5001
-      VIDEOAPP_DISABLE_CORS: "False"
+      VIDEOAPP_DISABLE_CORS: "True"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -115,13 +114,20 @@ services:
     build:
       context: ./services/webui
       dockerfile: Dockerfile
-      args:
-        VITE_BACKEND_API_URL: http://localhost:8002
-        VITE_VIDEO_SERVICE_URL: http://localhost:5001
-        VITE_PROBLEMS_API_URL: http://localhost:8001
-    ports:
-      - 3000:3000
+    volumes:
+      - ./config.docker.js:/app/dist/config.js:ro
     depends_on:
+      - backend
+      - video
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - webui
       - backend
       - video
 
