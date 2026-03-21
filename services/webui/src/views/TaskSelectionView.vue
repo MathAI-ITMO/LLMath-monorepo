@@ -156,7 +156,6 @@ function getStatusColor(status: UserTaskStatus): string {
   switch (status) {
     case UserTaskStatus.Solved: return 'success';
     case UserTaskStatus.InProgress: return 'warning';
-    case UserTaskStatus.Attempted: return 'info';
     case UserTaskStatus.NotStarted:
     default: return 'grey';
   }
@@ -167,7 +166,6 @@ function getStatusText(status: UserTaskStatus): string {
   switch (status) {
     case UserTaskStatus.Solved: return 'Решена';
     case UserTaskStatus.InProgress: return 'В процессе';
-    case UserTaskStatus.Attempted: return 'Была попытка';
     case UserTaskStatus.NotStarted:
     default: return 'Не начата';
   }

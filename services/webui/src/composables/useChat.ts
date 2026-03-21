@@ -45,7 +45,7 @@ export function useChat() {
           type: data.type,
           taskType: data.taskType,
           theoryLink: data.theoryLink,
-        } as Chat
+        } as unknown as Chat
       }
       return undefined
     } catch (error) {
@@ -68,7 +68,7 @@ export function useChat() {
       (m) =>
         ({
           id: m.id,
-          time: m.creationTime,
+          time: m.creationTime ? new Date(m.creationTime) : new Date(),
           text: m.text,
           type: m.type === 'Assistant' ? 'bot' : 'user',
         }) as Message,

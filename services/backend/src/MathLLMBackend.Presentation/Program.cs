@@ -114,10 +114,14 @@ try
 
     var app = builder.Build();
 
-    using (var scope = app.Services.CreateScope())
+    var isOpenApiGeneration = Environment.GetEnvironmentVariable("OPENAPI_GENERATION") == "true";
+    if (!isOpenApiGeneration)
     {
-        var warmupService = scope.ServiceProvider.GetRequiredService<WarmupService>();
-        await warmupService.WarmupAsync();
+        using (var scope = app.Services.CreateScope())
+        {
+            var warmupService = scope.ServiceProvider.GetRequiredService<WarmupService>();
+            await warmupService.WarmupAsync();
+        }
     }
 
     app.UseHttpLogging();

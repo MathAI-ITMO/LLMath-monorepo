@@ -70,10 +70,10 @@ services:
       ConnectionStrings__Postgres: Host=db;Port=5432;Database=math-llm-backend;Username=postgres;Password=postgres
       OpenAi__ChatModel__Token: ollama
       OpenAi__ChatModel__Url: http://host.docker.internal:11434/v1
-      OpenAi__ChatModel__Model: gemma3:4b
+      OpenAi__ChatModel__Model: gemma3:1b
       OpenAi__SolverModel__Token: ollama
       OpenAi__SolverModel__Url: http://host.docker.internal:11434/v1
-      OpenAi__SolverModel__Model: gemma3:4b
+      OpenAi__SolverModel__Model: gemma3:1b
       GeolinClientOptions__BaseAddress: http://geolin:8080
       ProblemsClientOptions__BaseAddress: http://problems:8000
       CorsConfiguration__Enabled: "False"

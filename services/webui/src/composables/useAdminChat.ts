@@ -40,14 +40,12 @@ export function useAdminChat() {
     router.go(-1);
   }
 
-  const formatTaskTypeForChat = (type: number | undefined): string => {
-    if (type === undefined) return 'Тип задачи не определен';
-    const typeStr = type.toString();
-    if (taskModeTitles.value && taskModeTitles.value[typeStr]) {
-      return taskModeTitles.value[typeStr];
+  const formatTaskTypeForChat = (type: string | null | undefined): string => {
+    if (type == null) return 'Тип задачи не определен';
+    if (taskModeTitles.value && taskModeTitles.value[type]) {
+      return taskModeTitles.value[type];
     }
-    if (type === 0) return 'Упражнение (из списка)';
-    return `Тип задачи (${type})`;
+    return type;
   };
 
   onMounted(async () => {

@@ -20,7 +20,7 @@ RUN dotnet restore src/MathLLMBackend.Presentation/MathLLMBackend.Presentation.c
 
 COPY . .
 
-RUN dotnet build src/MathLLMBackend.Presentation/MathLLMBackend.Presentation.csproj -c Release -o /App/out
+RUN dotnet build src/MathLLMBackend.Presentation/MathLLMBackend.Presentation.csproj -c Release -o /App/out /p:OpenApiGenerateDocumentsOnBuild=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /App
