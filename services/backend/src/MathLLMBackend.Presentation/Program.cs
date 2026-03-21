@@ -1,0 +1,144 @@
+using MathLLMBackend.Core;
+using MathLLMBackend.DataAccess;
+using MathLLMBackend.DataAccess.Services;
+using MathLLMBackend.GeolinClient;
+using MathLLMBackend.GeolinClient.Options;
+using Microsoft.OpenApi.Models;
+using MathLLMBackend.Presentation.Middlewares;
+using NLog;
+using NLog.Web;
+using Microsoft.AspNetCore.Identity;
+using MathLLMBackend.DataAccess.Contexts;
+using MathLLMBackend.DataAccess.Services.Identity;
+using MathLLMBackend.Presentation.Configuration;
+using MathLLMBackend.Domain.Entities;
+
+var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
+
+try
+{
+    var builder = WebApplication.CreateBuilder(args);
+    builder.Services.AddHttpLogging(o => { });
+    var configuration = builder.Configuration;
+    var corsConfiguration = configuration.GetSection(nameof(CorsConfiguration)).Get<CorsConfiguration>() ?? new CorsConfiguration();
+
+    if (corsConfiguration.Enabled)
+    {
+        builder.Services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(
+                policy =>
+                {
+                    policy.WithOrigins(corsConfiguration.Origin.Split(';'))
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();
+                });
+        });
+    }
+
+    builder.Logging.ClearProviders();
+    builder.Host.UseNLog();
+
+    CoreServicesRegistrar.Configure(builder.Services, configuration);
+    GeolinClientRegistrar.Configure(builder.Services, configuration.GetSection(nameof(GeolinClientOptions)).Bind);
+    DataAccessRegistrar.Configure(builder.Services, configuration);
+    
+    builder.Services.AddIdentityApiEndpoints<ApplicationUser>(options =>
+    {
+        options.User.RequireUniqueEmail = true;
+        options.SignIn.RequireConfirmedEmail = false;
+    })
+        .AddRoles<IdentityRole>()
+        .AddEntityFrameworkStores<AppDbContext>()
+        .AddClaimsPrincipalFactory<ApplicationUserClaimsPrincipalFactory>();
+    
+    builder.Services.AddAuthorization();
+
+    builder.Services.AddControllers(options =>
+    {
+        const int firstBinderIndex = 0;
+        options.ModelBinderProviders.Insert(firstBinderIndex, new MathLLMBackend.Presentation.Binders.UserIdModelBinderProvider());
+    });
+    builder.Services.AddEndpointsApiExplorer();
+    
+    builder.Services.ConfigureApplicationCookie(options =>
+    {
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    });
+    
+    
+    
+    builder.Services.AddSwaggerGen(c =>
+        {
+            var openApiSecurityScheme = new OpenApiSecurityScheme()
+            {
+                Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer [space] {your token}'",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
+                Scheme = "Bearer"
+            };
+
+            c.AddSecurityDefinition("Bearer", openApiSecurityScheme);
+
+            var openApiSecurityRequirement = new OpenApiSecurityRequirement()
+            {
+            {
+                new OpenApiSecurityScheme
+                {
+                    Reference = new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "Bearer"
+                    },
+                    Scheme = "oauth2",
+                    Name = "Bearer",
+                    In = ParameterLocation.Header
+                },
+                new List<string>()
+            }
+            };
+
+            c.AddSecurityRequirement(openApiSecurityRequirement);
+            c.OperationFilter<FromUserIdOperationFilter>();
+        });
+
+    var app = builder.Build();
+
+    using (var scope = app.Services.CreateScope())
+    {
+        var warmupService = scope.ServiceProvider.GetRequiredService<WarmupService>();
+        await warmupService.WarmupAsync();
+    }
+
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+
+    if (corsConfiguration.Enabled)
+    {
+        app.UseCors();
+    }
+
+    app.MapIdentityApi<ApplicationUser>();
+    app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+    app.UseAuthentication();
+    app.UseAuthorization();
+    app.MapControllers();
+    app.UseHttpLogging();
+
+    app.Run();
+}
+catch (Exception exception)
+{
+    logger.Error(exception, "Stopped program because of exception");
+    throw;
+}
+finally
+{
+    NLog.LogManager.Shutdown();
+}
