@@ -1,9 +1,11 @@
 import { ref, reactive } from 'vue';
-import { useProblemApi, type Problem, LLMATH_PROBLEMS_API_URL } from './useProblemApi';
-import { TaskType, type CreateProblemRequestDto, type UpdateProblemRequestDto } from '@/types/BackendDtos';
+import { useProblemApi, type Problem } from './useProblemApi';
+import { TaskType } from '@/api/generated/api';
+import { api } from '@/api';
+import type { CreateProblemRequestDto, UpdateProblemRequestDto } from '@/api/generated/api';
 
 export function useProblemManagement() {
-  const { makeApiCall, apiCallLoading, apiResponse } = useProblemApi();
+  const { apiCallLoading, apiResponse, makeApiCall } = useProblemApi();
 
   const problems = ref<Problem[]>([]);
   const loading = ref(false);
@@ -21,7 +23,6 @@ export function useProblemManagement() {
     }
   }
 
-  // Helper function to convert string type to TaskType enum
   function stringToTaskType(typeStr: string): TaskType | null {
     const normalized = typeStr.trim().toLowerCase();
     switch (normalized) {
@@ -42,7 +43,6 @@ export function useProblemManagement() {
     }
   }
 
-  // Helper function to convert TaskType enum to display string
   function taskTypeToString(type: TaskType): string {
     switch (type) {
       case TaskType.Default:
@@ -63,16 +63,13 @@ export function useProblemManagement() {
     error.value = null;
     attemptedLoad.value = true;
     try {
-      const data = await makeApiCall('/api/Problems', 'GET');
-      if (data && data.error) {
-        throw new Error(data.message || 'Error fetching problems');
-      }
-      problems.value = (Array.isArray(data) ? data : []) || [];
-      
-      // Populate types map from problems
+      const response = await api.getApiProblems();
+      const data = response.data as unknown as Problem[];
+      problems.value = Array.isArray(data) ? data : [];
+
       const tempMap: Record<string, TaskType[]> = {};
       for (const problem of problems.value) {
-        const problemId = problem.id || (problem as any)._id; // Support legacy _id field
+        const problemId = problem.id || (problem as any)._id;
         if (problemId && problem.types && Array.isArray(problem.types)) {
           tempMap[problemId] = problem.types;
         }
@@ -99,9 +96,16 @@ export function useProblemManagement() {
       apiResponse.deleteProblem = { error: true, message: "ID для удаления не предоставлен" };
       return;
     }
-    const result = await makeApiCall(`/api/Problems/${id}`, 'DELETE', undefined, 'deleteProblem', 'deleteProblem');
-    if (result && !result.error) {
+    try {
+      apiCallLoading.deleteProblem = true;
+      await api.deleteApiProblemsId(id);
+      apiResponse.deleteProblem = { success: true };
       await fetchAllProblems();
+    } catch (e: any) {
+      console.error('Error deleting problem:', e);
+      apiResponse.deleteProblem = { error: true, message: e.message };
+    } finally {
+      apiCallLoading.deleteProblem = false;
     }
   }
 
@@ -115,16 +119,14 @@ export function useProblemManagement() {
   }) {
     apiResponse.managementAddProblem = null;
     try {
-      const llmSolution = typeof problemData.llmSolutionJson === 'string' 
-        ? (tryParseJson(problemData.llmSolutionJson, problemData.llmSolutionJson))
+      const llmSolution = typeof problemData.llmSolutionJson === 'string'
+        ? tryParseJson(problemData.llmSolutionJson, problemData.llmSolutionJson)
         : problemData.llmSolutionJson;
-      
-      // Convert llmSolution to string if it's an object
-      const llmSolutionString = typeof llmSolution === 'string' 
-        ? llmSolution 
+
+      const llmSolutionString = typeof llmSolution === 'string'
+        ? llmSolution
         : (llmSolution ? JSON.stringify(llmSolution) : null);
 
-      // Convert type string to TaskType array
       const types: TaskType[] = [];
       if (problemData.type && problemData.type.trim() !== '') {
         const taskType = stringToTaskType(problemData.type);
@@ -140,23 +142,26 @@ export function useProblemManagement() {
         theoryLink: problemData.theory_link || null,
         geolinHash: problemData.geolin_ans_key?.hash || null,
         geolinSeed: problemData.geolin_ans_key?.seed ? Number(problemData.geolin_ans_key.seed) : null,
-        types: types.length > 0 ? types : null,
-      };
+        types: types.length > 0 ? types : [],
+      } as CreateProblemRequestDto;
 
-      const createdProblemResponse = await makeApiCall('/api/Problems', 'POST', createPayload, 'managementAddProblem', 'managementAddProblem');
+      apiCallLoading.managementAddProblem = true;
+      const response = await api.postApiProblems(createPayload);
+      const createdProblem = response.data as unknown as Problem;
 
-      if (createdProblemResponse && !createdProblemResponse.error && (createdProblemResponse.id || (createdProblemResponse as any)._id)) {
-        apiResponse.managementAddProblem = { success: true, createdProblem: createdProblemResponse };
+      if (createdProblem && (createdProblem.id || (createdProblem as any)._id)) {
+        apiResponse.managementAddProblem = { success: true, createdProblem };
         await fetchAllProblems();
-        return { success: true, createdProblem: createdProblemResponse };
+        return { success: true, createdProblem };
       } else {
-        console.error("Ошибка при создании задачи (management tab):", createdProblemResponse?.details);
-        return { error: true, details: createdProblemResponse?.details };
+        return { error: true, details: 'Unexpected response from server' };
       }
     } catch (e: any) {
-      console.error("Ошибка при добавлении задачи (management tab):", e);
+      console.error("Ошибка при добавлении задачи:", e);
       apiResponse.managementAddProblem = { error: true, message: e.message || "Ошибка при добавлении задачи", details: e };
       return { error: true, details: e };
+    } finally {
+      apiCallLoading.managementAddProblem = false;
     }
   }
 
@@ -174,16 +179,14 @@ export function useProblemManagement() {
     }
 
     try {
-      const llmSolution = typeof problemData.llmSolutionJson === 'string' 
-        ? (tryParseJson(problemData.llmSolutionJson, problemData.llmSolutionJson))
+      const llmSolution = typeof problemData.llmSolutionJson === 'string'
+        ? tryParseJson(problemData.llmSolutionJson, problemData.llmSolutionJson)
         : problemData.llmSolutionJson;
-      
-      // Convert llmSolution to string if it's an object
-      const llmSolutionString = typeof llmSolution === 'string' 
-        ? llmSolution 
+
+      const llmSolutionString = typeof llmSolution === 'string'
+        ? llmSolution
         : (llmSolution ? JSON.stringify(llmSolution) : null);
 
-      // Convert type string to TaskType array
       const types: TaskType[] = [];
       if (problemData.type && problemData.type.trim() !== '') {
         const taskType = stringToTaskType(problemData.type);
@@ -199,21 +202,20 @@ export function useProblemManagement() {
         theoryLink: problemData.theory_link || null,
         geolinHash: problemData.geolin_ans_key?.hash || null,
         geolinSeed: problemData.geolin_ans_key?.seed ? Number(problemData.geolin_ans_key.seed) : null,
-        types: types.length > 0 ? types : null,
-      };
+        types: types.length > 0 ? types : [],
+      } as UpdateProblemRequestDto;
 
-      const updateResponse = await makeApiCall(`/api/Problems/${problemId}`, 'PUT', updatePayload, 'managementUpdateProblem', 'managementUpdateProblem');
-
-      if (updateResponse && !updateResponse.error) {
-        await fetchAllProblems();
-        return { success: true };
-      } else {
-        return { error: true, details: updateResponse?.details };
-      }
+      apiCallLoading.managementUpdateProblem = true;
+      await api.putApiProblemsId(problemId, updatePayload);
+      apiResponse.managementUpdateProblem = { success: true };
+      await fetchAllProblems();
+      return { success: true };
     } catch (e: any) {
-      console.error("Ошибка при обновлении задачи (management tab):", e);
+      console.error("Ошибка при обновлении задачи:", e);
       apiResponse.managementUpdateProblem = { error: true, message: e.message || "Ошибка при обновлении задачи", details: e };
       return { error: true, details: e };
+    } finally {
+      apiCallLoading.managementUpdateProblem = false;
     }
   }
 

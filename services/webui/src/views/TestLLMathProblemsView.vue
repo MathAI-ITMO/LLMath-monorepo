@@ -557,7 +557,7 @@ import { useToast } from '@/composables/useToast';
 import { useModal } from '@/composables/useModal';
 import { useVideoManagement } from '@/composables/useVideoManagement';
 import { usePagination } from '@/composables/usePagination';
-import { TaskType } from '@/types/BackendDtos';
+import { TaskType } from '@/api/generated/api';
 
 // Task type options for dropdown
 const taskTypeOptions = [

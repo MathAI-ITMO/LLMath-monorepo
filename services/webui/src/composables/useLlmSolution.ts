@@ -1,42 +1,40 @@
-import { ref } from 'vue';
-import { createBackendApiClient } from '@/utils/apiClient';
+import { ref } from 'vue'
+import { api } from '@/api'
 
 export function useLlmSolution() {
-  const loading = ref(false);
-  const activeForm = ref<'management' | 'database' | 'update' | 'edit' | null>(null);
+  const loading = ref(false)
+  const activeForm = ref<'management' | 'database' | 'update' | 'edit' | null>(null)
 
   async function getLlmSolution(problemStatement: string) {
     if (!problemStatement) {
-      throw new Error('Поле "Условие" не может быть пустым для получения решения LLM');
+      throw new Error('Поле "Условие" не может быть пустым для получения решения LLM')
     }
 
-    loading.value = true;
+    loading.value = true
 
     try {
-      const client = createBackendApiClient();
+      const response = await api.postApiV1LlmSolveProblem({ problemDescription: problemStatement })
+      const data = response.data as unknown as { solution?: string; error?: string }
 
-      const response = await client.post('/api/v1/llm/solve-problem', {
-        problemDescription: problemStatement
-      });
-
-      if (response.data && response.data.error) {
-        throw new Error(response.data.error);
+      if (data?.error) {
+        throw new Error(data.error)
       }
 
-      return response.data.solution;
+      if (!data.solution) throw new Error('Бэкенд не вернул решение')
+      return data.solution
     } catch (error: any) {
-      console.error('Ошибка при получении решения от LLM:', error);
-      const data = error.response?.data;
-      const errorMessage = data?.error || data?.message || data || error.message || error;
-      throw new Error(errorMessage);
+      console.error('Ошибка при получении решения от LLM:', error)
+      const data = error.response?.data
+      const errorMessage = data?.error || data?.message || data || error.message || error
+      throw new Error(errorMessage)
     } finally {
-      loading.value = false;
+      loading.value = false
     }
   }
 
   return {
     loading,
     activeForm,
-    getLlmSolution
-  };
+    getLlmSolution,
+  }
 }

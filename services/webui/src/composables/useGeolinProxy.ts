@@ -1,5 +1,5 @@
 import { ref, reactive } from 'vue';
-import { createBackendApiClient } from '@/utils/apiClient';
+import { api } from '@/api';
 import { type GeolinProblemData } from './useProblemApi';
 
 export function useGeolinProxy() {
@@ -28,24 +28,15 @@ export function useGeolinProxy() {
     response.loadFromGeolin = null;
 
     try {
-      const url = `/app/api/tasks/problem/${encodeURIComponent(prefix)}`
-      const fetchResponse = await fetch(url, {
-        credentials: 'include'
-      });
-      const data = await fetchResponse.json();
+      const resp = await api.getApiTasksProblemPrefixName(encodeURIComponent(prefix));
+      const data = resp.data as unknown as GeolinProblemData;
       console.log("Response from GeoLin API:", data);
-
-      if (!fetchResponse.ok) {
-        const errorMsg = data.error || data.message || `HTTP error! status: ${fetchResponse.status}`;
-        console.error("Ошибка от GeoLin API:", data);
-        throw new Error(typeof errorMsg === 'object' ? JSON.stringify(errorMsg) : String(errorMsg));
-      }
-
       response.loadFromGeolin = data;
       return data;
     } catch (e: any) {
       console.error("Ошибка при загрузке из GeoLin прокси:", e);
-      response.loadFromGeolin = { error: e.message || 'Неизвестная ошибка при запросе к GeoLin прокси' };
+      const msg = e.response?.data?.error || e.response?.data?.message || e.message || 'Неизвестная ошибка при запросе к GeoLin прокси';
+      response.loadFromGeolin = { error: msg };
       return response.loadFromGeolin;
     } finally {
       loading.value = false;
@@ -64,31 +55,24 @@ export function useGeolinProxy() {
     loading.value = true;
 
     try {
-      const client = createBackendApiClient();
-
-      // Шаг 1: Извлекаем ответ из решения с помощью LLM
-      const extractRequestData = {
+      const extractResponse = await api.postApiV1LlmExtractAnswer({
         problemStatement: statement,
         solution: solution
-      };
-
-      const extractResponse = await client.post('/api/v1/llm/extract-answer', extractRequestData);
-      const extractedAnswer = extractResponse.data.extractedAnswer;
+      });
+      const extractedAnswer = (extractResponse.data as unknown as { extractedAnswer: string }).extractedAnswer;
 
       if (!extractedAnswer) {
         throw new Error('LLM не смог извлечь ответ из решения - получен пустой ответ');
       }
 
-      const checkRequestData = {
-        hash: hash,
+      const checkResponse = await api.postApiV1GeolinProxyCheckAnswerDirect({
+        hash,
         answerAttempt: extractedAnswer,
-        seed: seed
-      };
-
-      const checkResponse = await client.post('/api/v1/geolin-proxy/check-answer-direct', checkRequestData);
+        seed,
+        problemParams: '',
+      });
       const checkResult = checkResponse.data;
 
-      // Обновляем модальное окно результатов
       checkResultModal.show = true;
       checkResultModal.problemStatement = statement;
       checkResultModal.solution = solution;

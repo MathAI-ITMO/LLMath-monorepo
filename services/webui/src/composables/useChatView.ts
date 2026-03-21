@@ -3,15 +3,16 @@ import type { Chat } from '@/models/Chat'
 import type { Message } from '@/models/Message'
 import { useChat } from '@/composables/useChat'
 import { useRouter, useRoute } from 'vue-router'
-import type { ProblemDto, CreateChatDto } from '@/types/BackendDtos'
+import type { CreateChatRequestDto } from '@/api/generated/api'
 import { useUserTasks } from '@/composables/useUserTasks'
-import { UserTaskStatus } from '@/types/BackendDtos'
+import { UserTaskStatus } from '@/api/generated/api'
 
 export function useChatView(props: { chatId?: string }, emit: any) {
   const route = useRoute()
   const router = useRouter()
 
-  const { getChatById, getChatMessages, getNextMessage, createChat, getChats, deleteChat } = useChat()
+  const { getChatById, getChatMessages, getNextMessage, createChat, getChats, deleteChat } =
+    useChat()
   const { completeUserTask, fetchUserTasks } = useUserTasks()
 
   const chatId = ref<string | undefined>(props.chatId)
@@ -25,7 +26,7 @@ export function useChatView(props: { chatId?: string }, emit: any) {
   const currentMessageText = ref<string>('')
   const isSending = ref<boolean>(false)
 
-  const userTaskId = ref<number | null>(null)
+  const userTaskId = ref<string | null>(null)
   const taskStatus = ref<UserTaskStatus | null>(null)
   const taskType = ref<number | null>(null)
   const markingSolved = ref(false)
@@ -34,71 +35,69 @@ export function useChatView(props: { chatId?: string }, emit: any) {
     nextTick(() => {
       if (messagesCard.value) {
         try {
-          messagesCard.value.scrollTop = messagesCard.value.scrollHeight;
+          messagesCard.value.scrollTop = messagesCard.value.scrollHeight
         } catch (error) {
-          console.warn('Error scrolling to bottom:', error);
+          console.warn('Error scrolling to bottom:', error)
         }
       }
-    });
+    })
   }
 
   async function onChatUpdate() {
-    chats.value = await getChats();
+    chats.value = await getChats()
 
     if (!chatId.value) {
-      chat.value = undefined;
-      messages.value = [];
-      return;
+      chat.value = undefined
+      messages.value = []
+      return
     }
 
-    const receivedChat = await getChatById(chatId.value);
-    chat.value = receivedChat;
-    const receivedMessages = await getChatMessages(chatId.value);
+    const receivedChat = await getChatById(chatId.value)
+    chat.value = receivedChat
+    const receivedMessages = await getChatMessages(chatId.value)
 
-    messages.value = receivedMessages;
+    messages.value = receivedMessages
 
-    console.log('Loaded', receivedMessages?.length || 0, 'messages for chat', chatId.value);
-    scrollToBottom();
+    console.log('Loaded', receivedMessages?.length || 0, 'messages for chat', chatId.value)
+    scrollToBottom()
   }
 
   async function sendMessage() {
-    if (!chatId?.value)
-    {
+    if (!chatId?.value) {
       console.log('send message called but chat id not specified yet')
-      return;
+      return
     }
 
-    if (!currentMessageText.value)
-    {
+    if (!currentMessageText.value) {
       // Using a more user-friendly way for errors in real apps is better than alert
       console.warn('Message cannot be sent because it is empty')
-      return;
+      return
     }
     isSending.value = true
 
-    const userMessage : Message = {
+    const userMessage: Message = {
       id: `temp-user-${Date.now()}-${Math.random()}`,
       chatId: chatId!.value,
       type: 'user',
       text: currentMessageText.value,
-      time: new Date()
+      time: new Date(),
     }
 
     messages.value.push(userMessage)
     scrollToBottom()
 
     const messageText = currentMessageText.value
-    currentMessageText.value = ""
+    currentMessageText.value = ''
 
     try {
       const botResponseText = await getNextMessage(messageText, chatId!.value)
 
-      const message : Message = {
+      const message: Message = {
         id: `temp-bot-${Date.now()}-${Math.random()}`,
         chatId: chatId!.value,
         type: 'bot',
         text: botResponseText,
-        time: new Date()
+        time: new Date(),
       }
 
       messages.value.push(message)
@@ -112,8 +111,8 @@ export function useChatView(props: { chatId?: string }, emit: any) {
     console.log('chat with id ' + id + ' selected')
     emit('chatSelected', id)
     sidebarOpen.value = false
-    chatId.value = id;
-    await onChatUpdate();
+    chatId.value = id
+    await onChatUpdate()
   }
 
   async function onChatDelete(id: string) {
@@ -145,9 +144,9 @@ export function useChatView(props: { chatId?: string }, emit: any) {
       return
     }
 
-    const dto: CreateChatDto = {
+    const dto: CreateChatRequestDto = {
       name: chatName || defaultName,
-      type: 'Chat'
+      problemId: null,
     }
     const newChatId = await createChat(dto)
     await onChatUpdate()
@@ -156,74 +155,76 @@ export function useChatView(props: { chatId?: string }, emit: any) {
 
   async function updateTaskInfo() {
     if (!chatId.value) {
-      userTaskId.value = null;
-      taskStatus.value = null;
-      taskType.value = null;
-      return;
+      userTaskId.value = null
+      taskStatus.value = null
+      taskType.value = null
+      return
     }
-      const tasks0 = await fetchUserTasks(0);
-      let task = tasks0.find(t => t.associatedChatId === chatId.value);
+    const tasks0 = await fetchUserTasks(0)
+    let task = tasks0.find((t) => t.associatedChatId === chatId.value)
 
-      if (!task) {
-        for (let i = 1; i <= 3; i++) {
-          const tasksI = await fetchUserTasks(i);
-          task = tasksI.find(t => t.associatedChatId === chatId.value);
-          if (task) {
-            taskType.value = i;
-            break;
-          }
+    if (!task) {
+      for (let i = 1; i <= 3; i++) {
+        const tasksI = await fetchUserTasks(i)
+        task = tasksI.find((t) => t.associatedChatId === chatId.value)
+        if (task) {
+          taskType.value = i
+          break
         }
-      } else {
-        taskType.value = 0;
       }
+    } else {
+      taskType.value = 0
+    }
 
-      if (task) {
-        userTaskId.value = task.id as unknown as number; // id is number
-        taskStatus.value = task.status;
-      } else {
-        // Это обычный чат, не связанный с задачей
-        userTaskId.value = null;
-        taskStatus.value = null;
-        taskType.value = null;
-      }
+    if (task) {
+      userTaskId.value = task.id
+      taskStatus.value = task.status
+    } else {
+      userTaskId.value = null
+      taskStatus.value = null
+      taskType.value = null
+    }
   }
 
   async function markTaskSolved() {
-    if (!userTaskId.value) return;
-    markingSolved.value = true;
+    if (!userTaskId.value) return
+    markingSolved.value = true
     try {
-      const res = await completeUserTask(userTaskId.value);
+      const res = await completeUserTask(userTaskId.value)
       if (res) {
-        taskStatus.value = UserTaskStatus.Solved;
+        taskStatus.value = UserTaskStatus.Solved
         // Переходим к списку задач с правильным типом
         if (taskType.value !== null) {
-          router.push(`/select-task?taskType=${taskType.value}`);
+          router.push(`/select-task?taskType=${taskType.value}`)
         } else {
-          router.push('/select-task');
+          router.push('/select-task')
         }
       }
     } finally {
-      markingSolved.value = false;
+      markingSolved.value = false
     }
   }
 
   onMounted(async () => {
-    chatId.value = route.params.chatId as string | undefined;
-    emit('update:chatId', chatId.value);
-    await onChatUpdate();
-    await updateTaskInfo();
+    chatId.value = route.params.chatId as string | undefined
+    emit('update:chatId', chatId.value)
+    await onChatUpdate()
+    await updateTaskInfo()
   })
 
-  watch(() => route.params.chatId, async (newChatId) => {
-    console.log('New chatId from URL:', newChatId);
-    chatId.value = newChatId as string | undefined;
-    emit('update:chatId', chatId.value);
-    await onChatUpdate();
-  })
+  watch(
+    () => route.params.chatId,
+    async (newChatId) => {
+      console.log('New chatId from URL:', newChatId)
+      chatId.value = newChatId as string | undefined
+      emit('update:chatId', chatId.value)
+      await onChatUpdate()
+    },
+  )
 
   watch(chatId, () => {
-    updateTaskInfo();
-  });
+    updateTaskInfo()
+  })
 
   return {
     chatId,
@@ -246,6 +247,6 @@ export function useChatView(props: { chatId?: string }, emit: any) {
     createNewChat,
     updateTaskInfo,
     markTaskSolved,
-    UserTaskStatus
+    UserTaskStatus,
   }
 }

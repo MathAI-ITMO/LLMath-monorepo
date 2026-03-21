@@ -24,11 +24,8 @@ public static class DataAccessRegistrar
                     break;
                 case DatabaseProvider.Postgres:
                 default:
-                    var connectionString = configuration.GetConnectionString("Postgres");
-                    if (string.IsNullOrEmpty(connectionString))
-                    {
-                        throw new InvalidOperationException("PostgreSQL connection string is required when using Postgres provider.");
-                    }
+                    var connectionString = configuration.GetConnectionString("Postgres")
+                        ?? throw new InvalidOperationException("Connection string 'Postgres' is not configured.");
                     options.UseNpgsql(connectionString);
                     break;
             }

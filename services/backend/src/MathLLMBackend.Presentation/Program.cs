@@ -3,7 +3,7 @@ using MathLLMBackend.DataAccess;
 using MathLLMBackend.DataAccess.Services;
 using MathLLMBackend.GeolinClient;
 using MathLLMBackend.GeolinClient.Options;
-using Microsoft.OpenApi.Models;
+using Scalar.AspNetCore;
 using MathLLMBackend.Presentation.Middlewares;
 using NLog;
 using NLog.Web;
@@ -12,6 +12,8 @@ using MathLLMBackend.DataAccess.Contexts;
 using MathLLMBackend.DataAccess.Services.Identity;
 using MathLLMBackend.Presentation.Configuration;
 using MathLLMBackend.Domain.Entities;
+using Microsoft.OpenApi;
+using System.Text.Json.Serialization;
 
 var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
 
@@ -59,6 +61,10 @@ try
     {
         const int firstBinderIndex = 0;
         options.ModelBinderProviders.Insert(firstBinderIndex, new MathLLMBackend.Presentation.Binders.UserIdModelBinderProvider());
+    })
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
     builder.Services.AddEndpointsApiExplorer();
     
@@ -70,40 +76,41 @@ try
     
     
     
-    builder.Services.AddSwaggerGen(c =>
+    builder.Services.AddOpenApi("openapi", options =>
+    {
+        options.AddDocumentTransformer((document, context, ct) =>
         {
-            var openApiSecurityScheme = new OpenApiSecurityScheme()
+            document.Components ??= new OpenApiComponents();
+            document.Components.SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>
             {
-                Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer [space] {your token}'",
-                Name = "Authorization",
-                In = ParameterLocation.Header,
-                Type = SecuritySchemeType.ApiKey,
-                Scheme = "Bearer"
-            };
-
-            c.AddSecurityDefinition("Bearer", openApiSecurityScheme);
-
-            var openApiSecurityRequirement = new OpenApiSecurityRequirement()
-            {
-            {
-                new OpenApiSecurityScheme
+                ["Bearer"] = new OpenApiSecurityScheme
                 {
-                    Reference = new OpenApiReference
-                    {
-                        Type = ReferenceType.SecurityScheme,
-                        Id = "Bearer"
-                    },
-                    Scheme = "oauth2",
-                    Name = "Bearer",
-                    In = ParameterLocation.Header
-                },
-                new List<string>()
-            }
+                    Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer [space] {your token}'",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer"
+                }
             };
-
-            c.AddSecurityRequirement(openApiSecurityRequirement);
-            c.OperationFilter<FromUserIdOperationFilter>();
+            return Task.CompletedTask;
         });
+        options.AddOperationTransformer<MathLLMBackend.Presentation.Configuration.FromUserIdOperationTransformer>();
+        options.AddSchemaTransformer<MathLLMBackend.Presentation.Configuration.EnumSchemaTransformer>();
+        options.AddOperationTransformer((operation, context, ct) =>
+        {
+            operation.Security =
+            [
+                new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecuritySchemeReference("Bearer", null),
+                        new List<string>()
+                    }
+                }
+            ];
+            return Task.CompletedTask;
+        });
+    });
 
     var app = builder.Build();
 
@@ -113,23 +120,21 @@ try
         await warmupService.WarmupAsync();
     }
 
-    if (app.Environment.IsDevelopment())
-    {
-        app.UseSwagger();
-        app.UseSwaggerUI();
-    }
+    app.UseHttpLogging();
+    app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
     if (corsConfiguration.Enabled)
     {
         app.UseCors();
     }
 
-    app.MapIdentityApi<ApplicationUser>();
-    app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
     app.UseAuthentication();
     app.UseAuthorization();
+
+    app.MapOpenApi();
+    app.MapScalarApiReference();
+    app.MapIdentityApi<ApplicationUser>();
     app.MapControllers();
-    app.UseHttpLogging();
 
     app.Run();
 }

@@ -71,8 +71,8 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useUserTasks } from '@/composables/useUserTasks';
 import { useChat } from '@/composables/useChat';
-import type { UserTaskDto, CreateChatDto } from '@/types/BackendDtos';
-import { UserTaskStatus } from '@/types/BackendDtos';
+import type { UserTaskDto } from '@/api/generated/api';
+import { UserTaskStatus } from '@/api/generated/api';
 
 const router = useRouter();
 const route = useRoute();

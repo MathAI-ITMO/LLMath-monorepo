@@ -1,5 +1,5 @@
 import { ref, onMounted, computed } from 'vue';
-import { backendApi } from '@/utils/apiClient';
+import { api } from '@/api';
 
 export interface UserStats {
   userId: string;
@@ -30,8 +30,8 @@ export function useUserStats() {
     loading.value = true;
     error.value = null;
     try {
-      const response = await backendApi.get<UserStats[]>('/api/stats/user-stats');
-      const data = response.data;
+      const response = await api.getApiStatsUserStats();
+      const data = response.data as unknown as UserStats[];
       stats.value = Array.isArray(data) ? data : [];
     } catch (e: any) {
       console.error('Error fetching user stats:', e);

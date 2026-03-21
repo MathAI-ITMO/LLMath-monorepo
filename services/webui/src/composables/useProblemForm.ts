@@ -1,6 +1,6 @@
 import { ref, reactive } from 'vue';
 import type { Problem } from './useProblemApi';
-import { TaskType } from '@/types/BackendDtos';
+import { TaskType } from '@/api/generated/api';
 
 export function useProblemForm() {
   // Create form state

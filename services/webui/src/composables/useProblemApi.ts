@@ -1,5 +1,5 @@
 import { reactive, ref } from 'vue';
-import type { TaskType, CreateProblemRequestDto, UpdateProblemRequestDto } from '@/types/BackendDtos';
+import type { TaskType } from '@/api/generated/api';
 
 export const LLMATH_PROBLEMS_API_URL = '/app';
 

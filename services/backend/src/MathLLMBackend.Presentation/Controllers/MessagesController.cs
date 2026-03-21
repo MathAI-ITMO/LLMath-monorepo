@@ -26,6 +26,7 @@ namespace MathLLMBackend.Presentation.Controllers
         }
     
         [HttpPost("complete")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         public async Task<IActionResult> Complete([FromBody] MessageCreateDto dto, [FromJwt] JwtUser user, CancellationToken ct)
         {
             string llmResponseText = await _service.CreateMessageForUser(dto.ChatId, user.Id, dto.Text, ct);
@@ -46,6 +47,7 @@ namespace MathLLMBackend.Presentation.Controllers
         }
     
         [HttpGet("get-messages-from-chat")]
+        [ProducesResponseType(typeof(IEnumerable<MessageDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAllMessagesFromChat(Guid chatId, [FromJwt] JwtUser user, CancellationToken ct)
         {
             var isAdmin = User.IsInRole(Role.Admin);

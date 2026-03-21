@@ -1,5 +1,6 @@
 import { ref, onMounted } from 'vue';
-import { backendApi } from '@/utils/apiClient';
+import { api } from '@/api';
+import type { UserStats } from './useUserStats';
 
 export interface TaskItemDto {
   UserTaskId: string;
@@ -40,14 +41,15 @@ export function useUserDetails(userId: string) {
   const taskModeTitles = ref<Record<string, string>>({});
 
   async function fetchTaskModeTitles() {
-    const titlesResponse = await backendApi.get<Record<string, string>>('/api/stats/task-mode-titles');
-    taskModeTitles.value = titlesResponse.data;
+    const titlesResponse = await api.getApiStatsTaskModeTitles();
+    taskModeTitles.value = titlesResponse.data as unknown as Record<string, string>;
   }
 
   async function fetchUserInfo() {
     try {
-      const statsResp = await backendApi.get('/api/stats/user-stats');
-      const userDataFromStats = statsResp.data.find((user: any) => user.userId === userId);
+      const statsResp = await api.getApiStatsUserStats();
+      const allStats = statsResp.data as unknown as (UserStats & { email?: string })[];
+      const userDataFromStats = allStats.find((user) => user.userId === userId);
 
       if (userDataFromStats) {
         userInfo.value = {
@@ -69,8 +71,8 @@ export function useUserDetails(userId: string) {
     loading.value = true;
     error.value = null;
     try {
-      const resp = await backendApi.get<UserDetailDto>(`/api/stats/user-details/${userId}`);
-      details.value = resp.data;
+      const resp = await api.getApiStatsUserDetailsUserId(userId);
+      details.value = resp.data as unknown as UserDetailDto;
     } catch (e: any) {
       console.error('Error fetching user details:', e);
       error.value = e instanceof Error ? e.message : 'Ошибка при загрузке деталей пользователя.';

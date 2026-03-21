@@ -1,15 +1,14 @@
-using MathLLMBackend.Presentation.Binders;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.SwaggerGen;
+using Microsoft.AspNetCore.OpenApi;
+using Microsoft.OpenApi;
 
 namespace MathLLMBackend.Presentation.Configuration;
 
-public class FromUserIdOperationFilter : IOperationFilter
+public class FromUserIdOperationTransformer : IOpenApiOperationTransformer
 {
-    public void Apply(OpenApiOperation operation, OperationFilterContext context)
+    public Task TransformAsync(OpenApiOperation operation, OpenApiOperationTransformerContext context, CancellationToken cancellationToken)
     {
-        var userIdParameters = context.ApiDescription.ParameterDescriptions
+        var userIdParameters = context.Description.ParameterDescriptions
             .Where(p => p.Source == BindingSource.Custom)
             .Select(p => p.Name);
 
@@ -21,5 +20,7 @@ public class FromUserIdOperationFilter : IOperationFilter
                 operation.Parameters.Remove(parameter);
             }
         }
+
+        return Task.CompletedTask;
     }
 }

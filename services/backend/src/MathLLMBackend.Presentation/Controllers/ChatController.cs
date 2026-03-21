@@ -28,20 +28,22 @@ namespace MathLLMBackend.Presentation.Controllers
         }
 
         [HttpPost("create")]
+        [ProducesResponseType(typeof(ChatDto), StatusCodes.Status200OK)]
         public async Task<IActionResult> CreateChat([FromBody] CreateChatRequestDto dto, [FromJwt] JwtUser user, CancellationToken ct)
         {
             var chat = new Chat(dto.Name, user.Id);
             var createdChat = dto.ProblemId == null
                 ? await _chatService.Create(chat, ct)
                 : await _chatService.Create(chat, dto.ProblemId!.Value, TaskType.Default, ct);
-            
+
             return Ok(
                 new ChatDto(createdChat.Id, createdChat.Name, createdChat.Type?.ToString() ?? ChatConstants.DefaultChatTypeName, null, null)
             );
-            
+
         }
-        
+
         [HttpGet("get")]
+        [ProducesResponseType(typeof(IEnumerable<ChatDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetChats([FromJwt] JwtUser user, CancellationToken ct)
         {
             var chats = await _chatService.GetUserChats(user.Id, ct);
@@ -49,16 +51,17 @@ namespace MathLLMBackend.Presentation.Controllers
         }
 
         [HttpGet("get/{chatId:guid}")]
+        [ProducesResponseType(typeof(ChatDto), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetChatDetails(Guid chatId, [FromJwt] JwtUser user, CancellationToken ct)
         {
             var isAdmin = User.IsInRole(Role.Admin);
-            
+
             Chat chat;
             ChatDetailsModel details;
-            
+
             if (isAdmin)
             {
-                chat = await _chatService.GetChatByIdAsync(chatId, ct) 
+                chat = await _chatService.GetChatByIdAsync(chatId, ct)
                     ?? throw new NotFoundException($"Chat with ID {chatId} not found.");
                 details = await _chatService.GetChatDetailsForAdminAsync(chatId, ct);
             }
@@ -67,11 +70,12 @@ namespace MathLLMBackend.Presentation.Controllers
                 details = await _chatService.GetChatDetailsAsync(chatId, user.Id, ct);
                 chat = await _chatService.GetChatByIdForUser(chatId, user.Id, ct);
             }
-            
+
             return Ok(new ChatDto(chat.Id, chat.Name, chat.Type?.ToString() ?? ChatConstants.DefaultChatTypeName, details.TaskType, details.TheoryLink));
         }
 
         [HttpPost("delete/{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> DeleteChat(Guid id, [FromJwt] JwtUser user, CancellationToken ct)
         {
             await _chatService.Delete(id, user.Id, ct);

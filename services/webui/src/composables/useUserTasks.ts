@@ -1,30 +1,20 @@
-import type { UserTaskDto, StartUserTaskRequestDto } from '@/types/BackendDtos';
-import { createBackendApiClient } from '@/utils/apiClient';
+import { api } from '@/api';
+import type { UserTaskDto } from '@/api/generated/api';
 
 export function useUserTasks() {
-  const client = createBackendApiClient();
-
   async function fetchUserTasks(taskType: number): Promise<UserTaskDto[]> {
-    const response = await client.get<UserTaskDto[]>('/api/usertasks', {
-      params: { taskType },
-      withCredentials: true,
-    });
+    const response = await api.getApiUserTasks({ taskType });
     return response.data;
   }
 
-  async function startUserTask(userTaskId: string, chatId: string): Promise<UserTaskDto> {
-    const requestData: StartUserTaskRequestDto = { chatId };
-    const response = await client.post<UserTaskDto>(
-      `/api/usertasks/${userTaskId}/start`,
-      requestData,
-      { withCredentials: true },
-    );
+  async function startUserTask(userTaskId: string, _chatId?: string): Promise<UserTaskDto> {
+    const response = await api.postApiUserTasksUserTaskIdStart(userTaskId);
     return response.data;
   }
 
-  async function completeUserTask(taskId: number): Promise<UserTaskDto | null> {
+  async function completeUserTask(taskId: string): Promise<UserTaskDto | null> {
     try {
-      const response = await client.post<UserTaskDto>(`/api/usertasks/${taskId}/complete`, {}, { withCredentials: true });
+      const response = await api.postApiUserTasksUserTaskIdComplete(taskId);
       return response.data;
     } catch (error) {
       console.error(`Failed to mark task ${taskId} as solved:`, error);
@@ -37,4 +27,4 @@ export function useUserTasks() {
     startUserTask,
     completeUserTask,
   };
-} 
+}
