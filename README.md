@@ -60,6 +60,20 @@ pip install -r requirements.txt
 python app.py
 ```
 
+## API Client Generation
+
+The frontend TypeScript API client (`services/webui/src/api/generated/`) is auto-generated from the backend OpenAPI spec using [Orval](https://orval.dev/). After changing backend controllers or DTOs, regenerate it with:
+
+```sh
+make generate-api
+```
+
+This runs two steps:
+1. **`export-openapi`** — builds the backend and exports the OpenAPI spec to `services/backend/MathLLMBackend.Presentation_openapi.json`
+2. **`codegen`** — runs Orval to regenerate `services/webui/src/api/generated/api.ts` from that spec
+
+> Do not edit `services/webui/src/api/generated/` manually — changes will be overwritten.
+
 ## Environment Variables
 
 Each service has its own `.env` file. Copy the example files to get started:
