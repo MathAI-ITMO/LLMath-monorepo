@@ -1,0 +1,23 @@
+name: WebUI Docker
+
+on:
+  push:
+    branches: [ "**" ]
+    paths:
+      - 'services/webui/**'
+  pull_request:
+    paths:
+      - 'services/webui/**'
+  workflow_dispatch:
+
+jobs:
+  docker:
+    uses: ./.github/workflows/docker-publish.yml
+    with:
+      image-suffix: webui
+      context: ./services/webui
+      dockerfile: ./services/webui/Dockerfile
+      push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+    permissions:
+      contents: read
+      packages: write

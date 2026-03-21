@@ -1,0 +1,23 @@
+name: Backend Docker
+
+on:
+  push:
+    branches: [ "**" ]
+    paths:
+      - 'services/backend/**'
+  pull_request:
+    paths:
+      - 'services/backend/**'
+  workflow_dispatch:
+
+jobs:
+  docker:
+    uses: ./.github/workflows/docker-publish.yml
+    with:
+      image-suffix: backend
+      context: ./services/backend
+      dockerfile: ./services/backend/Dockerfile
+      push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+    permissions:
+      contents: read
+      packages: write
