@@ -7,6 +7,7 @@ from flask import Blueprint, jsonify, request, url_for
 
 from config_manager import get_llm_setting, get_prompt_template
 
+from ..auth import require_auth
 from ..llm import call_openai_text, get_openai_client
 from ..storage import FrameStore, LogStore, SubtitleStore, SummaryStore
 
@@ -24,6 +25,7 @@ def register(
     logger = logging.getLogger("llmath_video.api")
 
     @bp.route("/api/explain_frame", methods=["POST"])
+    @require_auth
     def explain_frame():
         data = request.get_json(silent=True) or {}
         name = data.get("name") or ""
@@ -118,6 +120,7 @@ def register(
         return jsonify({"answer": "Ошибка обращения к LLM"}), 200
 
     @bp.route("/api/chat", methods=["POST"])
+    @require_auth
     def api_chat():
         data = request.get_json(silent=True) or {}
         name = data.get("name") or ""

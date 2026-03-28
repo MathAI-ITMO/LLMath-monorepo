@@ -10,6 +10,7 @@ from flask import (
     url_for,
 )
 
+from ..auth import require_auth
 from ..processing import ProcessingService
 from ..storage import FrameStore, SubtitleStore, VideoStore
 
@@ -25,15 +26,18 @@ def register(
     bp = Blueprint("media", __name__)
 
     @bp.route("/videos", methods=["GET"])
+    @require_auth
     def list_videos():
         records = video_store.list_videos()
         return jsonify([r.__dict__ for r in records])
 
     @bp.route("/video/<path:filename>")
+    @require_auth
     def serve_video(filename):
         return send_from_directory(dirs["video"], filename, as_attachment=False)
 
     @bp.route("/video/<path:filename>", methods=["DELETE"])
+    @require_auth
     def delete_video(filename):
         filename = os.path.basename(filename)
         video_path = os.path.join(dirs["video"], filename)
@@ -54,6 +58,7 @@ def register(
         return jsonify({"deleted": deleted, "errors": errors}), status
 
     @bp.route("/upload", methods=["POST"])
+    @require_auth
     def upload_video():
         if "file" not in request.files:
             return jsonify({"error": "No file part in the request"}), 400
@@ -77,6 +82,7 @@ def register(
         )
 
     @bp.route("/api/ensure_processed", methods=["POST"])
+    @require_auth
     def api_ensure_processed():
         data = request.get_json(silent=True) or {}
         name = (
@@ -95,11 +101,13 @@ def register(
         return jsonify({"status": "queued"})
 
     @bp.route("/subtitles/<path:filename>.json")
+    @require_auth
     def serve_subtitles(filename):
         segments = subtitle_store.read_segments(filename)
         return jsonify({"segments": segments})
 
     @bp.route("/frames/<path:filename>")
+    @require_auth
     def serve_frame(filename):
         try:
             safe_path = frame_store.resolve(filename)

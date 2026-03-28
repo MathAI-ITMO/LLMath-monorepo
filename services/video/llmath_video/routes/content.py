@@ -6,6 +6,7 @@ from datetime import datetime
 
 from flask import Blueprint, jsonify
 
+from ..auth import require_auth
 from ..llm import build_timecoded_transcript, generate_suggestions_with_llm
 from ..storage import (
     LogStore,
@@ -27,11 +28,13 @@ def register(
     bp = Blueprint("content", __name__)
 
     @bp.route("/summary/<path:filename>")
+    @require_auth
     def get_summary(filename):
         text = summary_store.read(filename)
         return jsonify({"text": text})
 
     @bp.route("/suggestions/<path:filename>")
+    @require_auth
     def get_suggestions(filename):
         try:
             existing = suggestion_store.read(filename) or {}
@@ -67,11 +70,13 @@ def register(
         return jsonify({"items": []})
 
     @bp.route("/logs/<path:filename>")
+    @require_auth
     def get_logs(filename):
         entries = log_store.read_entries(filename)
         return jsonify({"entries": entries})
 
     @bp.route("/logs/<path:filename>", methods=["DELETE"])
+    @require_auth
     def clear_logs(filename):
         try:
             log_store.clear(filename)
