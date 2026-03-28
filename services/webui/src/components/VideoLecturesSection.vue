@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { servicesConfig } from '@/config/services.config'
+import VideoPlayer from '@/components/video/VideoPlayer.vue'
 
 interface VideoInfo {
   name: string
@@ -70,13 +71,6 @@ function backToHome() {
   selectedVideo.value = null
 }
 
-const videoAppUrl = computed(() => {
-  if (selectedVideo.value) {
-    return `${servicesConfig.videoServiceUrl}/${selectedVideo.value}`
-  }
-  return servicesConfig.videoServiceUrl
-})
-
 // Форматирование имени видео для отображения
 function formatVideoName(name: string): string {
   return name.replace(/\.(mp4|avi|mkv|webm)$/i, '').replace(/_/g, ' ')
@@ -107,14 +101,8 @@ function formatVideoName(name: string): string {
         <v-col cols="12" md="9">
           <div class="lectures-slider">
             <v-row>
-              <v-col 
-                v-for="(video, index) in topVideos" 
-                :key="video.name"
-                cols="12" 
-                sm="6" 
-                md="4"
-              >
-                <v-card 
+              <v-col v-for="(video, index) in topVideos" :key="video.name" cols="12" sm="6" md="4">
+                <v-card
                   class="video-card"
                   :style="{ background: getGradient(index) }"
                   elevation="4"
@@ -122,7 +110,9 @@ function formatVideoName(name: string): string {
                 >
                   <div class="video-card-content">
                     <div class="video-number">{{ index + 1 }}</div>
-                    <v-icon class="video-play-icon" size="48" color="white">mdi-play-circle-outline</v-icon>
+                    <v-icon class="video-play-icon" size="48" color="white"
+                      >mdi-play-circle-outline</v-icon
+                    >
                     <h3 class="video-title">{{ formatVideoName(video.name) }}</h3>
                   </div>
                 </v-card>
@@ -133,11 +123,7 @@ function formatVideoName(name: string): string {
 
         <!-- Статистика и кнопка "Все лекции" -->
         <v-col cols="12" md="3">
-          <v-card 
-            class="stats-card" 
-            elevation="4"
-            @click="openAllVideos"
-          >
+          <v-card class="stats-card" elevation="4" @click="openAllVideos">
             <v-card-item>
               <div class="stats-content">
                 <v-icon size="64" color="white" class="mb-3">mdi-video-box</v-icon>
@@ -152,11 +138,7 @@ function formatVideoName(name: string): string {
     </div>
 
     <!-- Модальное окно с видео -->
-    <v-dialog 
-      v-model="showVideoModal" 
-      fullscreen
-      transition="dialog-bottom-transition"
-    >
+    <v-dialog v-model="showVideoModal" fullscreen transition="dialog-bottom-transition">
       <v-card class="video-modal">
         <v-toolbar dark color="primary">
           <v-btn icon @click="backToHome">
@@ -165,15 +147,9 @@ function formatVideoName(name: string): string {
           <v-toolbar-title v-if="!showAllVideos && selectedVideo">
             {{ formatVideoName(selectedVideo) }}
           </v-toolbar-title>
-          <v-toolbar-title v-else>
-            Все видеолекции
-          </v-toolbar-title>
+          <v-toolbar-title v-else> Все видеолекции </v-toolbar-title>
           <v-spacer></v-spacer>
-          <v-btn 
-            v-if="showAllVideos" 
-            icon 
-            @click="closeVideoModal"
-          >
+          <v-btn v-if="showAllVideos" icon @click="closeVideoModal">
             <v-icon>mdi-close</v-icon>
           </v-btn>
         </v-toolbar>
@@ -181,15 +157,15 @@ function formatVideoName(name: string): string {
         <!-- Сетка всех видео -->
         <v-card-text v-if="showAllVideos" class="pa-6">
           <v-row>
-            <v-col 
-              v-for="(video, index) in videos" 
+            <v-col
+              v-for="(video, index) in videos"
               :key="video.name"
-              cols="12" 
-              sm="6" 
-              md="4" 
+              cols="12"
+              sm="6"
+              md="4"
               lg="3"
             >
-              <v-card 
+              <v-card
                 class="video-card"
                 :style="{ background: getGradient(index) }"
                 elevation="4"
@@ -197,7 +173,9 @@ function formatVideoName(name: string): string {
               >
                 <div class="video-card-content">
                   <div class="video-number">{{ index + 1 }}</div>
-                  <v-icon class="video-play-icon" size="48" color="white">mdi-play-circle-outline</v-icon>
+                  <v-icon class="video-play-icon" size="48" color="white"
+                    >mdi-play-circle-outline</v-icon
+                  >
                   <h3 class="video-title">{{ formatVideoName(video.name) }}</h3>
                 </div>
               </v-card>
@@ -205,15 +183,8 @@ function formatVideoName(name: string): string {
           </v-row>
         </v-card-text>
 
-        <!-- Iframe с видео -->
         <div v-else class="video-iframe-wrapper">
-          <iframe 
-            :src="videoAppUrl" 
-            class="video-iframe"
-            frameborder="0"
-            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen
-          ></iframe>
+          <VideoPlayer :filename="selectedVideo!" />
         </div>
       </v-card>
     </v-dialog>
@@ -244,7 +215,7 @@ function formatVideoName(name: string): string {
 
 .video-card:hover {
   transform: translateY(-8px) scale(1.02);
-  box-shadow: 0 12px 24px rgba(0,0,0,0.3) !important;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3) !important;
 }
 
 .video-card-content {
@@ -291,7 +262,7 @@ function formatVideoName(name: string): string {
   font-size: 1rem;
   font-weight: 600;
   color: white;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   line-height: 1.3;
   max-width: 100%;
   overflow: hidden;
@@ -314,7 +285,7 @@ function formatVideoName(name: string): string {
 .stats-card:hover {
   background: linear-gradient(135deg, #2a4d8f 0%, #3567b8 100%);
   transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.3) !important;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3) !important;
 }
 
 .stats-content {
@@ -378,7 +349,7 @@ function formatVideoName(name: string): string {
     min-height: auto;
     margin-top: 1rem;
   }
-  
+
   .video-card {
     height: 160px;
   }
@@ -388,11 +359,11 @@ function formatVideoName(name: string): string {
   .video-card {
     height: 140px;
   }
-  
+
   .video-title {
     font-size: 0.9rem;
   }
-  
+
   .stats-number {
     font-size: 2.5rem;
   }

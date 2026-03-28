@@ -7,7 +7,7 @@ from config_manager import is_cors_disabled, load_config, resolve_cors_origins
 from llmath_video import load_settings
 from llmath_video.logging_setup import setup_logging
 from llmath_video.processing import ProcessingService
-from llmath_video.routes import content, llm_routes, main, media
+from llmath_video.routes import content, llm_routes, media
 from llmath_video.storage import (
     FrameStore,
     LogStore,
@@ -20,12 +20,7 @@ from llmath_video.storage import (
 
 def create_app():
     """Create and configure the Flask application."""
-    app = Flask(
-        __name__,
-        static_url_path="/static",
-        static_folder="static",
-        template_folder="templates",
-    )
+    app = Flask(__name__)
     base_dir = os.path.abspath(os.path.dirname(__file__))
     settings = load_settings(base_dir)
     setup_logging(settings.dirs.logs, level="INFO")
@@ -63,7 +58,6 @@ def create_app():
         summary_store,
     )
 
-    main.register(app, video_store, settings.config)
     media.register(
         app,
         video_store,

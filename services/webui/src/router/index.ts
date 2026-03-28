@@ -77,6 +77,13 @@ const router = createRouter({
       path: '/video-app',
       name: 'video-app',
       component: VideoAppView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/video-app/:filename',
+      name: 'video-player',
+      component: VideoAppView,
+      meta: { requiresAuth: true },
     },
   ],
 })

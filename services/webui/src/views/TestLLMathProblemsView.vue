@@ -136,12 +136,7 @@
           <!-- Вкладка 2: Управление видео -->
           <v-window-item value="videos">
             <div class="video-iframe-wrapper">
-              <iframe
-                :src="videoAppUrl"
-                frameborder="0"
-                class="video-iframe"
-                title="Управление видео">
-              </iframe>
+              <VideoApp embedded />
             </div>
           </v-window-item>
         </v-window>
@@ -547,6 +542,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import MathEditor from '@/components/MathEditor.vue';
 import { renderMessage } from '@/utils/renderMessage';
 import { useProblemManagement } from '@/composables/useProblemManagement';
@@ -556,6 +552,7 @@ import { useProblemForm } from '@/composables/useProblemForm';
 import { useToast } from '@/composables/useToast';
 import { useModal } from '@/composables/useModal';
 import { useVideoManagement } from '@/composables/useVideoManagement';
+import VideoApp from '@/components/video/VideoApp.vue';
 import { usePagination } from '@/composables/usePagination';
 import { TaskType } from '@/api/generated/api';
 
@@ -636,7 +633,15 @@ const {
 
 const { paginatedItems: paginatedProblems, totalPages, currentPage, goToPage } = usePagination(problems, 10);
 
-const activeTab = ref('management');
+const route = useRoute();
+const router = useRouter();
+const VALID_TABS = ['management', 'videos'] as const;
+const activeTab = ref<string>(
+  VALID_TABS.includes(route.query.subtab as any) ? (route.query.subtab as string) : 'management'
+);
+watch(activeTab, (tab) => {
+  router.replace({ query: { ...route.query, subtab: tab } });
+});
 const geolinPrefixToLoad = ref('');
 const availableGeolinPrefixes = ref<string[]>([
   "tasks.linalg.linear_operators.matrix_decompositions.LU_decomposition.LU_decomposition_3x3",

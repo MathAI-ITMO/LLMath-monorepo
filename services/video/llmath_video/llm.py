@@ -97,62 +97,153 @@ def _fallback_segments(full_text: str, base_dir: str, audio_path: str) -> list:
     return segs
 
 
+CHUNK_SECONDS = 600  # 10-minute chunks
+
+
+def _split_audio_chunks(audio_path: str, chunk_seconds: int) -> list:
+    """Split mp3 into fixed-length chunks, return list of (offset_sec, tmp_path)."""
+    import tempfile
+    from av.audio.resampler import AudioResampler
+    chunks = []
+    in_container = av.open(audio_path)
+    try:
+        audio_stream = next((s for s in in_container.streams if s.type == "audio"), None)
+        if audio_stream is None:
+            return []
+        sample_rate = audio_stream.sample_rate or 16000
+        layout = str(audio_stream.layout) if hasattr(audio_stream, "layout") else "mono"
+        chunk_index = 0
+        offset_sec = 0.0
+        out_container = None
+        out_stream = None
+        tmp_path = None
+        resampler = AudioResampler(format="s16", layout="mono", rate=16000)
+        samples_per_chunk = chunk_seconds * 16000
+        samples_written = 0
+
+        def _new_chunk(idx: int):
+            tmp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
+            tmp.close()
+            oc = av.open(tmp.name, mode="w")
+            os = oc.add_stream("mp3", rate=16000)
+            os.layout = "mono"
+            os.bit_rate = 48000
+            return tmp.name, oc, os
+
+        tmp_path, out_container, out_stream = _new_chunk(chunk_index)
+
+        for packet in in_container.demux(audio_stream):
+            for frame in packet.decode():
+                resampled = resampler.resample(frame)
+                if resampled is None:
+                    continue
+                frames = resampled if isinstance(resampled, list) else [resampled]
+                for rf in frames:
+                    for out_packet in out_stream.encode(rf):
+                        out_container.mux(out_packet)
+                    samples_written += rf.samples
+                    if samples_written >= samples_per_chunk:
+                        for out_packet in out_stream.encode(None):
+                            out_container.mux(out_packet)
+                        out_container.close()
+                        chunks.append((offset_sec, tmp_path))
+                        offset_sec += samples_written / 16000
+                        chunk_index += 1
+                        samples_written = 0
+                        tmp_path, out_container, out_stream = _new_chunk(chunk_index)
+
+        for out_packet in out_stream.encode(None):
+            out_container.mux(out_packet)
+        out_container.close()
+        if samples_written > 0:
+            chunks.append((offset_sec, tmp_path))
+        else:
+            os_module = __import__("os")
+            try:
+                os_module.unlink(tmp_path)
+            except Exception:
+                pass
+    finally:
+        in_container.close()
+    return chunks
+
+
+def _parse_resp_segments(resp) -> tuple:
+    """Return (segments_list, full_text) from a transcription response."""
+    raw_segments = getattr(resp, "segments", None)
+    if raw_segments is None:
+        try:
+            raw_segments = resp.get("segments")
+        except Exception:
+            raw_segments = None
+    segments = []
+    for seg in (raw_segments or []):
+        try:
+            start = float(seg.get("start"))
+            end = float(seg.get("end"))
+            text = (seg.get("text") or "").strip()
+        except Exception:
+            start = float(getattr(seg, "start", 0.0))
+            end = float(getattr(seg, "end", 0.0))
+            text = (getattr(seg, "text", "") or "").strip()
+        if text:
+            segments.append({"start": start, "end": end, "text": text})
+    full_text = (getattr(resp, "text", "") or "").strip()
+    if not full_text:
+        try:
+            full_text = (resp.get("text") or "").strip()
+        except Exception:
+            full_text = ""
+    return segments, full_text
+
+
+def _transcribe_chunk(client, stt_model: str, language: str, chunk_path: str, offset: float) -> list:
+    """Transcribe one chunk file and return segments shifted by offset."""
+    with open(chunk_path, "rb") as f:
+        resp = client.audio.transcriptions.create(
+            model=stt_model,
+            file=f,
+            response_format="verbose_json",
+            language=language,
+            timestamp_granularities=["segment"],
+        )
+    segs, full_text = _parse_resp_segments(resp)
+    if segs:
+        return [{"start": s["start"] + offset, "end": s["end"] + offset, "text": s["text"]} for s in segs]
+    if not full_text:
+        return []
+    dur = _probe_duration(chunk_path, "")
+    fallback = _fallback_segments(full_text, "", chunk_path)
+    return [{"start": s["start"] + offset, "end": s["end"] + offset, "text": s["text"]} for s in fallback]
+
+
 def transcribe_with_openai(audio_path: str, llm_config: Dict, base_dir: str):
-    api_key = llm_config.get("openai_api_key")
     client = get_openai_client(
         llm_config, base_key="openai_stt_api_base", key_name="openai_stt_api_key"
     )
     stt_model = get_llm_setting(llm_config, "openai_stt_model")
     language = get_llm_setting(llm_config, "whisper_language")
 
-    try:
-        with open(audio_path, "rb") as f:
-            try:
-                resp = client.audio.transcriptions.create(
-                    model=stt_model,
-                    file=f,
-                    response_format="verbose_json",
-                    language=language,
-                    timestamp_granularities=["segment"],
-                )
-                raw_segments = getattr(resp, "segments", None)
-                if raw_segments is None:
-                    try:
-                        raw_segments = resp.get("segments")
-                    except Exception:
-                        raw_segments = None
-                segments = []
-                for seg in (raw_segments or []):
-                    try:
-                        start = float(seg.get("start"))
-                        end = float(seg.get("end"))
-                        text = (seg.get("text") or "").strip()
-                    except Exception:
-                        start = float(getattr(seg, "start", 0.0))
-                        end = float(getattr(seg, "end", 0.0))
-                        text = (getattr(seg, "text", "") or "").strip()
-                    if text:
-                        segments.append({"start": start, "end": end, "text": text})
-                if segments:
-                    return segments
-                full_text = (getattr(resp, "text", "") or "").strip()
-                if not full_text:
-                    try:
-                        full_text = (resp.get("text") or "").strip()
-                    except Exception:
-                        full_text = ""
-            except Exception:
-                full_text = ""
+    chunks = _split_audio_chunks(audio_path, CHUNK_SECONDS)
+    if not chunks:
+        # file fits in one shot or splitting failed — try directly
+        chunks = [(0.0, audio_path)]
 
-            if not full_text:
-                f.seek(0)
-                resp2 = client.audio.transcriptions.create(model=stt_model, file=f)
-                full_text = (getattr(resp2, "text", "") or "").strip()
-            if not full_text:
-                return []
-            return _fallback_segments(full_text, base_dir, audio_path)
-    except Exception:
-        return []
+    all_segments = []
+    tmp_paths = [p for _, p in chunks if p != audio_path]
+    try:
+        for offset, chunk_path in chunks:
+            segs = _transcribe_chunk(client, stt_model, language, chunk_path, offset)
+            all_segments.extend(segs)
+    finally:
+        import os as _os
+        for p in tmp_paths:
+            try:
+                _os.unlink(p)
+            except Exception:
+                pass
+
+    return all_segments
 
 
 def transcribe_with_whisper_local(audio_path: str, llm_config: Dict, base_dir: str):

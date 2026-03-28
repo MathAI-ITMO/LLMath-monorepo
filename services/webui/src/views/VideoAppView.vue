@@ -1,34 +1,12 @@
 <template>
-  <div class="video-app-container">
-    <iframe
-      :src="videoAppUrl"
-      class="video-app-iframe"
-      frameborder="0"
-      allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; microphone"
-      allowfullscreen
-    ></iframe>
-  </div>
+  <VideoApp :filename="filename" />
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { servicesConfig } from '@/config/services.config';
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import VideoApp from '@/components/video/VideoApp.vue'
 
-const videoAppUrl = computed(() => servicesConfig.videoServiceUrl);
+const route = useRoute()
+const filename = computed(() => route.params.filename as string | undefined)
 </script>
-
-<style scoped>
-.video-app-container {
-  width: 100%;
-  height: 100vh;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-}
-
-.video-app-iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-}
-</style>

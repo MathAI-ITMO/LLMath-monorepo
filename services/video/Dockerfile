@@ -30,5 +30,5 @@ COPY static/ ./static/
 ENV PORT=5001
 EXPOSE 5001
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5001", "app:create_app()"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5001", "--timeout", "300", "--limit-request-line", "0", "app:create_app()"]
 
