@@ -46,28 +46,3 @@ export function getVideoUrl(filename: string): string {
   // This opens the full VideoApp interface with chat, subtitles, etc.
   return `${baseUrl}/${cleanFilename}`
 }
-
-/**
- * Helper function to extract filename from theory link
- * @param theoryLink - Full URL or filename
- * @returns Just the filename
- */
-export function extractVideoFilename(theoryLink: string): string {
-  if (!theoryLink) return ''
-  
-  // If it's already just a filename, return it
-  if (!theoryLink.includes('/')) {
-    return theoryLink
-  }
-  
-  // Extract filename from URL
-  try {
-    const url = new URL(theoryLink)
-    const pathname = url.pathname
-    const filename = pathname.split('/').pop() || ''
-    return filename
-  } catch {
-    // Not a valid URL, try to extract from path
-    return theoryLink.split('/').pop() || theoryLink
-  }
-}

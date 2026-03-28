@@ -16,4 +16,19 @@ export default defineConfig({
       },
     },
   },
+  video: {
+    input: '../video/openapi.json',
+    output: {
+      target: './src/api/generated/videoApi.ts',
+      client: 'axios',
+      mode: 'single',
+      useNativeEnums: true,
+      override: {
+        mutator: {
+          path: './src/api/video/index.ts',
+          name: 'videoApiInstance',
+        },
+      },
+    },
+  },
 })

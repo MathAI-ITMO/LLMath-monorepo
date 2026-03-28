@@ -49,35 +49,11 @@ export function getRuntimeConfig(): AppConfig {
 }
 
 /**
- * Get a specific service URL from the runtime configuration
- */
-export function getServiceUrl(service: keyof AppConfig['services']): string {
-  const config = getRuntimeConfig()
-  return config.services[service]
-}
-
-/**
  * Get the base URL for the application
  */
 export function getBaseUrl(): string {
   const config = getRuntimeConfig()
   return config.baseUrl
-}
-
-/**
- * Check if a feature is enabled
- */
-export function isFeatureEnabled(featureName: string): boolean {
-  const config = getRuntimeConfig()
-  return Boolean(config.features[featureName])
-}
-
-/**
- * Get application metadata
- */
-export function getAppMeta(): AppConfig['meta'] {
-  const config = getRuntimeConfig()
-  return config.meta
 }
 
 // Export the config object for direct access

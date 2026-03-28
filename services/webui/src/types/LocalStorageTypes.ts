@@ -5,8 +5,3 @@ export interface UserInfo {
   lastName: string
 }
 
-export interface AuthTokenInfo {
-  token: string,
-  expirationDate: Date
-}
-
