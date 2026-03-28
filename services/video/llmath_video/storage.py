@@ -1,15 +1,13 @@
 from __future__ import annotations
 
+import base64
 import json
+import logging
 import os
+import shutil
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Sequence
-import logging
-
-from flask import url_for
-from werkzeug.datastructures import FileStorage
-import base64
+from typing import IO, List, Sequence
 
 
 @dataclass(frozen=True)
@@ -36,7 +34,7 @@ class VideoStore:
                     {
                         "name": name,
                         "mtime": os.path.getmtime(file_path),
-                        "url": url_for("media.serve_video", filename=name),
+                        "url": f"/video/{name}",
                     }
                 )
         videos.sort(key=lambda x: x["mtime"], reverse=True)
@@ -59,8 +57,8 @@ class VideoStore:
             safe_base = "video"
         return f"{safe_base}{ext}"
 
-    def save(self, storage: FileStorage) -> str:
-        filename = self.sanitize_name(storage.filename or "")
+    def save(self, filename: str, src_file: IO[bytes]) -> str:
+        filename = self.sanitize_name(filename or "")
         save_path = os.path.join(self.video_dir, filename)
         base, ext = os.path.splitext(filename)
         counter = 1
@@ -68,7 +66,8 @@ class VideoStore:
             new_name = f"{base}_{counter}{ext}"
             save_path = os.path.join(self.video_dir, new_name)
             counter += 1
-        storage.save(save_path)
+        with open(save_path, "wb") as f:
+            shutil.copyfileobj(src_file, f)
         return os.path.basename(save_path)
 
     def path_for(self, name: str) -> str:
@@ -98,7 +97,7 @@ class SubtitleStore:
         path = self.path_for(name)
         if os.path.isfile(path):
             with open(path, "r", encoding="utf-8") as f:
-                return (json.load(f).get("segments") or [])
+                return json.load(f).get("segments") or []
         return []
 
     def write_segments(self, name: str, segments):
@@ -223,4 +222,3 @@ class FrameStore:
         if not safe_path.startswith(base):
             raise ValueError("invalid path")
         return safe_path
-

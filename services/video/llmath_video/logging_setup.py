@@ -40,8 +40,7 @@ def build_logging_config(logs_dir: str, level: str = "INFO") -> Dict[str, Any]:
                 "handlers": ["console", "rotating_file"],
                 "propagate": False,
             },
-            # Flask related loggers
-            "werkzeug": {
+            "uvicorn": {
                 "level": "WARNING",
                 "handlers": ["console", "rotating_file"],
                 "propagate": False,

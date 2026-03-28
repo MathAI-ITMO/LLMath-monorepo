@@ -2,43 +2,37 @@ from __future__ import annotations
 
 import os
 
-from flask import (
-    Blueprint,
-    jsonify,
-    request,
-    send_from_directory,
-    url_for,
-)
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile
+from fastapi.responses import FileResponse, JSONResponse
 
 from ..auth import require_auth
 from ..processing import ProcessingService
 from ..storage import FrameStore, SubtitleStore, VideoStore
 
 
-def register(
-    app,
+def create_router(
     video_store: VideoStore,
     subtitle_store: SubtitleStore,
     frame_store: FrameStore,
     dirs: dict,
     processing_service: ProcessingService,
-):
-    bp = Blueprint("media", __name__)
+) -> APIRouter:
+    router = APIRouter()
 
-    @bp.route("/videos", methods=["GET"])
-    @require_auth
-    def list_videos():
+    @router.get("/videos")
+    def list_videos(_: dict = Depends(require_auth)):
         records = video_store.list_videos()
-        return jsonify([r.__dict__ for r in records])
+        return [r.__dict__ for r in records]
 
-    @bp.route("/video/<path:filename>")
-    @require_auth
-    def serve_video(filename):
-        return send_from_directory(dirs["video"], filename, as_attachment=False)
+    @router.get("/video/{filename:path}")
+    def serve_video(filename: str, _: dict = Depends(require_auth)):
+        file_path = os.path.join(dirs["video"], os.path.basename(filename))
+        if not os.path.isfile(file_path):
+            raise HTTPException(status_code=404, detail="Not found")
+        return FileResponse(file_path)
 
-    @bp.route("/video/<path:filename>", methods=["DELETE"])
-    @require_auth
-    def delete_video(filename):
+    @router.delete("/video/{filename:path}")
+    def delete_video(filename: str, _: dict = Depends(require_auth)):
         filename = os.path.basename(filename)
         video_path = os.path.join(dirs["video"], filename)
         base, _ = os.path.splitext(filename)
@@ -55,75 +49,61 @@ def register(
             except Exception as e:
                 errors.append(str(e))
         status = 200 if not errors else 207
-        return jsonify({"deleted": deleted, "errors": errors}), status
+        return JSONResponse({"deleted": deleted, "errors": errors}, status_code=status)
 
-    @bp.route("/upload", methods=["POST"])
-    @require_auth
-    def upload_video():
-        if "file" not in request.files:
-            return jsonify({"error": "No file part in the request"}), 400
-        file = request.files["file"]
-        if file.filename == "":
-            return jsonify({"error": "No file selected"}), 400
+    @router.post("/upload", status_code=201)
+    async def upload_video(file: UploadFile, _: dict = Depends(require_auth)):
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="No file selected")
         try:
-            name = video_store.save(file)
+            name = video_store.save(file.filename, file.file)
         except ValueError as e:
-            return jsonify({"error": str(e)}), 400
+            raise HTTPException(status_code=400, detail=str(e))
         save_path = os.path.join(dirs["video"], name)
         processing_service.queue(save_path)
-        return (
-            jsonify(
-                {
-                    "name": name,
-                    "url": url_for("media.serve_video", filename=name),
-                }
-            ),
-            201,
-        )
+        return {"name": name, "url": f"/video/{name}"}
 
-    @bp.route("/api/ensure_processed", methods=["POST"])
-    @require_auth
-    def api_ensure_processed():
-        data = request.get_json(silent=True) or {}
-        name = (
-            request.args.get("name")
-            or (data.get("name") if isinstance(data, dict) else None)
-            or request.form.get("name")
-            or ""
-        )
+    @router.post("/api/ensure_processed")
+    async def api_ensure_processed(
+        request: Request,
+        name: str = Query(default=""),
+        _: dict = Depends(require_auth),
+    ):
+        if not name:
+            try:
+                data = await request.json()
+                name = (data or {}).get("name", "") if isinstance(data, dict) else ""
+            except Exception:
+                pass
+        if not name:
+            form = await request.form()
+            name = form.get("name", "")
         name = os.path.basename(name)
         if not name:
-            return jsonify({"status": "error", "error": "missing name"}), 400
+            raise HTTPException(status_code=400, detail="missing name")
         video_path = video_store.path_for(name)
         if not os.path.isfile(video_path):
-            return jsonify({"status": "error", "error": "not found"}), 404
+            raise HTTPException(status_code=404, detail="not found")
         processing_service.queue(video_path)
-        return jsonify({"status": "queued"})
+        return {"status": "queued"}
 
-    @bp.route("/subtitles/<path:filename>.json")
-    @require_auth
-    def serve_subtitles(filename):
+    @router.get("/subtitles/{filename:path}.json")
+    def serve_subtitles(filename: str, _: dict = Depends(require_auth)):
         segments = subtitle_store.read_segments(filename)
-        return jsonify({"segments": segments})
+        return {"segments": segments}
 
-    @bp.route("/frames/<path:filename>")
-    @require_auth
-    def serve_frame(filename):
+    @router.get("/frames/{filename:path}")
+    def serve_frame(filename: str, _: dict = Depends(require_auth)):
         try:
             safe_path = frame_store.resolve(filename)
         except ValueError:
-            return jsonify({"error": "invalid path"}), 400
+            raise HTTPException(status_code=400, detail="invalid path")
         if not os.path.isfile(safe_path):
-            return jsonify({"error": "not found"}), 404
-        return send_from_directory(
-            os.path.dirname(safe_path),
-            os.path.basename(safe_path),
-            as_attachment=False,
-        )
+            raise HTTPException(status_code=404, detail="not found")
+        return FileResponse(safe_path)
 
-    @bp.route("/favicon.ico")
+    @router.get("/favicon.ico", status_code=204)
     def favicon():
-        return ("", 204)
+        return None
 
-    app.register_blueprint(bp)
-
+    return router

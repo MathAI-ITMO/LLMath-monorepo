@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import json
-import os
 from datetime import datetime
 
-from flask import Blueprint, jsonify
+from fastapi import APIRouter, Depends, HTTPException
 
 from ..auth import require_auth
 from ..llm import build_timecoded_transcript, generate_suggestions_with_llm
@@ -16,33 +14,30 @@ from ..storage import (
 )
 
 
-def register(
-    app,
+def create_router(
     summary_store: SummaryStore,
     suggestion_store: SuggestionStore,
     subtitle_store: SubtitleStore,
     log_store: LogStore,
     llm_config: dict,
     config: dict,
-):
-    bp = Blueprint("content", __name__)
+) -> APIRouter:
+    router = APIRouter()
 
-    @bp.route("/summary/<path:filename>")
-    @require_auth
-    def get_summary(filename):
+    @router.get("/summary/{filename:path}")
+    def get_summary(filename: str, _: dict = Depends(require_auth)):
         text = summary_store.read(filename)
-        return jsonify({"text": text})
+        return {"text": text}
 
-    @bp.route("/suggestions/<path:filename>")
-    @require_auth
-    def get_suggestions(filename):
+    @router.get("/suggestions/{filename:path}")
+    def get_suggestions(filename: str, _: dict = Depends(require_auth)):
         try:
             existing = suggestion_store.read(filename) or {}
         except Exception as exc:
-            return jsonify({"items": [], "error": str(exc)}), 200
+            return {"items": [], "error": str(exc)}
         items = existing.get("items")
         if isinstance(items, list) and items:
-            return jsonify({"items": items})
+            return {"items": items}
         try:
             segments = subtitle_store.read_segments(filename)
             if segments:
@@ -57,7 +52,7 @@ def register(
                 )
                 if new_items:
                     suggestion_store.write_items(filename, new_items)
-                    return jsonify({"items": new_items})
+                    return {"items": new_items}
         except Exception as e:
             log_store.append(
                 filename,
@@ -67,22 +62,19 @@ def register(
                     "content": f"suggestions_on_demand_error: {str(e)}",
                 },
             )
-        return jsonify({"items": []})
+        return {"items": []}
 
-    @bp.route("/logs/<path:filename>")
-    @require_auth
-    def get_logs(filename):
+    @router.get("/logs/{filename:path}")
+    def get_logs(filename: str, _: dict = Depends(require_auth)):
         entries = log_store.read_entries(filename)
-        return jsonify({"entries": entries})
+        return {"entries": entries}
 
-    @bp.route("/logs/<path:filename>", methods=["DELETE"])
-    @require_auth
-    def clear_logs(filename):
+    @router.delete("/logs/{filename:path}")
+    def clear_logs(filename: str, _: dict = Depends(require_auth)):
         try:
             log_store.clear(filename)
-            return jsonify({"status": "cleared"})
+            return {"status": "cleared"}
         except Exception as e:
-            return jsonify({"error": str(e)}), 500
+            raise HTTPException(status_code=500, detail=str(e))
 
-    app.register_blueprint(bp)
-
+    return router
