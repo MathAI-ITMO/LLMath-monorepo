@@ -1,27 +1,26 @@
 from __future__ import annotations
 
 import json
-import os
 import re
 import time
 from datetime import datetime
 from typing import Callable, Dict, List, Sequence
-from openai import OpenAI
+
 import av
-
 from config_manager import get_llm_setting, get_prompt_template
-
-try:
-    import whisper
-except Exception:
-    whisper = None
+from openai import OpenAI
 
 
 def get_openai_client(
-    llm_config: Dict, *, base_key: str = "openai_api_base", key_name: str = "openai_api_key"
+    llm_config: Dict,
+    *,
+    base_key: str = "openai_api_base",
+    key_name: str = "openai_api_key",
 ):
     base_url = get_llm_setting(llm_config, base_key)
-    api_key = (llm_config.get(key_name) or llm_config.get("openai_api_key") or "").strip()
+    api_key = (
+        llm_config.get(key_name) or llm_config.get("openai_api_key") or ""
+    ).strip()
     if not api_key:
         raise RuntimeError(f"{key_name} is not configured")
     return OpenAI(
@@ -68,11 +67,7 @@ def _fallback_segments(full_text: str, audio_path: str) -> list:
     full_text = (full_text or "").strip()
     if not full_text:
         return []
-    sentences = [
-        s.strip()
-        for s in re.split(r"(?<=[.!?])\s+", full_text)
-        if s.strip()
-    ]
+    sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", full_text) if s.strip()]
     if not sentences:
         sentences = [full_text]
     dur = _probe_duration(audio_path) or 0.0
@@ -99,11 +94,15 @@ CHUNK_SECONDS = 600  # 10-minute chunks
 def _split_audio_chunks(audio_path: str, chunk_seconds: int) -> list:
     """Split mp3 into fixed-length chunks, return list of (offset_sec, tmp_path)."""
     import tempfile
+
     from av.audio.resampler import AudioResampler
+
     chunks = []
     in_container = av.open(audio_path)
     try:
-        audio_stream = next((s for s in in_container.streams if s.type == "audio"), None)
+        audio_stream = next(
+            (s for s in in_container.streams if s.type == "audio"), None
+        )
         if audio_stream is None:
             return []
         sample_rate = audio_stream.sample_rate or 16000
@@ -173,7 +172,7 @@ def _parse_resp_segments(resp) -> tuple:
         except Exception:
             raw_segments = None
     segments = []
-    for seg in (raw_segments or []):
+    for seg in raw_segments or []:
         try:
             start = float(seg.get("start"))
             end = float(seg.get("end"))
@@ -193,7 +192,9 @@ def _parse_resp_segments(resp) -> tuple:
     return segments, full_text
 
 
-def _transcribe_chunk(client, stt_model: str, language: str, chunk_path: str, offset: float) -> list:
+def _transcribe_chunk(
+    client, stt_model: str, language: str, chunk_path: str, offset: float
+) -> list:
     """Transcribe one chunk file and return segments shifted by offset."""
     with open(chunk_path, "rb") as f:
         resp = client.audio.transcriptions.create(
@@ -205,15 +206,21 @@ def _transcribe_chunk(client, stt_model: str, language: str, chunk_path: str, of
         )
     segs, full_text = _parse_resp_segments(resp)
     if segs:
-        return [{"start": s["start"] + offset, "end": s["end"] + offset, "text": s["text"]} for s in segs]
+        return [
+            {"start": s["start"] + offset, "end": s["end"] + offset, "text": s["text"]}
+            for s in segs
+        ]
     if not full_text:
         return []
     dur = _probe_duration(chunk_path)
     fallback = _fallback_segments(full_text, chunk_path)
-    return [{"start": s["start"] + offset, "end": s["end"] + offset, "text": s["text"]} for s in fallback]
+    return [
+        {"start": s["start"] + offset, "end": s["end"] + offset, "text": s["text"]}
+        for s in fallback
+    ]
 
 
-def transcribe_with_openai(audio_path: str, llm_config: Dict, base_dir: str):
+def transcribe_audio(audio_path: str, llm_config: Dict, base_dir: str):
     client = get_openai_client(
         llm_config, base_key="openai_stt_api_base", key_name="openai_stt_api_key"
     )
@@ -233,6 +240,7 @@ def transcribe_with_openai(audio_path: str, llm_config: Dict, base_dir: str):
             all_segments.extend(segs)
     finally:
         import os as _os
+
         for p in tmp_paths:
             try:
                 _os.unlink(p)
@@ -240,45 +248,6 @@ def transcribe_with_openai(audio_path: str, llm_config: Dict, base_dir: str):
                 pass
 
     return all_segments
-
-
-def transcribe_with_whisper_local(audio_path: str, llm_config: Dict, base_dir: str):
-    """
-    Local transcription using openai-whisper python package.
-    Returns list of {start, end, text} segment dicts or [] on failure.
-    """
-    try:
-        model_name = get_llm_setting(llm_config, "whisper_local_model") or "base"
-        language = (get_llm_setting(llm_config, "whisper_language") or "").strip() or None
-        model = whisper.load_model(model_name)
-        result = model.transcribe(audio_path, language=language)
-        segments: List[dict] = []
-        for seg in (result.get("segments") or []):
-            text = (seg.get("text") or "").strip()
-            if not text:
-                continue
-            try:
-                start = float(seg.get("start", 0.0))
-                end = float(seg.get("end", 0.0))
-            except Exception:
-                start = float(seg.get("start") or 0.0) if hasattr(seg, "get") else 0.0
-                end = float(seg.get("end") or 0.0) if hasattr(seg, "get") else 0.0
-            segments.append({"start": start, "end": end, "text": text})
-        if segments:
-            return segments
-        full_text = (result.get("text") or "").strip()
-        if not full_text:
-            return []
-        return _fallback_segments(full_text, audio_path)
-    except Exception:
-        return []
-
-
-def transcribe_audio(audio_path: str, llm_config: Dict, base_dir: str):
-    mode = (get_llm_setting(llm_config, "stt_mode") or "api").strip().lower()
-    if mode == "local":
-        return transcribe_with_whisper_local(audio_path, llm_config, base_dir)
-    return transcribe_with_openai(audio_path, llm_config, base_dir)
 
 
 def summarize_with_llm(
@@ -366,7 +335,8 @@ def _parse_json_response(text: str):
         cleaned = text.strip()
         if cleaned.startswith("```"):
             cleaned = "\n".join(
-                line for line in cleaned.splitlines()
+                line
+                for line in cleaned.splitlines()
                 if not line.strip().startswith("```")
             )
         return json.loads(cleaned)
@@ -476,8 +446,5 @@ def generate_suggestions_with_llm(
             start = (it or {}).get("start")
             end = (it or {}).get("end")
             if text and start and end:
-                items.append(
-                    {"text": str(text), "start": str(start), "end": str(end)}
-                )
+                items.append({"text": str(text), "start": str(start), "end": str(end)})
     return items
-

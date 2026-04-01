@@ -2,9 +2,9 @@ name: Video Docker
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master"]
     paths:
-      - 'services/video/**'
+      - "services/video/**"
   release:
     types:
       - published
@@ -12,22 +12,11 @@ on:
 
 jobs:
   docker:
-    strategy:
-      matrix:
-        include:
-          - variant: full
-            include_whisper: "true"
-            tag_suffix: ""
-          - variant: nowhisper
-            include_whisper: "false"
-            tag_suffix: "-nowhisper"
     uses: ./.github/workflows/docker-publish.yml
     with:
       image-suffix: video
       context: ./services/video
       dockerfile: ./services/video/Dockerfile
-      build-args: INCLUDE_WHISPER=${{ matrix.include_whisper }}
-      tag-suffix: ${{ matrix.tag_suffix }}
       push: ${{ github.event_name == 'push' || github.event_name == 'release' || github.event_name == 'workflow_dispatch' }}
     permissions:
       contents: read

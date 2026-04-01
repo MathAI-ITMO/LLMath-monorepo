@@ -6,13 +6,8 @@ from dotenv import load_dotenv
 
 DEFAULT_CONFIG = {
     "subtitles_panel_enabled": True,
-    "server": {
-        "host": "0.0.0.0",
-        "port": 5001
-    },
-    "cors": {
-        "origins": ["http://localhost:8080", "http://127.0.0.1:8080"]
-    }
+    "server": {"host": "0.0.0.0", "port": 5001},
+    "cors": {"origins": ["http://localhost:8080", "http://127.0.0.1:8080"]},
 }
 
 LLM_DEFAULTS = {
@@ -24,7 +19,6 @@ LLM_DEFAULTS = {
     "openai_stt_model": "whisper-1",
     "whisper_language": "ru",
     "stt_mode": "api",
-    "whisper_local_model": "base",
 }
 
 DATA_SUBDIRS = {
@@ -63,7 +57,7 @@ PROMPT_DEFAULTS = {
         "чтобы в любой момент времени было несколько релевантных вопросов.\n"
         "- Привязывай вопросы к содержанию лекции: терминам, определениям, шагам, примерам.\n"
         "- Верни ТОЛЬКО JSON-массив объектов вида:\n"
-        "  [{\"text\":\"...\",\"start\":\"HH:mm:ss\",\"end\":\"HH:mm:ss\"}, ...]\n"
+        '  [{"text":"...","start":"HH:mm:ss","end":"HH:mm:ss"}, ...]\n'
         "- Без дополнительного текста, без комментариев и пояснений. Только JSON.\n\n"
         "Транскрипт с тайм-кодами:\n{timecoded_transcript}"
     ),
@@ -73,7 +67,7 @@ PROMPT_DEFAULTS = {
         "Предыдущий диалог:\n{history}\n\n"
         "У студента возник новый вопрос: {question}"
     ),
-    "chat_system": "Ты выступаешь в роли лектора, отвечай четко и по делу."
+    "chat_system": "Ты выступаешь в роли лектора, отвечай четко и по делу.",
 }
 
 
@@ -103,8 +97,7 @@ def ensure_data_directories(base_dir: str) -> Dict[str, str]:
 
 
 def build_llm_config(
-    config: Mapping[str, str],
-    env: Optional[MutableMapping[str, str]] = None
+    config: Mapping[str, str], env: Optional[MutableMapping[str, str]] = None
 ) -> Dict[str, str]:
     """
     Merge environment overrides with config values for LLM-related settings.
@@ -120,10 +113,7 @@ def build_llm_config(
     return llm_config
 
 
-def get_llm_setting(
-    llm_config: Mapping[str, str],
-    key: str
-) -> str:
+def get_llm_setting(llm_config: Mapping[str, str], key: str) -> str:
     """
     Retrieve an LLM setting value, falling back to centralized defaults.
     """
@@ -139,7 +129,11 @@ def get_prompt_template(config: Mapping[str, Any], key: str) -> str:
     """
     prompts = {}
     if config:
-        prompts = (config.get("prompts") or {}) if isinstance(config.get("prompts"), Mapping) else {}
+        prompts = (
+            (config.get("prompts") or {})
+            if isinstance(config.get("prompts"), Mapping)
+            else {}
+        )
     value = prompts.get(key)
     if value:
         return str(value)
@@ -147,8 +141,7 @@ def get_prompt_template(config: Mapping[str, Any], key: str) -> str:
 
 
 def resolve_cors_origins(
-    config: Mapping,
-    env: Optional[MutableMapping[str, str]] = None
+    config: Mapping, env: Optional[MutableMapping[str, str]] = None
 ) -> List[str]:
     """
     Determine allowed CORS origins using env override or fallback config.
@@ -156,8 +149,12 @@ def resolve_cors_origins(
     source_env = env or os.environ
     cors_origins_env = source_env.get("VIDEOAPP_CORS_ORIGINS")
     if cors_origins_env:
-        return [origin.strip() for origin in cors_origins_env.split(",") if origin.strip()]
-    return config.get("cors", {}).get("origins", ["http://localhost:8080", "http://127.0.0.1:8080"])
+        return [
+            origin.strip() for origin in cors_origins_env.split(",") if origin.strip()
+        ]
+    return config.get("cors", {}).get(
+        "origins", ["http://localhost:8080", "http://127.0.0.1:8080"]
+    )
 
 
 def is_cors_disabled(env: Optional[MutableMapping[str, str]] = None) -> bool:
@@ -167,4 +164,3 @@ def is_cors_disabled(env: Optional[MutableMapping[str, str]] = None) -> bool:
     source_env = env or os.environ
     flag = source_env.get("VIDEOAPP_DISABLE_CORS", "").strip().lower()
     return flag in {"1", "true", "yes", "on"}
-
