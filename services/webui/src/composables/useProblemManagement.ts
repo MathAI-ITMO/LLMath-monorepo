@@ -5,7 +5,7 @@ import { api } from '@/api';
 import type { CreateProblemRequestDto, UpdateProblemRequestDto } from '@/api/generated/api';
 
 export function useProblemManagement() {
-  const { apiCallLoading, apiResponse, makeApiCall } = useProblemApi();
+  const { apiCallLoading, apiResponse } = useProblemApi();
 
   const problems = ref<Problem[]>([]);
   const loading = ref(false);
@@ -232,7 +232,6 @@ export function useProblemManagement() {
     deleteProblemByIdAndRefresh,
     createProblem,
     updateProblem,
-    makeApiCall,
     tryParseJson,
     taskTypeToString,
   };

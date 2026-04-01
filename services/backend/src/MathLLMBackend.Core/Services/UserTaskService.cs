@@ -22,13 +22,6 @@ public class UserTaskService(
     private readonly IChatService _chatService = chatService;
     private readonly ILogger<UserTaskService> _logger = logger;
 
-    private static readonly Dictionary<TaskType, string> TaskTypeToProblemTypeName = new()
-    {
-        { TaskType.Learning, "problems" },
-        { TaskType.Guided, "problems" },
-        { TaskType.Exam, "problems" }
-    };
-
     public async Task<IEnumerable<UserTask>> GetOrCreateUserTasksAsync(string userId, TaskType taskType, CancellationToken cancellationToken = default)
     {
         IEnumerable<Problem> problems;

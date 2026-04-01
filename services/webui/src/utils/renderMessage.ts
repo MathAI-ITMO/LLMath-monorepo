@@ -4,10 +4,7 @@
 /* ------------------------------------------------------------------ */
 
 import katex       from 'katex'
-// import MarkdownIt  from 'markdown-it'
 import 'katex/dist/katex.min.css'
-
-// const md = MarkdownIt({ html: true, breaks: true, linkify: false })
 
 type Delim = { left: string; right: string; display: boolean }
 const DELIMS: readonly Delim[] = [
@@ -65,7 +62,6 @@ function safeKatex(src: string, display: boolean): string {
 
 /* ---------- главный парсер ---------- */
 export function renderMessage(raw: string): string {
-  //return raw
   let src = raw
   let out = ''
   let i   = 0
@@ -114,6 +110,5 @@ export function renderMessage(raw: string): string {
     .replace(/\\\\/g, '<br/>')
     .replace(/^---$/gm, '<hr>')
 
-  // return md.render(out)    // ← вернуть, если понадобится Markdown
   return out
 }

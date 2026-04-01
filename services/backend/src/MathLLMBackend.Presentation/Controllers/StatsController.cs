@@ -23,7 +23,7 @@ public class StatsController : ControllerBase
 
     [HttpGet("task-mode-titles")]
     [Authorize(Roles = Role.Admin)]
-    public async Task<IActionResult> GetTaskModeTitles(CancellationToken ct = default)
+    public IActionResult GetTaskModeTitles()
     {
         var result = TaskModeTitles.Titles;
         return Ok(result);

@@ -2,11 +2,9 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
-import subprocess
 import threading
 from datetime import datetime
-from typing import Dict, Iterable, Optional
+from typing import Dict
 import av
 from av.audio.resampler import AudioResampler
 
@@ -41,9 +39,12 @@ class ProcessingService:
 
     def queue(self, video_path: str, force: bool = False):
         key = os.path.abspath(video_path)
-        if not force:
-            if not self._needs_work(video_path):
+        with self._lock:
+            if key in self.processing_flags:
                 return
+            if not force and not self._needs_work(video_path):
+                return
+            self.processing_flags.add(key)
         try:
             name = os.path.basename(video_path)
             self.append_log(
@@ -56,10 +57,6 @@ class ProcessingService:
             )
         except Exception:
             pass
-        with self._lock:
-            if key in self.processing_flags:
-                return
-            self.processing_flags.add(key)
         thread = threading.Thread(
             target=self._worker,
             args=(video_path,),

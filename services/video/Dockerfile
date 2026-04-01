@@ -31,4 +31,3 @@ ENV PORT=5001
 EXPOSE 5001
 
 CMD ["uvicorn", "app:application", "--host", "0.0.0.0", "--port", "5001", "--timeout-keep-alive", "300"]
-

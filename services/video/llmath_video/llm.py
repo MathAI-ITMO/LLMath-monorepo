@@ -3,8 +3,6 @@ from __future__ import annotations
 import json
 import os
 import re
-import shutil
-import subprocess
 import time
 from datetime import datetime
 from typing import Callable, Dict, List, Sequence
@@ -22,8 +20,6 @@ except Exception:
 def get_openai_client(
     llm_config: Dict, *, base_key: str = "openai_api_base", key_name: str = "openai_api_key"
 ):
-    if OpenAI is None:
-        raise RuntimeError("openai package is not installed")
     base_url = get_llm_setting(llm_config, base_key)
     api_key = (llm_config.get(key_name) or llm_config.get("openai_api_key") or "").strip()
     if not api_key:
@@ -55,7 +51,7 @@ def call_openai_text(client, model: str, input_text: str) -> str:
     return ""
 
 
-def _probe_duration(audio_path: str, base_dir: str) -> float:
+def _probe_duration(audio_path: str) -> float:
     container = av.open(audio_path)
     try:
         if container.duration is not None:
@@ -68,7 +64,7 @@ def _probe_duration(audio_path: str, base_dir: str) -> float:
         container.close()
 
 
-def _fallback_segments(full_text: str, base_dir: str, audio_path: str) -> list:
+def _fallback_segments(full_text: str, audio_path: str) -> list:
     full_text = (full_text or "").strip()
     if not full_text:
         return []
@@ -79,7 +75,7 @@ def _fallback_segments(full_text: str, base_dir: str, audio_path: str) -> list:
     ]
     if not sentences:
         sentences = [full_text]
-    dur = _probe_duration(audio_path, base_dir) or 0.0
+    dur = _probe_duration(audio_path) or 0.0
     n = len(sentences)
     segs = []
     if dur <= 0.0:
@@ -212,8 +208,8 @@ def _transcribe_chunk(client, stt_model: str, language: str, chunk_path: str, of
         return [{"start": s["start"] + offset, "end": s["end"] + offset, "text": s["text"]} for s in segs]
     if not full_text:
         return []
-    dur = _probe_duration(chunk_path, "")
-    fallback = _fallback_segments(full_text, "", chunk_path)
+    dur = _probe_duration(chunk_path)
+    fallback = _fallback_segments(full_text, chunk_path)
     return [{"start": s["start"] + offset, "end": s["end"] + offset, "text": s["text"]} for s in fallback]
 
 
@@ -273,7 +269,7 @@ def transcribe_with_whisper_local(audio_path: str, llm_config: Dict, base_dir: s
         full_text = (result.get("text") or "").strip()
         if not full_text:
             return []
-        return _fallback_segments(full_text, base_dir, audio_path)
+        return _fallback_segments(full_text, audio_path)
     except Exception:
         return []
 
@@ -293,7 +289,7 @@ def summarize_with_llm(
     logger: Callable[[str, dict], None],
 ) -> str:
     api_key = llm_config.get("openai_api_key")
-    if not api_key or OpenAI is None:
+    if not api_key:
         return ""
     try:
         client = get_openai_client(llm_config)
@@ -349,6 +345,45 @@ def build_timecoded_transcript(segments: Sequence[dict]) -> str:
     return "\n".join(lines)
 
 
+def _parse_json_response(text: str):
+    """Attempt to parse a JSON value from an LLM text response.
+
+    Tries three strategies in order:
+    1. Direct ``json.loads`` of the raw text.
+    2. Strip markdown code fences, then parse.
+    3. Regex-extract the first ``[...]`` array, then parse.
+
+    Returns the parsed value, or ``None`` if all attempts fail.
+    """
+    # Attempt 1: direct parse
+    try:
+        return json.loads(text)
+    except Exception:
+        pass
+
+    # Attempt 2: strip markdown fences then parse
+    try:
+        cleaned = text.strip()
+        if cleaned.startswith("```"):
+            cleaned = "\n".join(
+                line for line in cleaned.splitlines()
+                if not line.strip().startswith("```")
+            )
+        return json.loads(cleaned)
+    except Exception:
+        pass
+
+    # Attempt 3: regex-extract first JSON array then parse
+    try:
+        m = re.search(r"\[[\s\S]*\]", text)
+        if m:
+            return json.loads(m.group(0))
+    except Exception:
+        pass
+
+    return None
+
+
 def generate_suggestions_with_llm(
     timecoded_transcript: str,
     filename: str,
@@ -358,7 +393,7 @@ def generate_suggestions_with_llm(
     logger: Callable[[str, dict], None],
 ) -> List[dict]:
     api_key = llm_config.get("openai_api_key")
-    if not api_key or OpenAI is None:
+    if not api_key:
         return []
     tpl = get_prompt_template(config, "suggestions")
 
@@ -433,28 +468,7 @@ def generate_suggestions_with_llm(
         {"type": "suggestions_response", "time": now, "content": answer},
     )
 
-    parsed = None
-    try:
-        parsed = json.loads(answer)
-    except Exception:
-        try:
-            cleaned = answer.strip()
-            if cleaned.startswith("```"):
-                cleaned = "\n".join(
-                    [
-                        line
-                        for line in cleaned.splitlines()
-                        if not line.strip().startswith("```")
-                    ]
-                )
-            parsed = json.loads(cleaned)
-        except Exception:
-            try:
-                m = re.search(r"\[[\s\S]*\]", answer)
-                if m:
-                    parsed = json.loads(m.group(0))
-            except Exception:
-                parsed = None
+    parsed = _parse_json_response(answer)
     items = []
     if isinstance(parsed, list):
         for it in parsed:

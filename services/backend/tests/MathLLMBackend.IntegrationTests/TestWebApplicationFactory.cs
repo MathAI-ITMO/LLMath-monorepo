@@ -8,6 +8,7 @@ using MathLLMBackend.GeolinClient.Options;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -67,6 +68,17 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.AddSingleton(LlmServiceMock.Object);
 
             services.AddLogging(b => b.AddConsole().SetMinimumLevel(LogLevel.Warning));
+
+            services.PostConfigure<MvcOptions>(options =>
+            {
+                for (int i = options.Filters.Count - 1; i >= 0; i--)
+                {
+                    if (options.Filters[i] is AutoValidateAntiforgeryTokenAttribute)
+                    {
+                        options.Filters.RemoveAt(i);
+                    }
+                }
+            });
 
             services.PostConfigure<IdentityOptions>(options =>
             {

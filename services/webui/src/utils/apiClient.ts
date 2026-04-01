@@ -24,11 +24,7 @@ export function createBackendApiClient(): AxiosInstance {
   })
 }
 
-/**
- * Singleton instance for backend API access
- * All API requests (including problems, auth, chats, etc.) go through this
- */
-export const backendApi = createBackendApiClient()
+const backendApi = createBackendApiClient()
 
 export const backendApiInstance = <T>(config: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
   return backendApi.request<T>(config)

@@ -104,6 +104,7 @@ services:
       FLASK_RUN_HOST: 0.0.0.0
       FLASK_RUN_PORT: 5001
       VIDEOAPP_DISABLE_CORS: "True"
+      VIDEOAPP_BACKEND_URL: "http://backend:5000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

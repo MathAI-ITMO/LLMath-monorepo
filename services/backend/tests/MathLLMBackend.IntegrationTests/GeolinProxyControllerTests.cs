@@ -22,7 +22,8 @@ public class GeolinProxyControllerTests : BaseIntegrationTest
         {
             Hash = "test-hash",
             AnswerAttempt = "42",
-            Seed = 123
+            Seed = 123,
+            ProblemParams = ""
         };
         var response = await AuthenticatedPostAsync("/api/v1/geolin-proxy/check-answer-direct", request);
 

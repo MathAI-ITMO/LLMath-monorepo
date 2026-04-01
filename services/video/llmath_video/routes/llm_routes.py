@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from config_manager import get_llm_setting, get_prompt_template
@@ -46,7 +47,7 @@ def create_router(
         current_time = float(body.currentTime or 0)
         api_key = llm_config.get("openai_api_key")
         if not api_key:
-            return {"answer": "LLM не настроен"}
+            return JSONResponse({"answer": "LLM не настроен"}, status_code=503)
 
         img_rel_path = frame_store.save_data_url(name, image_data_url)
 
@@ -122,7 +123,7 @@ def create_router(
         err_text = str(last_err) if last_err else "Неизвестная ошибка LLM"
         logger.error("explain_frame error: name=%s err=%s", name, err_text)
         log_store.append(name, {"type": "error", "time": now, "content": err_text})
-        return {"answer": "Ошибка обращения к LLM"}
+        return JSONResponse({"answer": "Ошибка обращения к LLM"}, status_code=500)
 
     @router.post("/api/chat")
     def api_chat(body: ChatRequest, _: dict = Depends(require_auth)):
@@ -132,7 +133,7 @@ def create_router(
         question = body.question or ""
         api_key = llm_config.get("openai_api_key")
         if not api_key:
-            return {"answer": "LLM не настроен"}
+            return JSONResponse({"answer": "LLM не настроен"}, status_code=503)
 
         segments = subtitle_store.read_segments(name)
         subs_text = _subtitles_before_time(segments, current_time)[-3000:]
@@ -185,7 +186,7 @@ def create_router(
             now = datetime.now().isoformat(timespec="seconds")
             log_store.append(name, {"type": "error", "time": now, "content": str(e)})
             logger.exception("chat request failed: name=%s", name)
-            return {"answer": "Ошибка обращения к LLM"}
+            return JSONResponse({"answer": "Ошибка обращения к LLM"}, status_code=500)
         now = datetime.now().isoformat(timespec="seconds")
         if answer:
             log_store.append(
@@ -197,7 +198,7 @@ def create_router(
             {"type": "error", "time": now, "content": "Не удалось получить ответ"},
         )
         logger.error("chat error: name=%s err=%s", name, "Не удалось получить ответ")
-        return {"answer": "Ошибка обращения к LLM"}
+        return JSONResponse({"answer": "Ошибка обращения к LLM"}, status_code=500)
 
     return router
 

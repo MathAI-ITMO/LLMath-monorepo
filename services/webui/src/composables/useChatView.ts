@@ -160,25 +160,28 @@ export function useChatView(props: { chatId?: string }, emit: any) {
       taskType.value = null
       return
     }
-    const tasks0 = await fetchUserTasks(0)
-    let task = tasks0.find((t) => t.associatedChatId === chatId.value)
-
-    if (!task) {
-      for (let i = 1; i <= 3; i++) {
-        const tasksI = await fetchUserTasks(i)
-        task = tasksI.find((t) => t.associatedChatId === chatId.value)
-        if (task) {
-          taskType.value = i
-          break
-        }
+    const [tasks0, tasks1, tasks2, tasks3] = await Promise.all([
+      fetchUserTasks(0),
+      fetchUserTasks(1),
+      fetchUserTasks(2),
+      fetchUserTasks(3),
+    ])
+    const allTaskLists = [tasks0, tasks1, tasks2, tasks3]
+    let task: (typeof tasks0)[number] | undefined
+    let foundType: number | null = null
+    for (let i = 0; i < allTaskLists.length; i++) {
+      const found = allTaskLists[i].find((t) => t.associatedChatId === chatId.value)
+      if (found) {
+        task = found
+        foundType = i
+        break
       }
-    } else {
-      taskType.value = 0
     }
 
     if (task) {
       userTaskId.value = task.id
       taskStatus.value = task.status
+      taskType.value = foundType
     } else {
       userTaskId.value = null
       taskStatus.value = null

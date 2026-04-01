@@ -9,7 +9,6 @@ namespace MathLLMBackend.Core.Services.GeolinService;
 public class GeolinService : IGeolinService
 {
     private readonly IGeolinApi _geolinApi;
-    private readonly Random _random = new();
 
     public GeolinService(
         IGeolinApi geolinApi)
@@ -25,7 +24,7 @@ public class GeolinService : IGeolinService
             throw new InvalidOperationException($"No problem found for prefix '{prefix}'.");
         }
 
-        seed = seed ?? _random.Next(1, 1000000000);
+        seed = seed ?? Random.Shared.Next(1, 1000000000);
         var condition = await _geolinApi.GetProblemCondition(new ProblemConditionRequest
         {
             Hash = problem.Hash,

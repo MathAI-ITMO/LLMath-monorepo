@@ -379,6 +379,21 @@
         ]
       }
     },
+    "/api/antiforgery/token": {
+      "get": {
+        "tags": [
+          "Antiforgery"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
     "/api/Auth/register": {
       "post": {
         "tags": [
@@ -565,8 +580,8 @@
         ]
       }
     },
-    "/api/Chat/delete/{id}": {
-      "post": {
+    "/api/Chat/{id}": {
+      "delete": {
         "tags": [
           "Chat"
         ],
@@ -2015,6 +2030,9 @@
   "tags": [
     {
       "name": "MathLLMBackend.Presentation"
+    },
+    {
+      "name": "Antiforgery"
     },
     {
       "name": "Auth"

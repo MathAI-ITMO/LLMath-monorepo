@@ -21,8 +21,7 @@ def create_router(
 
     @router.get("/videos")
     def list_videos(_: dict = Depends(require_auth)):
-        records = video_store.list_videos()
-        return [r.__dict__ for r in records]
+        return video_store.list_videos()
 
     @router.get("/video/{filename:path}")
     def serve_video(filename: str, _: dict = Depends(require_auth)):

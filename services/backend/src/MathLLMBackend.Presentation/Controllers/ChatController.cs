@@ -74,7 +74,7 @@ namespace MathLLMBackend.Presentation.Controllers
             return Ok(new ChatDto(chat.Id, chat.Name, chat.Type?.ToString() ?? ChatConstants.DefaultChatTypeName, details.TaskType, details.TheoryLink));
         }
 
-        [HttpPost("delete/{id}")]
+        [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> DeleteChat(Guid id, [FromJwt] JwtUser user, CancellationToken ct)
         {

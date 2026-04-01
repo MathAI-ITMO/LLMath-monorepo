@@ -79,7 +79,7 @@ public class ChatControllerTests : BaseIntegrationTest
     [Fact]
     public async Task DeleteChat_WithoutAuth_ReturnsUnauthorized()
     {
-        var response = await Client.PostAsync("/api/chat/delete/00000000-0000-0000-0000-000000000000", null);
+        var response = await Client.DeleteAsync("/api/chat/00000000-0000-0000-0000-000000000000");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -88,7 +88,7 @@ public class ChatControllerTests : BaseIntegrationTest
     public async Task DeleteChat_WithNonExistentChat_ReturnsNotFound()
     {
         await CreateAndLoginUserAsync();
-        var response = await AuthenticatedPostAsync("/api/chat/delete/00000000-0000-0000-0000-000000000000");
+        var response = await AuthenticatedDeleteAsync("/api/chat/00000000-0000-0000-0000-000000000000");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -126,7 +126,7 @@ public class ChatControllerTests : BaseIntegrationTest
         chatDto.Should().NotBeNull();
         chatDto!.Id.Should().NotBe(Guid.Empty);
         
-        var response = await AuthenticatedPostAsync($"/api/chat/delete/{chatDto.Id}");
+        var response = await AuthenticatedDeleteAsync($"/api/chat/{chatDto.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -136,13 +136,13 @@ public class ChatControllerTests : BaseIntegrationTest
     {
         await CreateAndLoginUserAsync();
         var otherUser = await Factory.CreateTestUserAsync("other@example.com", "Test123!@#");
-        
+
         using var scope = Factory.Services.CreateScope();
         var chatService = scope.ServiceProvider.GetRequiredService<MathLLMBackend.Core.Services.ChatService.IChatService>();
         var chat = new MathLLMBackend.Domain.Entities.Chat("Other User Chat", otherUser.Id);
         var createdChat = await chatService.Create(chat, CancellationToken.None);
 
-        var response = await AuthenticatedPostAsync($"/api/chat/delete/{createdChat.Id}");
+        var response = await AuthenticatedDeleteAsync($"/api/chat/{createdChat.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }

@@ -11,9 +11,9 @@ public static class DataAccessRegistrar
 {
     public static IServiceCollection Configure(IServiceCollection services, IConfiguration configuration)
     {
-        var dbConfig = configuration.GetSection(DatabaseConfiguration.SectionName).Get<DatabaseConfiguration>() 
+        var dbConfig = configuration.GetSection(DatabaseConfiguration.SectionName).Get<DatabaseConfiguration>()
             ?? new DatabaseConfiguration { Provider = DatabaseProvider.Postgres };
-        
+
         services.AddDbContext<AppDbContext>(options =>
         {
             switch (dbConfig.Provider)
@@ -30,9 +30,9 @@ public static class DataAccessRegistrar
                     break;
             }
         });
-            
+
         services.AddScoped<WarmupService>();
-        
+
         return services;
     }
-} 
+}

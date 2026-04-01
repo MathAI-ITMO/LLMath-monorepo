@@ -5,15 +5,8 @@ import json
 import logging
 import os
 import shutil
-from dataclasses import dataclass
 from datetime import datetime
 from typing import IO, List, Sequence
-
-
-@dataclass(frozen=True)
-class FileRecord:
-    name: str
-    url: str
 
 
 class VideoStore:
@@ -25,7 +18,7 @@ class VideoStore:
         _, ext = os.path.splitext((filename or "").lower())
         return ext in self.allowed_extensions
 
-    def list_videos(self) -> List[FileRecord]:
+    def list_videos(self) -> List[dict]:
         videos = []
         for name in os.listdir(self.video_dir):
             file_path = os.path.join(self.video_dir, name)
@@ -40,7 +33,7 @@ class VideoStore:
         videos.sort(key=lambda x: x["mtime"], reverse=True)
         for v in videos:
             v.pop("mtime", None)
-        return [FileRecord(**v) for v in videos]
+        return videos
 
     def sanitize_name(self, filename: str) -> str:
         filename = os.path.basename(filename or "")

@@ -231,7 +231,7 @@
 
             <!-- Видео теории -->
             <v-select
-              v-model="managementNewProblem.theory_link"
+              v-model="managementNewProblem.theoryLink"
               :items="videoSelectItems"
               item-title="title"
               item-value="value"
@@ -274,7 +274,7 @@
                     prepend-icon="mdi-check"
                     variant="outlined"
                     @click.prevent="checkSolution('management')"
-                    :disabled="geolinLoading || !managementNewProblem.statement || !managementNewProblemLlmSolutionJson || !managementNewProblem.geolin_ans_key?.hash">
+                    :disabled="geolinLoading || !managementNewProblem.statement || !managementNewProblemLlmSolutionJson || !managementNewProblem.geolinHash">
                     Проверить решение
                   </v-btn>
                 </div>
@@ -298,11 +298,11 @@
               <div class="d-flex gap-4 mb-2">
                 <div>
                   <span class="text-caption text-grey">GeoLin Hash:</span>
-                  <div class="text-body-2 font-weight-medium">{{ managementNewProblem.geolin_ans_key?.hash || 'не указан' }}</div>
+                  <div class="text-body-2 font-weight-medium">{{ managementNewProblem.geolinHash || 'не указан' }}</div>
                 </div>
                 <div>
                   <span class="text-caption text-grey">GeoLin Seed:</span>
-                  <div class="text-body-2 font-weight-medium">{{ managementNewProblem.geolin_ans_key?.seed || 0 }}</div>
+                  <div class="text-body-2 font-weight-medium">{{ managementNewProblem.geolinSeed || 0 }}</div>
                 </div>
               </div>
               <div class="text-caption text-grey">Эти данные заполняются автоматически при импорте из GeoLin</div>
@@ -362,7 +362,7 @@
 
             <!-- Видео теории -->
             <v-select
-              v-model="currentEditProblem.theory_link"
+              v-model="currentEditProblem.theoryLink"
               :items="videoSelectItems"
               item-title="title"
               item-value="value"
@@ -405,7 +405,7 @@
                     prepend-icon="mdi-check"
                     variant="outlined"
                     @click.prevent="checkSolution('edit')"
-                    :disabled="geolinLoading || !currentEditProblem.statement || !currentEditProblemLlmSolutionJson || !editingProblem?.geolin_ans_key?.hash">
+                    :disabled="geolinLoading || !currentEditProblem.statement || !currentEditProblemLlmSolutionJson || !editingProblem?.geolinHash">
                     Проверить решение
                   </v-btn>
                 </div>
@@ -429,11 +429,11 @@
               <div class="d-flex gap-4 mb-2">
                 <div>
                   <span class="text-caption text-grey">GeoLin Hash:</span>
-                  <div class="text-body-2 font-weight-medium">{{ editingProblem.geolin_ans_key?.hash || 'не указан' }}</div>
+                  <div class="text-body-2 font-weight-medium">{{ editingProblem.geolinHash || 'не указан' }}</div>
                 </div>
                 <div>
                   <span class="text-caption text-grey">GeoLin Seed:</span>
-                  <div class="text-body-2 font-weight-medium">{{ editingProblem.geolin_ans_key?.seed || 0 }}</div>
+                  <div class="text-body-2 font-weight-medium">{{ editingProblem.geolinSeed || 0 }}</div>
                 </div>
               </div>
               <div class="text-caption text-grey">GeoLin данные нельзя изменить после создания</div>
@@ -550,7 +550,6 @@ import { useGeolinProxy } from '@/composables/useGeolinProxy';
 import { useLlmSolution } from '@/composables/useLlmSolution';
 import { useProblemForm } from '@/composables/useProblemForm';
 import { useToast } from '@/composables/useToast';
-import { useModal } from '@/composables/useModal';
 import { useVideoManagement } from '@/composables/useVideoManagement';
 import VideoApp from '@/components/video/VideoApp.vue';
 import { usePagination } from '@/composables/usePagination';
@@ -612,17 +611,16 @@ const {
 } = useProblemForm();
 
 const { errorToast, successToast, showError, showSuccess } = useToast();
-const { 
-  showGeolinImportModal, 
-  showCreateModal, 
-  showEditModal, 
-  openGeolinImport, 
-  closeGeolinImport, 
-  openCreate, 
-  closeCreate, 
-  openEdit, 
-  closeEdit 
-} = useModal();
+const showGeolinImportModal = ref(false);
+const showCreateModal = ref(false);
+const showEditModal = ref(false);
+
+function openGeolinImport() { showGeolinImportModal.value = true; }
+function closeGeolinImport() { showGeolinImportModal.value = false; }
+function openCreate() { showCreateModal.value = true; }
+function closeCreate() { showCreateModal.value = false; }
+function openEdit() { showEditModal.value = true; }
+function closeEdit() { showEditModal.value = false; }
 
 const { 
   videoAppUrl, 
@@ -769,9 +767,9 @@ async function handleUpdateProblem() {
   const result = await updateProblemApi(problemId, {
     title: currentEditProblem.title || '',
     statement: currentEditProblem.statement,
-    geolin_ans_key: editingProblem.value.geolin_ans_key || { hash: '', seed: 0 },
+    geolin_ans_key: { hash: editingProblem.value.geolinHash || '', seed: editingProblem.value.geolinSeed || 0 },
     llmSolutionJson: currentEditProblemLlmSolutionJson.value,
-    theory_link: currentEditProblem.theory_link,
+    theory_link: currentEditProblem.theoryLink,
     type: currentEditProblemType.value,
   });
 
@@ -818,9 +816,9 @@ async function handleCreateProblem() {
   const result = await createProblemApi({
     title: managementNewProblem.title || '',
     statement: managementNewProblem.statement,
-    geolin_ans_key: managementNewProblem.geolin_ans_key || { hash: '', seed: 0 },
+    geolin_ans_key: { hash: managementNewProblem.geolinHash || '', seed: managementNewProblem.geolinSeed || 0 },
     llmSolutionJson: managementNewProblemLlmSolutionJson.value,
-    theory_link: managementNewProblem.theory_link,
+    theory_link: managementNewProblem.theoryLink,
     type: managementNewProblemType.value,
   });
 
@@ -854,10 +852,10 @@ async function getLlmSolution(formType: 'management' | 'edit') {
 
     if (formType === 'management') {
       managementNewProblemLlmSolutionJson.value = solution;
-      managementNewProblem.llm_solution = solution;
+      managementNewProblem.llmSolution = solution;
     } else if (formType === 'edit') {
       currentEditProblemLlmSolutionJson.value = solution;
-      currentEditProblem.llm_solution = solution;
+      currentEditProblem.llmSolution = solution;
     }
   } catch (error) {
     showError(error instanceof Error ? error.message : 'Ошибка при получении решения от LLM');
@@ -874,13 +872,13 @@ async function checkSolution(formType: 'management' | 'edit') {
   if (formType === 'management') {
     problemStatement = managementNewProblem.statement;
     solution = managementNewProblemLlmSolutionJson.value;
-    hash = managementNewProblem.geolin_ans_key?.hash || '';
-    seed = managementNewProblem.geolin_ans_key?.seed;
+    hash = managementNewProblem.geolinHash || '';
+    seed = managementNewProblem.geolinSeed;
   } else if (formType === 'edit') {
     problemStatement = currentEditProblem.statement;
     solution = currentEditProblemLlmSolutionJson.value;
-    hash = editingProblem.value?.geolin_ans_key?.hash || '';
-    seed = editingProblem.value?.geolin_ans_key?.seed;
+    hash = editingProblem.value?.geolinHash || '';
+    seed = editingProblem.value?.geolinSeed;
   }
 
   if (!problemStatement) {

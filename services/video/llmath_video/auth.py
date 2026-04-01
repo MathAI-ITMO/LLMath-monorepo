@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 
-import requests
+import httpx
 from fastapi import HTTPException, Request
 
 
@@ -20,11 +20,12 @@ async def require_auth(request: Request) -> dict:
         raise HTTPException(status_code=401, detail="Missing authentication")
     backend_url = _get_backend_url(request)
     try:
-        response = requests.get(
-            f"{backend_url}/api/User/me",
-            headers={"Cookie": cookie_header},
-            timeout=5,
-        )
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{backend_url}/api/User/me",
+                headers={"Cookie": cookie_header},
+                timeout=5,
+            )
     except Exception:
         raise HTTPException(status_code=503, detail="Auth service unavailable")
     if response.status_code != 200:

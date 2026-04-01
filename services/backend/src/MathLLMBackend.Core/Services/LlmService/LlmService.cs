@@ -43,8 +43,11 @@ public class LlmService : ILlmService
             };
     
         var completion = await client.CompleteChatAsync(openaiMessages, cancellationToken: ct);
-        var solution = completion!.Value.Content[0].Text;
-        
+        var content = completion?.Value.Content;
+        if (content == null || content.Count == 0)
+            throw new InvalidOperationException("LLM returned empty content");
+        var solution = content[0].Text;
+
         _logger.LogLlmSolution(problemDescription, solution, config.Model);
         
         return solution;
@@ -65,7 +68,10 @@ public class LlmService : ILlmService
         );
     
         var completion = await client.CompleteChatAsync(openaiMessages, cancellationToken: ct);
-        var response = completion!.Value.Content[0].Text;
+        var content = completion?.Value.Content;
+        if (content == null || content.Count == 0)
+            throw new InvalidOperationException("LLM returned empty content");
+        var response = content[0].Text;
         var config = _config.Value.ChatModel;
         
         _logger.LogLlmInteraction(taskType, messages, response, config.Model);
@@ -87,7 +93,10 @@ public class LlmService : ILlmService
             };
     
         var completion = await client.CompleteChatAsync(openaiMessages, cancellationToken: ct);
-        var extractedAnswer = completion!.Value.Content[0].Text;
+        var content = completion?.Value.Content;
+        if (content == null || content.Count == 0)
+            throw new InvalidOperationException("LLM returned empty content");
+        var extractedAnswer = content[0].Text;
         
         _logger.LogInformation("Extracted answer: {ExtractedAnswer}", extractedAnswer);
         
