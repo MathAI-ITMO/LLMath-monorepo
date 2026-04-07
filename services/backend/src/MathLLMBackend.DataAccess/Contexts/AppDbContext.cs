@@ -1,3 +1,4 @@
+using MathLLMBackend.Core.Contexts;
 using MathLLMBackend.Domain.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -5,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MathLLMBackend.DataAccess.Contexts;
 
-public class AppDbContext : IdentityDbContext<ApplicationUser>
+public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {

@@ -1,6 +1,6 @@
 using MathLLMBackend.Core.Constants;
 using MathLLMBackend.Domain.Models;
-using MathLLMBackend.DataAccess.Contexts;
+using MathLLMBackend.Core.Contexts;
 using MathLLMBackend.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -10,12 +10,12 @@ namespace MathLLMBackend.Core.Services.StatsService;
 
 public class StatsService : IStatsService
 {
-    private readonly AppDbContext _context;
+    private readonly IAppDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly ILogger<StatsService> _logger;
 
     public StatsService(
-        AppDbContext context,
+        IAppDbContext context,
         IConfiguration configuration,
         ILogger<StatsService> logger)
     {

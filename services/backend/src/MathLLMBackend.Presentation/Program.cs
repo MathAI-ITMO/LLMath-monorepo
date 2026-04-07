@@ -1,6 +1,5 @@
 using MathLLMBackend.Core;
 using MathLLMBackend.DataAccess;
-using MathLLMBackend.DataAccess.Services;
 using MathLLMBackend.GeolinClient;
 using MathLLMBackend.GeolinClient.Options;
 using Scalar.AspNetCore;
@@ -8,8 +7,6 @@ using MathLLMBackend.Presentation.Middlewares;
 using NLog;
 using NLog.Web;
 using Microsoft.AspNetCore.Identity;
-using MathLLMBackend.DataAccess.Contexts;
-using MathLLMBackend.DataAccess.Services.Identity;
 using MathLLMBackend.Presentation.Configuration;
 using MathLLMBackend.Domain.Entities;
 using Microsoft.OpenApi;
@@ -45,16 +42,15 @@ try
     CoreServicesRegistrar.Configure(builder.Services, configuration);
     GeolinClientRegistrar.Configure(builder.Services, configuration.GetSection(nameof(GeolinClientOptions)).Bind);
     DataAccessRegistrar.Configure(builder.Services, configuration);
-    
-    builder.Services.AddIdentityApiEndpoints<ApplicationUser>(options =>
+
+    var identityBuilder = builder.Services.AddIdentityApiEndpoints<ApplicationUser>(options =>
     {
         options.User.RequireUniqueEmail = true;
         options.SignIn.RequireConfirmedEmail = false;
     })
-        .AddRoles<IdentityRole>()
-        .AddEntityFrameworkStores<AppDbContext>()
-        .AddClaimsPrincipalFactory<ApplicationUserClaimsPrincipalFactory>();
-    
+        .AddRoles<IdentityRole>();
+    DataAccessRegistrar.ConfigureIdentity(identityBuilder);
+
     builder.Services.AddAuthorization();
 
     builder.Services.AddControllers(options =>
@@ -67,15 +63,13 @@ try
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
     builder.Services.AddEndpointsApiExplorer();
-    
+
     builder.Services.ConfigureApplicationCookie(options =>
     {
         options.Cookie.HttpOnly = true;
         options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
     });
-    
-    
-    
+
     builder.Services.AddOpenApi("openapi", options =>
     {
         options.AddDocumentTransformer((document, context, ct) =>
@@ -117,11 +111,7 @@ try
     var isOpenApiGeneration = Environment.GetEnvironmentVariable("OPENAPI_GENERATION") == "true";
     if (!isOpenApiGeneration)
     {
-        using (var scope = app.Services.CreateScope())
-        {
-            var warmupService = scope.ServiceProvider.GetRequiredService<WarmupService>();
-            await warmupService.WarmupAsync();
-        }
+        await DataAccessRegistrar.WarmupAsync(app.Services);
     }
 
     app.UseHttpLogging();

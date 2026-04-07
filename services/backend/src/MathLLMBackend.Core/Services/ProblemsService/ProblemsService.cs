@@ -1,4 +1,4 @@
-using MathLLMBackend.DataAccess.Contexts;
+using MathLLMBackend.Core.Contexts;
 using MathLLMBackend.Domain.Entities;
 using MathLLMBackend.Domain.Enums;
 using MathLLMBackend.Domain.Models;
@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MathLLMBackend.Core.Services.ProblemsService;
 
-public class ProblemsService(AppDbContext dbContext) : IProblemsService
+public class ProblemsService(IAppDbContext dbContext) : IProblemsService
 {
-    private readonly AppDbContext _dbContext = dbContext;
+    private readonly IAppDbContext _dbContext = dbContext;
 
     public async Task<IEnumerable<Problem>> GetProblems(CancellationToken ct)
     {

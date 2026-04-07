@@ -1,7 +1,7 @@
 using MathLLMBackend.Core.Constants;
 using MathLLMBackend.Core.Services.LlmService;
 using MathLLMBackend.Core.Services.PromptService;
-using MathLLMBackend.DataAccess.Contexts;
+using MathLLMBackend.Core.Contexts;
 using MathLLMBackend.Domain.Entities;
 using MathLLMBackend.Domain.Enums;
 using MathLLMBackend.Domain.Exceptions;
@@ -13,13 +13,13 @@ using Microsoft.Extensions.Logging;
 namespace MathLLMBackend.Core.Services.ChatService;
 
 public class ChatService(
-    AppDbContext dbContext,
+    IAppDbContext dbContext,
     ILlmService llmService,
     IPromptService promptService,
     ILogger<ChatService> logger)
     : IChatService
 {
-    private readonly AppDbContext _dbContext = dbContext;
+    private readonly IAppDbContext _dbContext = dbContext;
     private readonly ILlmService _llmService = llmService;
     private readonly IPromptService _promptService = promptService;
     private readonly ILogger<ChatService> _logger = logger;

@@ -1,6 +1,9 @@
+using MathLLMBackend.Core.Contexts;
 using MathLLMBackend.DataAccess.Configuration;
 using MathLLMBackend.DataAccess.Contexts;
 using MathLLMBackend.DataAccess.Services;
+using MathLLMBackend.DataAccess.Services.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,8 +34,23 @@ public static class DataAccessRegistrar
             }
         });
 
+        services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddScoped<WarmupService>();
 
         return services;
+    }
+
+    public static IdentityBuilder ConfigureIdentity(IdentityBuilder builder)
+    {
+        return builder
+            .AddEntityFrameworkStores<AppDbContext>()
+            .AddClaimsPrincipalFactory<ApplicationUserClaimsPrincipalFactory>();
+    }
+
+    public static async Task WarmupAsync(IServiceProvider serviceProvider)
+    {
+        using var scope = serviceProvider.CreateScope();
+        var warmupService = scope.ServiceProvider.GetRequiredService<WarmupService>();
+        await warmupService.WarmupAsync();
     }
 }

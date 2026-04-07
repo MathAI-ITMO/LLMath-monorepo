@@ -1,6 +1,6 @@
 using MathLLMBackend.Core.Constants;
 using MathLLMBackend.Core.Services.ChatService;
-using MathLLMBackend.DataAccess.Contexts;
+using MathLLMBackend.Core.Contexts;
 using MathLLMBackend.Domain.Entities;
 using MathLLMBackend.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -11,13 +11,13 @@ using MathLLMBackend.Domain.Exceptions;
 namespace MathLLMBackend.Core.Services;
 
 public class UserTaskService(
-    AppDbContext context,
+    IAppDbContext context,
     IProblemsService problemsService,
     IChatService chatService,
     ILogger<UserTaskService> logger)
     : IUserTaskService
 {
-    private readonly AppDbContext _context = context;
+    private readonly IAppDbContext _context = context;
     private readonly IProblemsService _problemsService = problemsService;
     private readonly IChatService _chatService = chatService;
     private readonly ILogger<UserTaskService> _logger = logger;
