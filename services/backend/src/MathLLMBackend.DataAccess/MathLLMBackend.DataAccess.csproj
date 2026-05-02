@@ -23,7 +23,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MathLLMBackend.Core\MathLLMBackend.Core.csproj" />
-    <ProjectReference Include="..\MathLLMBackend.Domain\MathLLMBackend.Domain.csproj" />
   </ItemGroup>
 
 </Project>

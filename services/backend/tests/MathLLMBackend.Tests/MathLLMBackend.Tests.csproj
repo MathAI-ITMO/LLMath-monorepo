@@ -27,6 +27,7 @@
     <ProjectReference Include="..\..\src\MathLLMBackend.Core\MathLLMBackend.Core.csproj" />
     <ProjectReference Include="..\..\src\MathLLMBackend.Domain\MathLLMBackend.Domain.csproj" />
     <ProjectReference Include="..\..\src\MathLLMBackend.DataAccess\MathLLMBackend.DataAccess.csproj" />
+    <ProjectReference Include="..\..\src\MathLLMBackend.GeolinClient\MathLLMBackend.GeolinClient.csproj" />
   </ItemGroup>
 
 </Project>

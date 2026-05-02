@@ -9,7 +9,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MathLLMBackend.Domain\MathLLMBackend.Domain.csproj" />
-    <ProjectReference Include="..\MathLLMBackend.GeolinClient\MathLLMBackend.GeolinClient.csproj" />
   </ItemGroup>
 
   <ItemGroup>

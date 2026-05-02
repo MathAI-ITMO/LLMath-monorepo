@@ -224,4 +224,12 @@ public class ProblemsServiceTests
         var dbProblem = await _context.Problems.FindAsync(p.Id);
         dbProblem.Should().BeNull();
     }
+
+    [Fact]
+    public async Task DeleteProblem_WhenNotFound_CompletesWithoutException()
+    {
+        var act = () => _service.DeleteProblem(Guid.NewGuid(), CancellationToken.None);
+
+        await act.Should().NotThrowAsync();
+    }
 }

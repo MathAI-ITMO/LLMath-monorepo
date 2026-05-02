@@ -20,7 +20,6 @@ public static class CoreServicesRegistrar
         services.AddTransient<IChatService, ChatService>();
         services.AddTransient<ILlmService, LlmService>();
         services.AddTransient<IPromptService, PromptService>();
-        services.AddTransient<IGeolinService, GeolinService>();
         services.AddTransient<IProblemsService, ProblemsService>();
         services.AddTransient<IUserTaskService, UserTaskService>();
         services.AddTransient<IStatsService, StatsService>();
