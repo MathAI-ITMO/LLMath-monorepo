@@ -1,10 +1,9 @@
 using MathLLMBackend.Core.Constants;
+using MathLLMBackend.Core.Services.GeolinService;
 using MathLLMBackend.Domain.Models;
-using MathLLMBackend.GeolinClient;
 using MathLLMBackend.GeolinClient.Models;
-using System.Text.Json;
 
-namespace MathLLMBackend.Core.Services.GeolinService;
+namespace MathLLMBackend.GeolinClient;
 
 public class GeolinService : IGeolinService
 {

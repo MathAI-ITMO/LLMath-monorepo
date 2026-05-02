@@ -1,5 +1,4 @@
 using FluentAssertions;
-using MathLLMBackend.Core.Services.GeolinService;
 using MathLLMBackend.GeolinClient;
 using MathLLMBackend.GeolinClient.Models;
 using Moq;
