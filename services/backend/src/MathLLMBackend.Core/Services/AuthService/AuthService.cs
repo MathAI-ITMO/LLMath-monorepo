@@ -16,7 +16,13 @@ public class AuthService : IAuthService
         _logger = logger;
     }
 
-    public async Task<ApplicationUser> RegisterAsync(string email, string password, string firstName, string lastName, string studentGroup, CancellationToken ct = default)
+    public async Task<ApplicationUser> RegisterAsync(
+        string email,
+        string password,
+        string firstName,
+        string lastName,
+        string studentGroup,
+        CancellationToken ct = default)
     {
         var existingUser = await _userManager.FindByEmailAsync(email);
         if (existingUser != null)
@@ -44,18 +50,18 @@ public class AuthService : IAuthService
 
         var errorMessages = TranslateIdentityErrors(result.Errors);
         var combinedMessage = string.Join("; ", errorMessages);
-        
+
         throw new InvalidOperationException($"Не удалось создать аккаунт: {combinedMessage}");
     }
 
     private static List<string> TranslateIdentityErrors(IEnumerable<IdentityError> errors)
     {
         var messages = new List<string>();
-        
+
         foreach (var error in errors)
         {
             string message;
-            
+
             if (error.Code == "DuplicateUserName" || error.Code == "DuplicateEmail")
             {
                 message = "Пользователь с таким email уже существует";
@@ -68,10 +74,10 @@ public class AuthService : IAuthService
             {
                 message = error.Description;
             }
-            
+
             messages.Add(message);
         }
-        
+
         return messages;
     }
 }

@@ -39,9 +39,9 @@ public class LlmController : ControllerBase
     [Authorize(Roles = Role.Admin)]
     public async Task<IActionResult> ExtractAnswer([FromBody] ExtractAnswerRequest request, CancellationToken ct)
     {
-        _logger.LogInformation("ExtractAnswer called with ProblemStatement length: {ProblemStatementLength}, Solution length: {SolutionLength}", 
+        _logger.LogInformation("ExtractAnswer called with ProblemStatement length: {ProblemStatementLength}, Solution length: {SolutionLength}",
             request.ProblemStatement?.Length ?? 0, request.Solution?.Length ?? 0);
-        
+
         if (string.IsNullOrWhiteSpace(request.ProblemStatement))
         {
             _logger.LogWarning("ExtractAnswer: Problem statement is empty");
@@ -54,13 +54,13 @@ public class LlmController : ControllerBase
             return BadRequest("Solution cannot be empty");
         }
 
-        _logger.LogInformation("Extracting answer from solution for problem. ProblemStatement preview: {ProblemPreview}", 
+        _logger.LogInformation("Extracting answer from solution for problem. ProblemStatement preview: {ProblemPreview}",
             request.ProblemStatement.Substring(0, Math.Min(MessageConstants.Logging.MaxProblemPreviewLength, request.ProblemStatement.Length)));
-        _logger.LogInformation("Solution preview: {SolutionPreview}", 
+        _logger.LogInformation("Solution preview: {SolutionPreview}",
             request.Solution.Substring(0, Math.Min(MessageConstants.Logging.MaxSolutionPreviewLength, request.Solution.Length)));
-            
+
         var extractedAnswer = await _llmService.ExtractAnswer(request.ProblemStatement, request.Solution, ct);
-        
+
         _logger.LogInformation("Successfully extracted answer: {ExtractedAnswer}", extractedAnswer);
         return Ok(new ExtractAnswerResponse { ExtractedAnswer = extractedAnswer });
     }

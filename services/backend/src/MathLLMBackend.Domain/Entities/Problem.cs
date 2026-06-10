@@ -11,7 +11,7 @@ public class Problem
         Statement = statement;
         Title = title;
     }
-    
+
     public Problem() { }
 
     public Guid Id { get; set; }

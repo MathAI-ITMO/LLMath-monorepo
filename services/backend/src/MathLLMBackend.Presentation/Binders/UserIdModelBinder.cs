@@ -13,7 +13,7 @@ public class UserIdModelBinder : IModelBinder
         }
 
         var userId = bindingContext.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-        
+
         if (string.IsNullOrEmpty(userId))
         {
             bindingContext.ModelState.TryAddModelError(

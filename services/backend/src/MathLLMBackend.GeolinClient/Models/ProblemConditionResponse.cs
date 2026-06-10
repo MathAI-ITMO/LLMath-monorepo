@@ -9,4 +9,4 @@ public class ProblemConditionResponse
 
     [JsonPropertyName("condition")]
     public string Condition { get; set; } = string.Empty;
-} 
+}

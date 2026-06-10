@@ -39,56 +39,39 @@ public class GlobalExceptionHandlerMiddleware
 
         var errorResponse = new ErrorResponse();
 
-        if (exception is AuthorizationException authEx)
+        var (statusCode, title, detail, logAction) = exception switch
         {
-            response.StatusCode = (int)HttpStatusCode.Forbidden;
-            errorResponse.Status = response.StatusCode;
-            errorResponse.Title = "Forbidden";
-            errorResponse.Detail = authEx.Message;
-            _logger.LogInformation("Authorization exception: {Message}", authEx.Message);
-        }
-        else if (exception is NotFoundException notFoundEx)
-        {
-            response.StatusCode = (int)HttpStatusCode.NotFound;
-            errorResponse.Status = response.StatusCode;
-            errorResponse.Title = "Not Found";
-            errorResponse.Detail = notFoundEx.Message;
-            _logger.LogInformation("Resource not found: {Message}", notFoundEx.Message);
-        }
-        else if (exception is ArgumentException or ArgumentNullException)
-        {
-            response.StatusCode = (int)HttpStatusCode.BadRequest;
-            errorResponse.Status = response.StatusCode;
-            errorResponse.Title = "Bad Request";
-            errorResponse.Detail = exception.Message;
-            _logger.LogWarning("Invalid argument: {Message}", exception.Message);
-        }
-        else if (exception is InvalidOperationException invalidOpEx)
-        {
-            response.StatusCode = (int)HttpStatusCode.BadRequest;
-            errorResponse.Status = response.StatusCode;
-            errorResponse.Title = "Invalid Operation";
-            errorResponse.Detail = invalidOpEx.Message;
-            _logger.LogWarning("Invalid operation: {Message}", invalidOpEx.Message);
-        }
-        else if (exception is UnauthorizedAccessException)
-        {
-            response.StatusCode = (int)HttpStatusCode.Forbidden;
-            errorResponse.Status = response.StatusCode;
-            errorResponse.Title = "Forbidden";
-            errorResponse.Detail = exception.Message;
-            _logger.LogInformation("Unauthorized access: {Message}", exception.Message);
-        }
-        else
-        {
-            response.StatusCode = (int)HttpStatusCode.InternalServerError;
-            errorResponse.Status = response.StatusCode;
-            errorResponse.Title = "Internal Server Error";
-            errorResponse.Detail = _environment.IsDevelopment() 
-                ? exception.ToString() 
-                : "An error occurred while processing your request.";
-            _logger.LogError(exception, "Unhandled exception occurred");
-        }
+            AuthorizationException ex => (
+                HttpStatusCode.Forbidden, "Forbidden", ex.Message,
+                (Action)(() => _logger.LogInformation("Authorization exception: {Message}", ex.Message))),
+
+            NotFoundException ex => (
+                HttpStatusCode.NotFound, "Not Found", ex.Message,
+                () => _logger.LogInformation("Resource not found: {Message}", ex.Message)),
+
+            ArgumentException or ArgumentNullException => (
+                HttpStatusCode.BadRequest, "Bad Request", exception.Message,
+                () => _logger.LogWarning("Invalid argument: {Message}", exception.Message)),
+
+            InvalidOperationException ex => (
+                HttpStatusCode.BadRequest, "Invalid Operation", ex.Message,
+                () => _logger.LogWarning("Invalid operation: {Message}", ex.Message)),
+
+            UnauthorizedAccessException => (
+                HttpStatusCode.Forbidden, "Forbidden", exception.Message,
+                () => _logger.LogInformation("Unauthorized access: {Message}", exception.Message)),
+
+            _ => (
+                HttpStatusCode.InternalServerError, "Internal Server Error",
+                _environment.IsDevelopment() ? exception.ToString() : "An error occurred while processing your request.",
+                () => _logger.LogError(exception, "Unhandled exception occurred"))
+        };
+
+        response.StatusCode = (int)statusCode;
+        errorResponse.Status = response.StatusCode;
+        errorResponse.Title = title;
+        errorResponse.Detail = detail;
+        logAction();
 
         var jsonOptions = new JsonSerializerOptions
         {

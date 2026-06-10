@@ -97,15 +97,15 @@ public class ChatControllerTests : BaseIntegrationTest
     public async Task GetChatDetails_WithValidChat_ReturnsOk()
     {
         await CreateAndLoginUserAsync();
-        
+
         var request = new CreateChatRequestDto($"Test Chat {Guid.NewGuid()}", null);
         var createResponse = await AuthenticatedPostAsync("/api/chat/create", request);
         createResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var chatDto = await createResponse.Content.ReadFromJsonAsync<ChatDto>();
         chatDto.Should().NotBeNull();
         chatDto!.Id.Should().NotBe(Guid.Empty);
-        
+
         var response = await AuthenticatedGetAsync($"/api/chat/get/{chatDto.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -117,15 +117,15 @@ public class ChatControllerTests : BaseIntegrationTest
     public async Task DeleteChat_WithValidChat_ReturnsOk()
     {
         await CreateAndLoginUserAsync();
-        
+
         var request = new CreateChatRequestDto($"Test Chat {Guid.NewGuid()}", null);
         var createResponse = await AuthenticatedPostAsync("/api/chat/create", request);
         createResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var chatDto = await createResponse.Content.ReadFromJsonAsync<ChatDto>();
         chatDto.Should().NotBeNull();
         chatDto!.Id.Should().NotBe(Guid.Empty);
-        
+
         var response = await AuthenticatedDeleteAsync($"/api/chat/{chatDto.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -152,7 +152,7 @@ public class ChatControllerTests : BaseIntegrationTest
     {
         await CreateAndLoginUserAsync();
         var otherUser = await Factory.CreateTestUserAsync("other_details@example.com", "Test123!@#");
-        
+
         using var scope = Factory.Services.CreateScope();
         var chatService = scope.ServiceProvider.GetRequiredService<MathLLMBackend.Core.Services.ChatService.IChatService>();
         var chat = new MathLLMBackend.Domain.Entities.Chat("Other User Chat Details", otherUser.Id);
@@ -190,25 +190,25 @@ public class ChatControllerTests : BaseIntegrationTest
     public async Task GetChatDetails_WithProblemSolverChat_ReturnsOk()
     {
         var problemId = Guid.NewGuid();
-        
+
         Factory.LlmServiceMock
             .Setup(x => x.GenerateNextMessageAsync(It.IsAny<List<Message>>(), It.IsAny<TaskType>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("Test response");
 
         await CreateAndLoginUserAsync();
-        
+
         ProblemTaskType ptt;
         using (var scope1 = Factory.Services.CreateScope())
         {
             var dbContext1 = scope1.ServiceProvider.GetRequiredService<AppDbContext>();
-            var problem = new Problem("Test solution text content", "Test problem statement with content", "Test Title") 
-            { 
-                Id = problemId, 
-                TheoryLink = "https://example.com/theory" 
+            var problem = new Problem("Test solution text content", "Test problem statement with content", "Test Title")
+            {
+                Id = problemId,
+                TheoryLink = "https://example.com/theory"
             };
             ptt = new ProblemTaskType(problem, TaskType.Learning);
             problem.Types = new List<ProblemTaskType> { ptt };
-            
+
             dbContext1.Problems.Add(problem);
 
             var userTask = new UserTask
@@ -229,14 +229,14 @@ public class ChatControllerTests : BaseIntegrationTest
         {
             var chatService = scope2.ServiceProvider.GetRequiredService<MathLLMBackend.Core.Services.ChatService.IChatService>();
             var chat = new Chat($"Test ProblemSolver Chat {Guid.NewGuid()}", TestUser!.Id);
-            
+
             var createdChat = await chatService.Create(chat, problemId, TaskType.Exam, CancellationToken.None);
             createdChat.Id.Should().NotBe(Guid.Empty);
-            
+
             var dbContext2 = scope2.ServiceProvider.GetRequiredService<AppDbContext>();
             var verifyChat = await dbContext2.Chats.FindAsync(createdChat.Id);
             verifyChat.Should().NotBeNull("Chat should be saved in database");
-            
+
             var response = await AuthenticatedGetAsync($"/api/chat/get/{createdChat.Id}");
             response.StatusCode.Should().Be(HttpStatusCode.OK);
         }
@@ -246,33 +246,33 @@ public class ChatControllerTests : BaseIntegrationTest
     public async Task GetChatDetails_WithProblemSolverChatWithoutUserTask_ReturnsOk()
     {
         var problemId = Guid.NewGuid();
-        
+
         Factory.LlmServiceMock
             .Setup(x => x.GenerateNextMessageAsync(It.IsAny<List<Message>>(), It.IsAny<TaskType>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("Test response");
 
         await CreateAndLoginUserAsync();
-        
+
         using (var scope = Factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            var problem = new Problem("Test solution text content", "Test problem statement with content", "Test Title") 
-            { 
-                Id = problemId, 
-                TheoryLink = "link" 
+            var problem = new Problem("Test solution text content", "Test problem statement with content", "Test Title")
+            {
+                Id = problemId,
+                TheoryLink = "link"
             };
             dbContext.Problems.Add(problem);
             await dbContext.SaveChangesAsync();
 
             var chatService = scope.ServiceProvider.GetRequiredService<MathLLMBackend.Core.Services.ChatService.IChatService>();
             var chat = new Chat($"Test ProblemSolver Chat {Guid.NewGuid()}", TestUser!.Id);
-            
+
             var createdChat = await chatService.Create(chat, problemId, TaskType.Exam, CancellationToken.None);
             createdChat.Id.Should().NotBe(Guid.Empty);
-            
+
             var verifyChat = await dbContext.Chats.FindAsync(createdChat.Id);
             verifyChat.Should().NotBeNull("Chat should be saved in database");
-            
+
             var response = await AuthenticatedGetAsync($"/api/chat/get/{createdChat.Id}");
             response.StatusCode.Should().Be(HttpStatusCode.OK);
         }

@@ -223,11 +223,6 @@ public class ChatService(
         var messagesForLlm = currentChat.Messages.ToList();
         messagesForLlm.Add(message);
 
-        if (taskType == TaskType.Exam)
-        {
-            messagesForLlm.RemoveAll(m => m.IsSystemPrompt && m.Text.Contains(MessageConstants.TutorSolutionMarker));
-        }
-
         var llmResponseText = await _llmService.GenerateNextMessageAsync(messagesForLlm, taskType, ct);
 
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);

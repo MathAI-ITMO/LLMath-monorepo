@@ -5,6 +5,7 @@ using MathLLMBackend.Core.Services.ProblemsService;
 using MathLLMBackend.DataAccess.Contexts;
 using MathLLMBackend.Domain.Entities;
 using MathLLMBackend.Domain.Enums;
+using MathLLMBackend.Domain.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -463,6 +464,47 @@ public class UserTaskServiceTests
 
         result.Should().NotBeNull();
         result!.Status.Should().Be(UserTaskStatus.Solved);
+    }
+
+    [Fact]
+    public async Task StartUserTaskWithChatAsync_WhenTaskNotFound_ThrowsNotFoundException()
+    {
+        var act = () => _service.StartUserTaskWithChatAsync(Guid.NewGuid(), "user1");
+
+        await act.Should().ThrowAsync<NotFoundException>();
+    }
+
+    [Fact]
+    public async Task StartUserTaskWithChatAsync_WhenChatServiceReturnsEmptyGuid_ThrowsInvalidOperationException()
+    {
+        const string userId = "user1";
+        var problemId = Guid.NewGuid();
+        var problem = new Problem("sol", "stmt", "title") { Id = problemId, TheoryLink = "link" };
+        var problemTaskType = new ProblemTaskType(problem, TaskType.Learning);
+
+        var task = new UserTask
+        {
+            ApplicationUserId = userId,
+            ProblemId = problemId,
+            ProblemHash = "hash",
+            DisplayName = "Test Task",
+            ProblemTaskType = problemTaskType,
+            Status = UserTaskStatus.NotStarted,
+            AssociatedChatId = null
+        };
+        _context.UserTasks.Add(task);
+        await _context.SaveChangesAsync();
+
+        _chatServiceMock
+            .Setup(x => x.GetOrCreateProblemChatAsync(
+                It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<TaskType>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Guid.Empty);
+
+        var act = () => _service.StartUserTaskWithChatAsync(task.Id, userId);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*valid chat ID*");
     }
 
     [Fact]

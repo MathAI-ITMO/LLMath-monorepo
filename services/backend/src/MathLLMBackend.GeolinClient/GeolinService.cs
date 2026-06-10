@@ -1,10 +1,9 @@
 using MathLLMBackend.Core.Constants;
+using MathLLMBackend.Core.Services.GeolinService;
 using MathLLMBackend.Domain.Models;
-using MathLLMBackend.GeolinClient;
 using MathLLMBackend.GeolinClient.Models;
-using System.Text.Json;
 
-namespace MathLLMBackend.Core.Services.GeolinService;
+namespace MathLLMBackend.GeolinClient;
 
 public class GeolinService : IGeolinService
 {
@@ -31,7 +30,7 @@ public class GeolinService : IGeolinService
             Seed = seed,
             Lang = LocalizationConstants.RussianLanguageCode
         }, ct);
-        
+
         if (condition == null)
         {
             throw new InvalidOperationException("Failed to get problem condition from GeoLin.");
@@ -63,7 +62,7 @@ public class GeolinService : IGeolinService
     private async Task<ProblemInfoResponse> FindProblemByPrefix(string prefix, CancellationToken ct)
     {
         var problemPage = await _geolinApi.GetProblemsInfo(page: 1, size: 1, prefixName: prefix, ct: ct);
-        
+
         if (problemPage.Problems.Count == 0)
         {
             throw new InvalidOperationException($"Problem with prefix '{prefix}' not found");
@@ -87,4 +86,4 @@ public class GeolinService : IGeolinService
         var response = await _geolinApi.CheckProblemAnswer(checkRequest, ct);
         return response.Verdict;
     }
-} 
+}

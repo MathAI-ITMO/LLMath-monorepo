@@ -17,7 +17,7 @@ public class UserTasksController : ControllerBase
     private readonly ILogger<UserTasksController> _logger;
 
     public UserTasksController(
-        IUserTaskService userTaskService, 
+        IUserTaskService userTaskService,
         ILogger<UserTasksController> logger)
     {
         _userTaskService = userTaskService;
@@ -50,7 +50,7 @@ public class UserTasksController : ControllerBase
     public async Task<IActionResult> StartUserTask(Guid userTaskId, [FromJwt] JwtUser user, CancellationToken ct = default)
     {
         var task = await _userTaskService.StartUserTaskWithChatAsync(userTaskId, user.Id, ct);
-        
+
         var dto = new UserTaskDto(
             task.Id,
             task.ProblemId,
@@ -59,7 +59,7 @@ public class UserTasksController : ControllerBase
             task.Status,
             task.AssociatedChatId
         );
-        
+
         return Ok(dto);
     }
 
@@ -74,7 +74,7 @@ public class UserTasksController : ControllerBase
         {
             return NotFound();
         }
-        
+
         var dto = new UserTaskDto(
             completedTask.Id,
             completedTask.ProblemId,
@@ -83,7 +83,7 @@ public class UserTasksController : ControllerBase
             completedTask.Status,
             completedTask.AssociatedChatId
         );
-        
+
         return Ok(dto);
     }
-} 
+}

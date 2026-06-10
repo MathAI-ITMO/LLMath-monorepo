@@ -1,3 +1,4 @@
+using MathLLMBackend.Core.Services.GeolinService;
 using MathLLMBackend.GeolinClient.HttpMessageHandlers;
 using MathLLMBackend.GeolinClient.Options;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +22,8 @@ public static class GeolinClientRegistrar
                 c.BaseAddress = new Uri(config.BaseAddress);
             })
             .AddHttpMessageHandler<AuthMessageHandler>();
+
+        services.AddTransient<IGeolinService, GeolinService>();
 
         return services;
     }

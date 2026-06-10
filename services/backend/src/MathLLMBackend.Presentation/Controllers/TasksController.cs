@@ -36,5 +36,5 @@ public class TasksController : ControllerBase
         );
 
         return Ok(result);
-    }    
-} 
+    }
+}

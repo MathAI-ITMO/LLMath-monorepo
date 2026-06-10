@@ -32,22 +32,22 @@ public class PromptService(IOptions<PromptConfiguration> promptConfiguration) : 
     {
         return _promptConfiguration.DefaultSystemPrompt;
     }
-    
+
     public string GetLearningSystemPrompt()
     {
         return _promptConfiguration.LearningSystemPrompt;
     }
-    
+
     public string GetGuidedSystemPrompt()
     {
         return _promptConfiguration.GuidedSystemPrompt;
     }
-    
+
     public string GetExamSystemPrompt()
     {
         return _promptConfiguration.ExamSystemPrompt;
     }
-    
+
     public string GetSystemPromptByTaskType(TaskType taskType)
     {
         return taskType switch
@@ -58,28 +58,28 @@ public class PromptService(IOptions<PromptConfiguration> promptConfiguration) : 
             _ => GetTutorSystemPrompt()
         };
     }
-    
+
     public string GetTutorInitialPrompt()
     {
         return _promptConfiguration.TutorInitialPrompt;
     }
-    
+
     public string GetLearningInitialPrompt(string condition, string firstStep)
     {
         // TODO: Consider using condition and firstStep parameters if prompt template supports placeholders
         return _promptConfiguration.LearningInitialPrompt;
     }
-    
+
     public string GetGuidedInitialPrompt()
     {
         return _promptConfiguration.GuidedInitialPrompt;
     }
-    
+
     public string GetExamInitialPrompt()
     {
         return _promptConfiguration.ExamInitialPrompt;
     }
-    
+
     public string GetInitialPromptByTaskType(TaskType taskType, string condition, string firstStep)
     {
         return taskType switch
@@ -102,4 +102,4 @@ public class PromptService(IOptions<PromptConfiguration> promptConfiguration) : 
             .Replace("{problemStatement}", problemStatement)
             .Replace("{solution}", solution);
     }
-} 
+}

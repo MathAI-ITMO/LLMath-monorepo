@@ -12,9 +12,9 @@ internal class TestWarmupService : WarmupService
     private readonly ILogger<WarmupService> _logger;
 
     public TestWarmupService(
-        AppDbContext dbContext, 
+        AppDbContext dbContext,
         RoleManager<IdentityRole> roleManager,
-        ILogger<WarmupService> logger) 
+        ILogger<WarmupService> logger)
         : base(dbContext, roleManager, logger)
     {
         _dbContext = dbContext;
@@ -24,7 +24,7 @@ internal class TestWarmupService : WarmupService
     public override async Task WarmupAsync()
     {
         _logger.LogInformation("Starting database warmup...");
-        
+
         var isInMemory = _dbContext.Database.ProviderName == "Microsoft.EntityFrameworkCore.InMemory";
         if (isInMemory)
         {

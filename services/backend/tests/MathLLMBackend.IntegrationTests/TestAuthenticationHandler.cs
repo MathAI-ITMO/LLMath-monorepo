@@ -36,7 +36,7 @@ public class TestAuthenticationHandler : AuthenticationHandler<AuthenticationSch
         var serviceProvider = Context.RequestServices;
         using var scope = serviceProvider.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        
+
         var user = await userManager.FindByIdAsync(userId);
         if (user == null)
         {

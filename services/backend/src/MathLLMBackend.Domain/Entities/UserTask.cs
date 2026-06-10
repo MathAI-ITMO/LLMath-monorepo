@@ -23,4 +23,4 @@ public class UserTask
     public UserTaskStatus Status { get; set; }
     public Guid? AssociatedChatId { get; set; }
     public string ProblemHash { get; set; } = null!;
-} 
+}

@@ -13,7 +13,7 @@ public class WarmupService
     private readonly ILogger<WarmupService> _logger;
 
     public WarmupService(
-        AppDbContext dbContext, 
+        AppDbContext dbContext,
         RoleManager<IdentityRole> roleManager,
         ILogger<WarmupService> logger)
     {
@@ -27,14 +27,14 @@ public class WarmupService
         try
         {
             _logger.LogInformation("Starting database warmup...");
-            
+
             if (_dbContext.Database.IsRelational())
             {
                 await _dbContext.Database.MigrateAsync();
             }
 
             await SeedRolesAsync();
-            
+
             _logger.LogInformation("Database warmup completed successfully");
         }
         catch (Exception ex)

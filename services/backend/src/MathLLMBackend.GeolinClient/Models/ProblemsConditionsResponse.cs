@@ -6,4 +6,4 @@ public class ProblemsConditionsResponse
 {
     [JsonPropertyName("conditions")]
     public List<ProblemConditionResponse> Conditions { get; set; } = new();
-} 
+}

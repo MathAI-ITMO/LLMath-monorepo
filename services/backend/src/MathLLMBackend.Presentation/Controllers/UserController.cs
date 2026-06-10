@@ -30,4 +30,4 @@ namespace MathLLMBackend.Presentation.Controllers
                 user.Role));
         }
     }
-} 
+}

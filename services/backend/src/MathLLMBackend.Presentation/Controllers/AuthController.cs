@@ -48,8 +48,8 @@ namespace MathLLMBackend.Presentation.Controllers
             catch (InvalidOperationException ex)
             {
                 var errorMessage = ex.Message;
-                
-                return BadRequest(new 
+
+                return BadRequest(new
                 {
                     errors = new Dictionary<string, string[]>
                     {
@@ -91,4 +91,4 @@ namespace MathLLMBackend.Presentation.Controllers
                 role));
         }
     }
-} 
+}

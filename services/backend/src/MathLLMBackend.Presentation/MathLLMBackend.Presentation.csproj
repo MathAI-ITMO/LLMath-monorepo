@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\MathLLMBackend.Core\MathLLMBackend.Core.csproj" />
     <ProjectReference Include="..\MathLLMBackend.DataAccess\MathLLMBackend.DataAccess.csproj" />
+    <ProjectReference Include="..\MathLLMBackend.GeolinClient\MathLLMBackend.GeolinClient.csproj" />
   </ItemGroup>
   
   <ItemGroup>

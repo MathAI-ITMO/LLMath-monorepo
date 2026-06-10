@@ -24,7 +24,7 @@ namespace MathLLMBackend.Presentation.Controllers
             _service = service;
             _logger = logger;
         }
-    
+
         [HttpPost("complete")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         public async Task<IActionResult> Complete([FromBody] MessageCreateDto dto, [FromJwt] JwtUser user, CancellationToken ct)
@@ -42,16 +42,16 @@ namespace MathLLMBackend.Presentation.Controllers
                 _logger.LogWarning("LLM service returned empty or null response for chat {ChatId}, user message: {UserMessage}", dto.ChatId, dto.Text);
                 return Ok(string.Empty);
             }
-            
+
             return Ok(llmResponseText);
         }
-    
+
         [HttpGet("get-messages-from-chat")]
         [ProducesResponseType(typeof(IEnumerable<MessageDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAllMessagesFromChat(Guid chatId, [FromJwt] JwtUser user, CancellationToken ct)
         {
             var isAdmin = User.IsInRole(Role.Admin);
-            
+
             List<Message> messages;
             if (isAdmin)
             {
@@ -61,7 +61,7 @@ namespace MathLLMBackend.Presentation.Controllers
             {
                 messages = await _service.GetUserVisibleMessagesFromChat(chatId, user.Id, ct);
             }
-            
+
             return Ok(
                 messages.Select(m => new MessageDto(m.Id, m.ChatId, m.Text, m.MessageType.ToString(), m.CreatedAt))
             );
