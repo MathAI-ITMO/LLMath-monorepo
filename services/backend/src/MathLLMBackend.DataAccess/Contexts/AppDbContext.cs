@@ -30,24 +30,24 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
         modelBuilder.Entity<GeolinProblemData>(ConfigureGeolinProblems);
         modelBuilder.Entity<ProblemTaskType>(ConfigureProblemTaskType);
     }
-    
+
     private void ConfigureProblemTaskType(EntityTypeBuilder<ProblemTaskType> type)
     {
         type.HasKey(t => new { t.ProblemId, t.TaskType });
-        
+
         type.HasOne(t => t.Problem)
             .WithMany(p => p.Types)
             .HasForeignKey(t => t.ProblemId)
             .OnDelete(DeleteBehavior.Cascade);
     }
-    
+
     private void ConfigureGeolinProblems(EntityTypeBuilder<GeolinProblemData> problem)
     {
         problem.HasKey(p => p.Id);
         problem.Property(p => p.ProblemId).IsRequired();
         problem.Property(p => p.Seed).IsRequired();
         problem.Property(p => p.Hash).IsRequired();
-        
+
         problem.HasIndex(p => new { p.Seed, p.Hash });
         problem.HasIndex(p => p.ProblemId).IsUnique();
     }
@@ -80,7 +80,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
         task.Property(ut => ut.Status).IsRequired();
         task.Property(ut => ut.AssociatedChatId);
         task.Property(ut => ut.ProblemHash).IsRequired();
-        
+
         task.HasOne(ut => ut.Problem)
             .WithMany()
             .HasForeignKey(ut => ut.ProblemId)
@@ -108,11 +108,11 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
         user
             .Property(u => u.FirstName)
             .HasMaxLength(100);
-        
+
         user
             .Property(u => u.LastName)
             .HasMaxLength(100);
-            
+
         user
             .Property(u => u.StudentGroup)
             .HasMaxLength(20);

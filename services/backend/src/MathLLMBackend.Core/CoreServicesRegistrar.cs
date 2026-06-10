@@ -23,10 +23,10 @@ public static class CoreServicesRegistrar
         services.AddTransient<IProblemsService, ProblemsService>();
         services.AddTransient<IUserTaskService, UserTaskService>();
         services.AddTransient<IStatsService, StatsService>();
-        
+
         services.Configure<LlmServiceConfiguration>(configuration.GetSection("OpenAi"));
         services.Configure<PromptConfiguration>(configuration.GetSection("DefaultPrompts"));
-        
+
         return services;
     }
 }

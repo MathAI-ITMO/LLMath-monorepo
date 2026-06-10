@@ -7,4 +7,4 @@ public record ProblemDto(
     string Condition,
     int Seed,
     string Params
-); 
+);

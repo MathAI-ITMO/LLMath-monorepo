@@ -43,7 +43,7 @@ public class ProblemsController(IProblemsService problemsService) : ControllerBa
     {
         var model = MapToModel(dto);
         var problem = await _problemsService.UpdateProblem(id, model, ct);
-        
+
         if (problem == null)
         {
             return NotFound();

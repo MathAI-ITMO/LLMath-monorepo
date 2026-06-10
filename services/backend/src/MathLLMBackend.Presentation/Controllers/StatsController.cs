@@ -34,7 +34,7 @@ public class StatsController : ControllerBase
     public async Task<IActionResult> GetUserStats(CancellationToken ct = default)
     {
         var stats = await _statsService.GetUserStatsAsync(ct);
-        
+
         var dtos = stats.Select(s => new UserStatsDto
         {
             UserId = s.UserId,
@@ -56,7 +56,7 @@ public class StatsController : ControllerBase
     {
 
         var detail = await _statsService.GetUserDetailsAsync(userId, ct);
-        
+
         var dto = new UserDetailDto
         {
             SolvedTasks = detail.SolvedTasks.Select(t => new TaskItemDto
@@ -82,4 +82,4 @@ public class StatsController : ControllerBase
 
         return Ok(dto);
     }
-} 
+}

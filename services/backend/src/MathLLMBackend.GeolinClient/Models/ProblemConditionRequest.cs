@@ -12,4 +12,4 @@ public class ProblemConditionRequest
 
     [JsonPropertyName("lang")]
     public string Lang { get; set; } = string.Empty;
-} 
+}

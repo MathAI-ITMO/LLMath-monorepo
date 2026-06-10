@@ -21,7 +21,7 @@ namespace MathLLMBackend.IntegrationTests;
 public class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string _databaseName = "TestDb_" + Guid.NewGuid();
-    
+
     public Mock<IGeolinApi> GeolinApiMock { get; } = new();
     public Mock<ILlmService> LlmServiceMock { get; } = new();
 
@@ -29,10 +29,10 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
     {
         builder.ConfigureServices(services =>
         {
-            var descriptorsToRemove = services.Where(d => 
+            var descriptorsToRemove = services.Where(d =>
                 d.ServiceType == typeof(DbContextOptions<AppDbContext>) ||
                 (d.ServiceType.IsGenericType && d.ServiceType.GetGenericTypeDefinition() == typeof(DbContextOptions<>))).ToList();
-            
+
             foreach (var descriptor in descriptorsToRemove)
             {
                 services.Remove(descriptor);
@@ -93,7 +93,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 options.DefaultScheme = "Test";
             })
             .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>("Test", options => { });
-            
+
             // Ensure Test scheme is always used as default, even after Identity configuration
             services.PostConfigure<AuthenticationOptions>(options =>
             {
@@ -130,14 +130,14 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
     {
         using var scope = Services.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        
+
         // Check if user already exists
         var existingUser = await userManager.FindByEmailAsync(email);
         if (existingUser != null)
         {
             return existingUser;
         }
-        
+
         var user = new ApplicationUser
         {
             UserName = email,
@@ -157,13 +157,13 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         using var scope = Services.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-        
+
         // Ensure admin role exists
         if (!await roleManager.RoleExistsAsync(MathLLMBackend.Domain.Constants.Role.Admin))
         {
             await roleManager.CreateAsync(new IdentityRole(MathLLMBackend.Domain.Constants.Role.Admin));
         }
-        
+
         // Check if user already exists
         var existingUser = await userManager.FindByEmailAsync(email);
         if (existingUser != null)
@@ -175,7 +175,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             }
             return existingUser;
         }
-        
+
         var user = new ApplicationUser
         {
             UserName = email,

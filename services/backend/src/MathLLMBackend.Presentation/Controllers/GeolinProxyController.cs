@@ -24,8 +24,8 @@ namespace MathLLMBackend.Presentation.Controllers
         {
             if (string.IsNullOrWhiteSpace(request.Hash))
             {
-                return BadRequest(new CheckAnswerResponse 
-                { 
+                return BadRequest(new CheckAnswerResponse
+                {
                     Error = "Hash is required.",
                     Hash = request.Hash,
                     AnswerAttempt = request.AnswerAttempt,
@@ -35,8 +35,8 @@ namespace MathLLMBackend.Presentation.Controllers
 
             if (string.IsNullOrWhiteSpace(request.AnswerAttempt))
             {
-                return BadRequest(new CheckAnswerResponse 
-                { 
+                return BadRequest(new CheckAnswerResponse
+                {
                     Error = "Answer attempt is required.",
                     Hash = request.Hash,
                     AnswerAttempt = request.AnswerAttempt,
@@ -45,17 +45,17 @@ namespace MathLLMBackend.Presentation.Controllers
             }
 
             var result = await _geolinService.CheckAnswer(
-                request.Hash, 
-                request.AnswerAttempt, 
-                request.Seed, 
+                request.Hash,
+                request.AnswerAttempt,
+                request.Seed,
                 request.ProblemParams,
                 ct);
 
             var response = new CheckAnswerResponse
             {
                 IsCorrect = result.IsCorrect,
-                Message = result.IsCorrect 
-                    ? $"Ответ правильный (verdict: {result.Verdict})" 
+                Message = result.IsCorrect
+                    ? $"Ответ правильный (verdict: {result.Verdict})"
                     : $"Ответ неправильный (verdict: {result.Verdict})",
                 Hash = request.Hash,
                 AnswerAttempt = request.AnswerAttempt,
@@ -65,4 +65,4 @@ namespace MathLLMBackend.Presentation.Controllers
             return Ok(response);
         }
     }
-} 
+}

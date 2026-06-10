@@ -46,35 +46,37 @@ public class UserTaskService(
         foreach (var problem in problems)
         {
             var existingUserTask = await _context.UserTasks
-                .FirstOrDefaultAsync(ut => ut.ApplicationUserId == userId && ut.ProblemId == problem.Id, cancellationToken: cancellationToken);
-            
+                .FirstOrDefaultAsync(
+                    ut => ut.ApplicationUserId == userId
+                    && ut.ProblemId == problem.Id,
+                    cancellationToken: cancellationToken);
+
             if (existingUserTask != null)
             {
                 newOrExistingUserTasks.Add(existingUserTask);
+                continue;
             }
-            else
+
+            var displayName = !string.IsNullOrWhiteSpace(problem.Title)
+                ? problem.Title
+                : GetTruncatedStatement(problem.Statement);
+
+            var newTask = new UserTask
             {
-                var displayName = !string.IsNullOrWhiteSpace(problem.Title)
-                    ? problem.Title
-                    : GetTruncatedStatement(problem.Statement);
-                
-                var newTask = new UserTask
-                {
-                    ApplicationUserId = userId,
-                    ProblemId = problem.Id,
-                    DisplayName = displayName,
-                    TaskType = taskType,
-                    ProblemTaskType = problem.Types.First(t => t.TaskType == taskType),
-                    Status = UserTaskStatus.NotStarted,
-                    AssociatedChatId = null,
-                    ProblemHash = problem.Id.ToString()
-                };
-                
-                _context.UserTasks.Add(newTask);
-                newOrExistingUserTasks.Add(newTask);
-            }
+                ApplicationUserId = userId,
+                ProblemId = problem.Id,
+                DisplayName = displayName,
+                TaskType = taskType,
+                ProblemTaskType = problem.Types.First(t => t.TaskType == taskType),
+                Status = UserTaskStatus.NotStarted,
+                AssociatedChatId = null,
+                ProblemHash = problem.Id.ToString()
+            };
+
+            _context.UserTasks.Add(newTask);
+            newOrExistingUserTasks.Add(newTask);
         }
-        
+
         await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("Returning {Count} UserTasks based on LLMath-Problems DB for user {UserId}", newOrExistingUserTasks.Count, userId);
@@ -97,9 +99,9 @@ public class UserTaskService(
         }
 
         var chatId = await _chatService.GetOrCreateProblemChatAsync(
-            userTask.ProblemId, 
-            userId, 
-            userTask.DisplayName, 
+            userTask.ProblemId,
+            userId,
+            userTask.DisplayName,
             userTask.ProblemTaskType.TaskType,
             cancellationToken);
 
@@ -133,12 +135,12 @@ public class UserTaskService(
             _logger.LogInformation("Task {UserTaskId} is already in progress with chat {ChatId}.", userTaskId, chatId);
             return userTask;
         }
-        
+
         if (userTask.AssociatedChatId != null && userTask.AssociatedChatId != chatId)
         {
-             _logger.LogWarning("Task {UserTaskId} is already associated with a different chat {ExistingChatId}. Cannot associate with new chat {NewChatId}.", 
-                userTaskId, userTask.AssociatedChatId, chatId);
-            return null; 
+            _logger.LogWarning("Task {UserTaskId} is already associated with a different chat {ExistingChatId}. Cannot associate with new chat {NewChatId}.",
+               userTaskId, userTask.AssociatedChatId, chatId);
+            return null;
         }
 
         userTask.Status = UserTaskStatus.InProgress;
@@ -156,7 +158,7 @@ public class UserTaskService(
         var userTask = await _context.UserTasks
             .Include(ut => ut.ProblemTaskType)
             .FirstOrDefaultAsync(ut => ut.Id == userTaskId && ut.ApplicationUserId == userId, cancellationToken);
-        
+
         if (userTask == null)
         {
             _logger.LogWarning("UserTask with ID {UserTaskId} not found for user {UserId} in GetUserTaskByIdAsync.", userTaskId, userId);
@@ -193,9 +195,9 @@ public class UserTaskService(
 
     private static string GetTruncatedStatement(string statement)
     {
-        return statement.Length > DisplayConstants.MaxSnippetLength 
-            ? statement.Substring(0, DisplayConstants.MaxSnippetLength) + "..." 
+        return statement.Length > DisplayConstants.MaxSnippetLength
+            ? statement.Substring(0, DisplayConstants.MaxSnippetLength) + "..."
             : statement;
     }
 
-} 
+}

@@ -22,7 +22,7 @@ public static class GeolinClientRegistrar
                 c.BaseAddress = new Uri(config.BaseAddress);
             })
             .AddHttpMessageHandler<AuthMessageHandler>();
-        
+
         services.AddTransient<IGeolinService, GeolinService>();
 
         return services;

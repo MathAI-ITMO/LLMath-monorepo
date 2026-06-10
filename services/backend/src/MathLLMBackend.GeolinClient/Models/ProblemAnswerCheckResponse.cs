@@ -6,4 +6,4 @@ public class ProblemAnswerCheckResponse
 {
     [JsonPropertyName("verdict")]
     public double Verdict { get; set; }
-} 
+}

@@ -29,7 +29,7 @@ public class ApplicationUserClaimsPrincipalFactory : UserClaimsPrincipalFactory<
         identity.AddClaim(new Claim(ClaimTypeConstants.FirstName, user.FirstName ?? string.Empty));
         identity.AddClaim(new Claim(ClaimTypeConstants.LastName, user.LastName ?? string.Empty));
         identity.AddClaim(new Claim(ClaimTypeConstants.StudentGroup, user.StudentGroup ?? string.Empty));
-        
+
         if (identity.FindFirst(ClaimTypes.Email) == null && !string.IsNullOrEmpty(user.Email))
         {
             identity.AddClaim(new Claim(ClaimTypes.Email, user.Email));

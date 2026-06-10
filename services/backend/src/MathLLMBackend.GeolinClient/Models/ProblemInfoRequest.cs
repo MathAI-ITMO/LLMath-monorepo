@@ -6,4 +6,4 @@ public class ProblemInfoRequest
 {
     [JsonPropertyName("hashes")]
     public List<string> Hashes { get; set; } = new();
-} 
+}

@@ -109,7 +109,7 @@ try
     var app = builder.Build();
 
     var isOpenApiGeneration = Environment.GetEnvironmentVariable("OPENAPI_GENERATION") == "true";
-    
+
     {
         await DataAccessRegistrar.WarmupAsync(app.Services);
     }

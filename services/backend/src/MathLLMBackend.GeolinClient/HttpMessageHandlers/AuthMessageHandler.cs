@@ -7,7 +7,7 @@ namespace MathLLMBackend.GeolinClient.HttpMessageHandlers;
 public class AuthMessageHandler : DelegatingHandler
 {
     private readonly IOptionsMonitor<GeolinClientOptions> _options;
-    
+
     public AuthMessageHandler(IOptionsMonitor<GeolinClientOptions> options)
     {
         _options = options;
@@ -19,8 +19,8 @@ public class AuthMessageHandler : DelegatingHandler
         if (header is not null && header.Length == 2)
         {
             request.Headers.Authorization = new AuthenticationHeaderValue(header[0], header[1]);
-        } 
-        
+        }
+
         return await base.SendAsync(request, cancellationToken);
     }
 }

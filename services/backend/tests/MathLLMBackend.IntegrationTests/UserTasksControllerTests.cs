@@ -82,7 +82,7 @@ public class UserTasksControllerTests : BaseIntegrationTest
             var problemTaskType = new ProblemTaskType(problem, TaskType.Learning);
             problem.Types = new List<ProblemTaskType> { problemTaskType };
             dbContext.Problems.Add(problem);
-            
+
             var userTask = new UserTask
             {
                 ApplicationUserId = TestUser!.Id,
@@ -111,10 +111,10 @@ public class UserTasksControllerTests : BaseIntegrationTest
     public async Task CompleteUserTask_WithValidTask_ReturnsOk()
     {
         await CreateAndLoginUserAsync();
-        
+
         using var scope = Factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<MathLLMBackend.DataAccess.Contexts.AppDbContext>();
-        
+
         var problem = new Problem("sol", "stmt", "title") { Id = Guid.NewGuid(), TheoryLink = "link" };
         var problemTaskType = new ProblemTaskType(problem, TaskType.Learning);
         problem.Types = new List<ProblemTaskType> { problemTaskType };

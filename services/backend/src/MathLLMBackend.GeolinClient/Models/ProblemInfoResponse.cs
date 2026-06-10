@@ -18,4 +18,4 @@ public class ProblemInfoResponse
 
     [JsonPropertyName("condition_en")]
     public string? ConditionEn { get; set; }
-} 
+}

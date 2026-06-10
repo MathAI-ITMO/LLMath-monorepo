@@ -51,11 +51,11 @@ public class ProblemsServiceTests
         var p1 = new Problem("sol1", "stmt1", "title1") { TheoryLink = "link1" };
         var p2 = new Problem("sol2", "stmt2", "title2") { TheoryLink = "link2" };
         _context.Problems.AddRange(p1, p2);
-        
+
         var pt1 = new ProblemTaskType(p1, TaskType.Learning);
         var pt2 = new ProblemTaskType(p2, TaskType.Exam);
         _context.Set<ProblemTaskType>().AddRange(pt1, pt2);
-        
+
         await _context.SaveChangesAsync();
 
         // Act
